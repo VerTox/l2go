@@ -88,10 +88,8 @@ func (c *Client) Receive() (opcode byte, data []byte, e error) {
 		return 0x00, nil, errors.New("An error occured while decrypting the packet data.")
 	}
 
-	// Verify checksum using standard server packet verification (as per Java LoginCrypt)
 	checksumValid := crypt.VerifyChecksum(data)
 	if !checksumValid {
-		// Try client-specific checksum verification for packets with padding
 		checksumValid = crypt.VerifyChecksumClient(data)
 	}
 

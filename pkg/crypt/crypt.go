@@ -236,7 +236,7 @@ func DecXORPass(raw []byte, offset int, size int) {
 	pos := 4 + offset
 
 	// Read the final key from last 4 bytes
-	keyPos := offset + size - 4
+	keyPos := offset + size - 8
 	finalKey := uint32(raw[keyPos]) & 0xFF
 	finalKey |= (uint32(raw[keyPos+1]) & 0xFF) << 8
 	finalKey |= (uint32(raw[keyPos+2]) & 0xFF) << 16

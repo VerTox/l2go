@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 
 	"github.com/rs/zerolog/log"
 
@@ -21,10 +22,10 @@ func (h *Handler) handleRequestAuthLogin(ctx context.Context, client *transport.
 
 	account, err := h.usc.HandleAuthLogin(ctx, packet)
 	if err != nil {
-		switch err {
-		case usecase.ErrAccountBanned:
+		switch {
+		case errors.Is(err, usecase.ErrAccountBanned):
 			client.Send(outclient.NewLoginFailPacket(packets.REASON_ACCOUNT_SUSPENDED_CALL))
-		case usecase.ErrAccountNotFound:
+		case errors.Is(err, usecase.ErrAccountNotFound):
 			client.Send(outclient.NewLoginFailPacket(packets.REASON__PASS_WRONG))
 		default:
 			client.Send(outclient.NewLoginFailPacket(packets.REASON_ACCESS_FAILED))

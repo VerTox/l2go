@@ -21,6 +21,11 @@ type RequestAuthLogin struct {
 func NewRequestAuthLogin(ctx context.Context, client *transport.Client, request []byte) (*RequestAuthLogin, error) {
 	var result RequestAuthLogin
 
+	if len(request) < 128 {
+		log.Ctx(ctx).Error().Msgf("Request too short: %d bytes, expected at least 128 bytes", len(request))
+		return nil, errors.New("request too short")
+	}
+
 	dec128, err := packets.RsaDecryptNoPadding(client.PrivateKey, request[:128])
 	if err != nil {
 		log.Ctx(ctx).Error().Msgf("Error decrypting request: %v\n", err)
