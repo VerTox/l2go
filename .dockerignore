@@ -1,0 +1,59 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+CLAUDE.md
+DATABASE.md
+DOCKER_SETUP.md
+README.md
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Test files
+*_test.go
+
+# Dependencies
+vendor/
+
+# Build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Environment files (we handle these separately)
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Reference Java code (not needed in container)
+l2jserver/
+
+# Legacy files
+loginserver/
+gameserver/
+packets/
+config/
+l2go.go
+Makefile
+
+# Test artifacts
+coverage.out
+*.test

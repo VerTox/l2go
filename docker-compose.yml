@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: l2go-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: l2go_login
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d l2go_login"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - l2go-network
+
+  loginserver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: l2go-loginserver
+    ports:
+      - "2106:2106"  # Client connections
+      - "9014:9014"  # GameServer connections
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - l2go-network
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USERNAME=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DATABASE=l2go_login
+      - POSTGRES_MIGRATION_DIR=./migrations
+      - LOGIN_SERVER_HOST=0.0.0.0
+      - LOGIN_SERVER_PORT=2106
+      - GAME_SERVER_PORT=9014
+      - LOG_LEVEL=info
+      - AUTO_CREATE_ACCOUNTS=true
+    volumes:
+      - ./cmd/loginserver/.env:/app/.env:ro
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 2106 || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  adminer:
+    image: adminer:latest
+    container_name: l2go-adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - l2go-network
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  l2go-network:
+    driver: bridge
