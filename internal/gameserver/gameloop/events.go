@@ -1,0 +1,320 @@
+package gameloop
+
+import (
+	"time"
+
+	"github.com/VerTox/l2go/internal/gameserver/models"
+	"github.com/VerTox/l2go/internal/gameserver/packets/outclient"
+	"github.com/rs/zerolog/log"
+)
+
+// NextAttackEvent schedules the next auto-attack swing.
+type NextAttackEvent struct {
+	At             time.Time
+	AttackerCharID int32
+	TargetObjectID int32
+	RetryCount     int // number of distance-check retries (max 30 ≈ 9s)
+}
+
+func (e *NextAttackEvent) ExecuteAt() time.Time { return e.At }
+
+func (e *NextAttackEvent) Execute(gl *GameLoop) {
+	cs, ok := gl.combatState[e.AttackerCharID]
+	if !ok || !cs.IsAutoAttacking || cs.TargetObjectID != e.TargetObjectID {
+		return // attack cancelled or retargeted
+	}
+
+	npc, exists := gl.world.GetNPC(e.TargetObjectID)
+	if !exists || npc.IsDead {
+		gl.stopAttacker(e.AttackerCharID)
+		return
+	}
+
+	player, exists := gl.world.GetPlayer(e.AttackerCharID)
+	if !exists {
+		gl.stopAttacker(e.AttackerCharID)
+		return
+	}
+
+	// Check attack range (use template AttackRange or default 40)
+	attackRange := 40
+	if npc.Template != nil && npc.Template.AttackRange > 0 {
+		attackRange = npc.Template.AttackRange
+	}
+	attackRange += 50 // add collision radius approximation
+
+	dx := player.Position.X - npc.Position.X
+	dy := player.Position.Y - npc.Position.Y
+	distSq := dx*dx + dy*dy
+	rangeSq := attackRange * attackRange
+	if distSq > rangeSq {
+		// Out of range — retry approaching (up to ~9 seconds)
+		const maxRetries = 30
+		if e.RetryCount >= maxRetries {
+			gl.stopAttacker(e.AttackerCharID)
+			return
+		}
+		gl.events.Schedule(&NextAttackEvent{
+			At:             time.Now().Add(300 * time.Millisecond),
+			AttackerCharID: e.AttackerCharID,
+			TargetObjectID: e.TargetObjectID,
+			RetryCount:     e.RetryCount + 1,
+		})
+		return
+	}
+
+	// Compute attack timing
+	pAtkSpd := 300 // default
+	if player.Character != nil {
+		computed := gl.computePlayerStats(player)
+		pAtkSpd = computed.PAtkSpd
+	}
+	timeAtkMs := calcAttackSpeed(pAtkSpd)
+
+	// Roll hit/crit/damage
+	miss := false
+	crit := false
+	var damage int32
+
+	accuracy := 35  // default
+	evasion := 20   // NPC default
+	pAtk := 10      // default
+	pDef := 10      // default
+	critRate := 4   // default
+
+	if player.Character != nil {
+		computed := gl.computePlayerStats(player)
+		accuracy = computed.Accuracy
+		pAtk = computed.PAtk
+		critRate = computed.CritRate
+	}
+	if npc.Template != nil {
+		evasion = int(npc.Template.PDef / 10) // rough evasion estimate
+		pDef = int(npc.Template.PDef)
+		if pDef < 1 {
+			pDef = 1
+		}
+	}
+
+	if !calcHitChance(accuracy, evasion) {
+		miss = true
+		damage = 0
+	} else {
+		damage = calcPhysDamage(pAtk, pDef)
+		crit = calcCrit(critRate)
+		if crit {
+			damage *= 2
+		}
+		damage = applyVariance(damage)
+		if damage < 1 {
+			damage = 1
+		}
+	}
+
+	// Build flags
+	var flags int32
+	if miss {
+		flags |= 0x01 // MISS
+	}
+	if crit {
+		flags |= 0x20 // CRIT
+	}
+
+	// Broadcast Attack packet (animation) immediately
+	attackPkt := outclient.BuildAttack(
+		player.CharID,
+		e.TargetObjectID,
+		damage,
+		flags,
+		int32(player.Position.X), int32(player.Position.Y), int32(player.Position.Z),
+		int32(npc.Position.X), int32(npc.Position.Y), int32(npc.Position.Z),
+	)
+	gl.broadcastToNearby(player.Position, attackPkt)
+
+	// Schedule HitEvent at half attack time (damage lands mid-swing)
+	now := time.Now()
+	hitDelay := time.Duration(timeAtkMs/2) * time.Millisecond
+	if !miss {
+		gl.events.Schedule(&HitEvent{
+			At:             now.Add(hitDelay),
+			AttackerCharID: e.AttackerCharID,
+			TargetObjectID: e.TargetObjectID,
+			Damage:         damage,
+		})
+	}
+
+	// Schedule next swing
+	nextSwing := time.Duration(timeAtkMs) * time.Millisecond
+	gl.events.Schedule(&NextAttackEvent{
+		At:             now.Add(nextSwing),
+		AttackerCharID: e.AttackerCharID,
+		TargetObjectID: e.TargetObjectID,
+	})
+
+	cs.LastAttackTime = now
+}
+
+// HitEvent applies damage when the attack animation lands.
+type HitEvent struct {
+	At             time.Time
+	AttackerCharID int32
+	TargetObjectID int32
+	Damage         int32
+}
+
+func (e *HitEvent) ExecuteAt() time.Time { return e.At }
+
+func (e *HitEvent) Execute(gl *GameLoop) {
+	npc, exists := gl.world.GetNPC(e.TargetObjectID)
+	if !exists || npc.IsDead {
+		return
+	}
+
+	// Apply damage (game loop is sole writer of NPC HP)
+	npc.CurrentHP -= float64(e.Damage)
+	if npc.CurrentHP < 0 {
+		npc.CurrentHP = 0
+	}
+
+	// Add hate
+	if hl, ok := gl.npcHateLists[e.TargetObjectID]; ok {
+		hl.AddHate(e.AttackerCharID, int64(e.Damage))
+	} else {
+		hl := NewHateList()
+		hl.AddHate(e.AttackerCharID, int64(e.Damage))
+		gl.npcHateLists[e.TargetObjectID] = hl
+	}
+
+	// Trigger NPC auto-attack back (NPC retaliates when hit)
+	if npc.IsAttackable() {
+		gl.startNPCAttack(e.TargetObjectID, e.AttackerCharID)
+	}
+
+	// Broadcast StatusUpdate with current HP
+	su := outclient.BuildStatusUpdate(e.TargetObjectID, []outclient.StatusAttribute{
+		{ID: outclient.StatusMaxHP, Value: int32(npc.Template.HP)},
+		{ID: outclient.StatusCurHP, Value: int32(npc.CurrentHP)},
+	})
+	gl.broadcastToTargeters(e.TargetObjectID, su)
+
+	// Check death
+	if npc.CurrentHP <= 0 {
+		gl.handleNPCDeath(npc)
+	}
+}
+
+// RespawnEvent respawns an NPC after death.
+type RespawnEvent struct {
+	At       time.Time
+	ObjectID int32 // old object ID (for spawn info lookup)
+}
+
+func (e *RespawnEvent) ExecuteAt() time.Time { return e.At }
+
+func (e *RespawnEvent) Execute(gl *GameLoop) {
+	info, ok := gl.npcSpawnInfo[e.ObjectID]
+	if !ok {
+		log.Warn().Int32("object_id", e.ObjectID).Msg("respawn: spawn info not found")
+		return
+	}
+
+	tpl := gl.getNpcTemplate(info.TemplateID)
+	if tpl == nil {
+		log.Warn().Int32("template_id", info.TemplateID).Msg("respawn: template not found")
+		return
+	}
+
+	// Create new NPC instance with new ObjectID
+	newNPC := &models.NpcInstance{
+		ObjectID:   gl.nextObjectID(),
+		TemplateID: info.TemplateID,
+		Template:   tpl,
+		Position:   info.Position,
+		Heading:    info.Heading,
+		IsRunning:  true,
+		IsDead:     false,
+		CurrentHP:  tpl.HP,
+		CurrentMP:  tpl.MP,
+	}
+
+	// Cache spawn info for the new object ID
+	gl.npcSpawnInfo[newNPC.ObjectID] = info
+
+	// Add to world
+	gl.world.AddNPC(newNPC)
+
+	log.Debug().
+		Int32("new_object_id", newNPC.ObjectID).
+		Int32("template_id", info.TemplateID).
+		Msg("NPC respawned")
+}
+
+// CorpseDecayEvent removes an NPC corpse from the world.
+type CorpseDecayEvent struct {
+	At       time.Time
+	ObjectID int32
+}
+
+func (e *CorpseDecayEvent) ExecuteAt() time.Time { return e.At }
+
+func (e *CorpseDecayEvent) Execute(gl *GameLoop) {
+	// Broadcast DeleteObject to nearby players
+	npc, exists := gl.world.GetNPC(e.ObjectID)
+	if !exists {
+		return
+	}
+
+	deleteData := outclient.BuildDeleteObject(e.ObjectID)
+	gl.broadcastToNearby(npc.Position, deleteData)
+
+	// Remove from world registry
+	gl.world.RemoveNPC(e.ObjectID)
+
+	// Clean up hate list
+	delete(gl.npcHateLists, e.ObjectID)
+
+	log.Debug().Int32("object_id", e.ObjectID).Msg("NPC corpse decayed")
+}
+
+// CombatStanceTimeoutEvent ends combat stance after 15 seconds of inactivity.
+type CombatStanceTimeoutEvent struct {
+	At     time.Time
+	CharID int32
+}
+
+func (e *CombatStanceTimeoutEvent) ExecuteAt() time.Time { return e.At }
+
+func (e *CombatStanceTimeoutEvent) Execute(gl *GameLoop) {
+	cs, ok := gl.combatState[e.CharID]
+	if !ok {
+		return
+	}
+
+	// Only timeout if not actively attacking and enough time has passed
+	if cs.IsAutoAttacking {
+		return // Still attacking, don't timeout
+	}
+
+	if time.Since(cs.LastAttackTime) < 15*time.Second {
+		return // Recent attack, reschedule
+	}
+
+	// End combat stance
+	gl.world.SetPlayerCombatState(e.CharID, false)
+
+	// Send AutoAttackStop to the player
+	stopPkt := outclient.BuildAutoAttackStop(e.CharID)
+	if conn := gl.connections.GetConnection(cs.AccountName); conn != nil {
+		_ = conn.Send(stopPkt)
+	}
+
+	// Send updated UserInfo to the player (InCombat=0 for peaceful stance)
+	if player, exists := gl.world.GetPlayer(e.CharID); exists {
+		userInfoData := gl.buildUserInfoForPlayer(player)
+		if conn := gl.connections.GetConnection(cs.AccountName); conn != nil {
+			_ = conn.Send(userInfoData)
+		}
+	}
+
+	delete(gl.combatState, e.CharID)
+}
