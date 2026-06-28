@@ -1,6 +1,8 @@
 package ings
 
 import (
+	"fmt"
+
 	"github.com/VerTox/l2go/internal/loginserver/packets"
 )
 
@@ -54,10 +56,14 @@ func NewAuthRequest(data []byte) *AuthRequest {
 	subnetSize := reader.ReadUInt32()
 
 	hosts := make([]string, 0)
+	subnets := make([]string, 0)
+	fmt.Printf("subnetSize: %d\n", subnetSize)
 	if subnetSize > 0 {
 		for i := 0; i < int(subnetSize); i++ {
 			subnet := reader.ReadString() // Assuming subnets are 16 bytes each
-			hosts = append(hosts, subnet)
+			subnets = append(subnets, subnet)
+			host := reader.ReadString() // Assuming hosts are 16 bytes each
+			hosts = append(hosts, host)
 		}
 	}
 
@@ -69,6 +75,7 @@ func NewAuthRequest(data []byte) *AuthRequest {
 		port:            port,
 		maxPlayers:      maxPlayers,
 		hexID:           hexID,
+		subnets:         subnets,
 		hosts:           hosts,
 	}
 }
@@ -87,4 +94,8 @@ func (ar *AuthRequest) GetPort() int {
 
 func (ar *AuthRequest) GetHosts() []string {
 	return ar.hosts
+}
+
+func (ar *AuthRequest) GetSubnets() []string {
+	return ar.subnets
 }

@@ -8,6 +8,8 @@ import (
 	"io"
 	"net"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/VerTox/l2go/internal/loginserver/packets"
 	"github.com/VerTox/l2go/pkg/crypt"
 )
@@ -51,6 +53,8 @@ func (gs *GameServer) Receive() (opcode byte, data []byte, err error) {
 
 	// Calculate the packet size (little-endian)
 	size := int(header[0]) + int(header[1])*256
+
+	log.Debug().Msg(fmt.Sprintf("Packet size: %d", size))
 
 	if size < 2 {
 		return 0x00, nil, errors.New("invalid packet size")

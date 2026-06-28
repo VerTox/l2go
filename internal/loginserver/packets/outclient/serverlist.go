@@ -1,6 +1,7 @@
 package outclient
 
 import (
+	"fmt"
 	"net"
 
 	"github.com/VerTox/l2go/internal/loginserver/models"
@@ -139,22 +140,27 @@ func (p *ServerList) getServerIP(server *models.GameServerInfo) [4]byte {
 		}
 	}
 
+	fmt.Printf("Client IP: %v\n", clientIP)
+
 	var selectedIP string
 
 	// Use new subnet-based IP selection if client IP is available
 	if clientIP != nil {
 		selectedIP = server.GetServerAddress(clientIP)
+		fmt.Printf("Selected IP from subnet matching: %s\n", selectedIP)
 	}
 
 	// Fallback to external host if no match found
 	if selectedIP == "" {
 		selectedIP = server.GetExternalHost()
+		fmt.Printf("Fallback to external host: %s\n", selectedIP)
 	}
 
 	// Final fallback to localhost
 	if selectedIP == "" {
 		return [4]byte{127, 0, 0, 1}
 	}
+	fmt.Printf("Final selected IP: %s\n", selectedIP)
 
 	// Parse the selected IP
 	ip := net.ParseIP(selectedIP)

@@ -73,11 +73,12 @@ func (uc *GameServerCommUseCase) HandleAuthRequest(ctx context.Context, authReq 
 		Int("server_id", serverID).
 		Int("hosts_count", len(hosts)).
 		Msg("Processing GameServer hosts")
+	subnets := authReq.GetSubnets()
 
-	// Process hosts in pairs: [subnet, ip, subnet, ip, ...]
-	for i := 0; i+1 < len(hosts); i += 2 {
-		subnet := hosts[i]
-		serverAddr := hosts[i+1]
+	//Process hosts in pairs: [subnet, ip, subnet, ip, ...]
+	for i := 0; i < len(hosts); i++ {
+		subnet := subnets[i]
+		serverAddr := hosts[i]
 
 		err := serverInfo.AddServerAddress(subnet, serverAddr)
 		if err != nil {
@@ -94,6 +95,10 @@ func (uc *GameServerCommUseCase) HandleAuthRequest(ctx context.Context, authReq 
 			Str("server_addr", serverAddr).
 			Msg("Added server address mapping")
 	}
+
+	//serverInfo.AddServerAddress("192.168.88.0/24", "192.168.88.42")
+	//serverInfo.AddServerAddress("127.0.0.1/24", "127.0.0.1")
+	//serverInfo.AddServerAddress("0.0.0.0/0", "192.168.88.42")
 
 	// Register or update server in registry
 	err := uc.gameServerRegistry.Register(ctx, serverInfo)
