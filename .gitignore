@@ -6,6 +6,8 @@
 *.dylib
 l2go
 l2go.exe
+/gameserver
+/loginserver
 
 # Test binary, built with `go test -c`
 *.test
@@ -58,6 +60,7 @@ Thumbs.db
 # Local configuration
 .env
 server.json
+.claude/settings.local.json
 
 # Database data
 postgres_data/
@@ -74,3 +77,12 @@ temp/
 .dolt/
 *.db
 .beads-credential-key
+references
+
+.gocache
+.gopath
+
+loadtest
+.logs
+.claude
+.beads
