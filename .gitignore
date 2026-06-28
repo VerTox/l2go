@@ -8,6 +8,7 @@ l2go
 l2go.exe
 /gameserver
 /loginserver
+/main
 
 # Test binary, built with `go test -c`
 *.test
