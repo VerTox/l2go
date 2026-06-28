@@ -95,6 +95,12 @@ func VerifyChecksumClient(raw []byte) bool {
 func AppendChecksum(raw []byte) {
 	offset := 0 // Starting from beginning like Java version
 	size := len(raw)
+	
+	// Check if size is valid (must be at least 4 bytes and multiple of 4)
+	if size < 4 || (size&3) != 0 {
+		return // Invalid size, cannot add checksum
+	}
+	
 	var chksum uint32 = 0
 	count := offset + size - 4 // Same calculation as Java: i < count
 	var ecx uint32
@@ -110,17 +116,13 @@ func AppendChecksum(raw []byte) {
 		chksum ^= ecx
 	}
 
-	// Read the existing checksum bytes (as in Java, though they will be overwritten)
-	ecx = uint32(raw[i]) & 0xff
-	ecx |= (uint32(raw[i+1]) << 8) & 0xff00
-	ecx |= (uint32(raw[i+2]) << 16) & 0xff0000
-	ecx |= (uint32(raw[i+3]) << 24) & 0xff000000
-
-	// Write checksum to last 4 bytes (exactly as in Java)
-	raw[i] = byte(chksum & 0xff)
-	raw[i+1] = byte((chksum >> 8) & 0xff)
-	raw[i+2] = byte((chksum >> 16) & 0xff)
-	raw[i+3] = byte((chksum >> 24) & 0xff)
+	// Write checksum to last 4 bytes
+	// i should now be equal to count, which is size-4
+	checksumIndex := size - 4
+	raw[checksumIndex] = byte(chksum & 0xff)
+	raw[checksumIndex+1] = byte((chksum >> 8) & 0xff)
+	raw[checksumIndex+2] = byte((chksum >> 16) & 0xff)
+	raw[checksumIndex+3] = byte((chksum >> 24) & 0xff)
 }
 
 // Legacy checksum function (deprecated, use VerifyChecksum instead)
