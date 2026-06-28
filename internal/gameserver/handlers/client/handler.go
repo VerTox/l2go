@@ -34,6 +34,8 @@ type Handler struct {
 	connections        *registry.ConnectionRegistry
 	loginServerHandler LoginServerInterface
 	gameLoopCmd        chan<- gameloop.Command
+	// registry — state-aware таблица опкод→обработчик входящих пакетов.
+	registry *Registry
 	// Simple in-memory session storage (TODO: use proper session management)
 	sessions map[*client.ClientConn]*ClientSession
 }
@@ -53,6 +55,7 @@ func New(characterUseCase *usecase.CharacterUseCase, movementUseCase usecase.Mov
 		connections:        connections,
 		loginServerHandler: loginServerHandler,
 		gameLoopCmd:        gameLoopCmd,
+		registry:           buildRegistry(),
 		sessions:           make(map[*client.ClientConn]*ClientSession),
 	}
 }
@@ -95,6 +98,9 @@ func (h *Handler) Handle(ctx context.Context, c *client.ClientConn) {
 
 	log.Ctx(ctx).Info().Msg("Client handshake complete (GameCrypt enabled)")
 
+	// Состояние соединения: после хендшейка ждём AuthLogin.
+	state := StateConnected
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -110,97 +116,44 @@ func (h *Handler) Handle(ctx context.Context, c *client.ClientConn) {
 			return
 		}
 
-		log.Ctx(ctx).Debug().
-			Str("opcode", fmt.Sprintf("0x%x", opcode)).
-			Msg("client packet")
+		// Для мультипакета 0xD0 вычитываем 2-байтный sub-опкод (LE) и сдвигаем payload.
+		dispatchPayload := payload
+		var sub uint16
+		if opcode == multiPacketOpcode {
+			s, rest, ok := parseSubOpcode(payload)
+			if !ok {
+				log.Ctx(ctx).Warn().Msg("multi-packet too short for sub-opcode")
+				continue
+			}
+			sub, dispatchPayload = s, rest
+		}
 
-		// Route to appropriate handler based on opcode
-		switch opcode {
-		case 0x2b: // AuthLogin
-			if err := h.handleAuthLogin(ctx, c, payload); err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("handle AuthLogin failed")
-				return
+		entry, ok := h.registry.Resolve(state, opcode, sub)
+		if !ok {
+			if opcode == multiPacketOpcode {
+				log.Ctx(ctx).Warn().
+					Str("opcode", fmt.Sprintf("0xd0:0x%x", sub)).
+					Uint8("state", uint8(state)).
+					Msg("unknown multi-packet sub-opcode")
+			} else {
+				log.Ctx(ctx).Warn().
+					Str("opcode", fmt.Sprintf("0x%x", opcode)).
+					Uint8("state", uint8(state)).
+					Msg("unknown opcode")
 			}
-		case 0x12: // CharacterSelect
-			if err := h.handleCharacterSelect(ctx, c, payload); err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("handle CharacterSelect failed")
-				return
-			}
-		case 0x13: // NewCharacter (request templates)
-			if err := h.handleNewCharacter(ctx, c, payload); err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("handle NewCharacter failed")
-				return
-			}
-		case 0x0c: // CharacterCreate
-			if err := h.handleCharacterCreate(ctx, c, payload); err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("handle CharacterCreate failed")
-				return
-			}
-		case 0x0d: // CharacterDelete
-			if err := h.handleCharacterDelete(ctx, c, payload); err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("handle CharacterDelete failed")
-				return
-			}
-		case 0x11: // EnterWorld
-			if err := h.handleEnterWorld(ctx, c, payload); err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("handle EnterWorld failed")
-				return
-			}
-		case 0x1f: // Action (click on NPC/player/object)
-			if err := h.handleAction(ctx, c, payload); err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("handle Action failed")
-			}
-		case 0x48: // RequestTargetCancel (Escape / deselect target)
-			if err := h.handleRequestTargetCancel(ctx, c, payload); err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("handle RequestTargetCancel failed")
-			}
-		case 0x0f: // MoveBackwardToLocation
-			if err := h.handleMoveBackwardToLocation(ctx, c, payload); err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("handle MoveBackwardToLocation failed")
-			}
-		case 0x59: // ValidatePosition
-			if err := h.handleValidatePosition(ctx, c, payload); err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("handle ValidatePosition failed")
-			}
-		case 0x47: // CannotMoveAnymore
-			if err := h.handleCannotMoveAnymore(ctx, c, payload); err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("handle CannotMoveAnymore failed")
-			}
-		case 0x52: // MoveWithDelta (not implemented in L2J, stub for compatibility)
-			log.Ctx(ctx).Debug().Msg("MoveWithDelta packet received (not implemented, ignoring)")
 			continue
-		case 0x56: // RequestActionUse (Walk/Run toggle, etc.)
-			if err := h.handleRequestActionUse(ctx, c, payload); err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("handle RequestActionUse failed")
+		}
+
+		if err := entry.Handle(h, ctx, c, dispatchPayload); err != nil {
+			log.Ctx(ctx).Error().Err(err).Str("packet", entry.Name).Msg("packet handler failed")
+			if entry.Fatal {
+				return
 			}
-		case 0x00: // Logout
-			if err := h.handleLogout(ctx, c, payload); err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("handle Logout failed")
-			}
-		case 0x57: // RequestRestart
-			if err := h.handleRequestRestart(ctx, c, payload); err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("handle RequestRestart failed")
-			}
-		case 0xd0: // Multi-packet opcode (requires sub-opcode)
-			if err := h.handleMultiPacket(ctx, c, payload); err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("handle multi-packet failed")
-			}
-		case 0x14:
-			if err := h.handleRequestItemList(ctx, c, payload); err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("handle RequestItemList failed")
-			}
-		case 0x19: // UseItem (equip/unequip by double-click)
-			if err := h.handleUseItem(ctx, c, payload); err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("handle UseItem failed")
-			}
-		case 0x16: // RequestUnEquipItem (drag off paperdoll)
-			if err := h.handleRequestUnEquipItem(ctx, c, payload); err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("handle RequestUnEquipItem failed")
-			}
-		case 0xa6: //RequestSkillCoolTime
 			continue
-		default:
-			log.Ctx(ctx).Warn().Msgf("unknown opcode 0x%x", opcode)
+		}
+
+		if entry.Transition != nil {
+			state = *entry.Transition
 		}
 	}
 }

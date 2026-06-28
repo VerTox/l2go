@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/rs/zerolog/log"
 
@@ -11,47 +10,9 @@ import (
 	"github.com/VerTox/l2go/pkg/l2pkt"
 )
 
-// handleMultiPacket processes 0xd0 multi-packet opcodes with sub-opcodes
-func (h *Handler) handleMultiPacket(ctx context.Context, c *client.ClientConn, payload []byte) error {
-	if len(payload) < 2 { // Need at least 1 byte opcode + 2 bytes sub-opcode
-		log.Ctx(ctx).Warn().Msg("multi-packet too short for sub-opcode")
-		return nil
-	}
-
-	// Extract sub-opcode (2 bytes after the 0xd0 opcode)
-	subOpcode := payload[0]
-	subPayload := payload[1:] // Rest of the packet after sub-opcode
-
-	log.Ctx(ctx).Debug().
-		Str("sub_opcode", fmt.Sprintf("0x%x", subOpcode)).
-		Int("payload_len", len(subPayload)).
-		Msg("multi-packet received")
-
-	switch subOpcode {
-	case 0x01: // RequestManorList
-		return nil
-	case 0x0d: // RequestAutoSoulShot
-		return h.handleRequestAutoSoulShot(ctx, c, subPayload)
-	case 0x21: // RequestKeyMapping
-		return h.handleRequestKeyMapping(ctx, c, subPayload)
-	case 0x22: // RequestSaveKeyMapping
-		return h.handleRequestSaveKeyMapping(ctx, c, subPayload)
-	case 0x24: // Unknown packet - likely related to UI or settings
-		log.Ctx(ctx).Debug().
-			Int("payload_len", len(subPayload)).
-			Msg("Unknown 0x24 multi-packet - ignoring for now")
-		return nil
-	case 0x36: // RequestGotoLobby - return to character selection after character creation  
-		return h.handleRequestGotoLobby(ctx, c, subPayload)
-	case 0x38: // RequestGotoLobby - alternative opcode (Java L2J uses D0:38)
-		return h.handleRequestGotoLobby(ctx, c, subPayload)
-	default:
-		log.Ctx(ctx).Debug().
-			Str("sub_opcode", fmt.Sprintf("0x%x", subOpcode)).
-			Msg("unimplemented multi-packet sub-opcode")
-		return nil
-	}
-}
+// Мультипакет 0xD0 диспетчеризуется через реестр (dispatch.go): sub-опкод
+// читается как 2 байта (LE), а маппинг учитывает состояние соединения.
+// Ниже — обработчики уже реализованных 0xD0 sub-пакетов.
 
 // handleRequestAutoSoulShot processes auto-shot configuration
 func (h *Handler) handleRequestAutoSoulShot(ctx context.Context, c *client.ClientConn, payload []byte) error {
