@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/VerTox/l2go/internal/gameserver/models"
+	"github.com/VerTox/l2go/internal/gameserver/registry"
+	"github.com/VerTox/l2go/internal/gameserver/usecase"
 )
 
 // interpolatePosition returns the position along the straight line from start to
@@ -30,4 +32,12 @@ func distanceBetween(a, b models.Position) float64 {
 	dx := float64(b.X - a.X)
 	dy := float64(b.Y - a.Y)
 	return math.Sqrt(dx*dx + dy*dy)
+}
+
+// stepPlayerMovement computes a moving player's position at time `now` via
+// server-side interpolation, and whether the move has completed.
+func stepPlayerMovement(player *registry.PlayerWorldState, now time.Time) (models.Position, bool) {
+	distance := distanceBetween(player.MoveStartPos, player.MoveDestination)
+	total := usecase.CalculateMovementTime(distance, player.IsRunning)
+	return interpolatePosition(player.MoveStartPos, player.MoveDestination, now.Sub(player.MoveStarted), total)
 }

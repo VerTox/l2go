@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/VerTox/l2go/internal/gameserver/models"
+	"github.com/VerTox/l2go/internal/gameserver/registry"
 )
 
 func TestInterpolatePosition(t *testing.T) {
@@ -48,4 +49,38 @@ func TestDistanceBetween(t *testing.T) {
 	if d != 5 {
 		t.Errorf("got %g, want 5", d)
 	}
+}
+
+func TestStepPlayerMovement(t *testing.T) {
+	t.Run("far past start → arrived at destination", func(t *testing.T) {
+		player := &registry.PlayerWorldState{
+			IsMoving:        true,
+			IsRunning:       true,
+			MoveStartPos:    models.Position{X: 0, Y: 0, Z: 0},
+			MoveDestination: models.Position{X: 1000, Y: 0, Z: 0},
+			MoveStarted:     time.Now().Add(-1 * time.Hour), // заведомо дошёл
+		}
+		pos, arrived := stepPlayerMovement(player, time.Now())
+		if !arrived || pos != player.MoveDestination {
+			t.Errorf("got pos=%+v arrived=%v, want dest arrived", pos, arrived)
+		}
+	})
+
+	t.Run("just started → near start, not arrived", func(t *testing.T) {
+		now := time.Now()
+		player := &registry.PlayerWorldState{
+			IsMoving:        true,
+			IsRunning:       true,
+			MoveStartPos:    models.Position{X: 0, Y: 0, Z: 0},
+			MoveDestination: models.Position{X: 1000, Y: 0, Z: 0},
+			MoveStarted:     now,
+		}
+		pos, arrived := stepPlayerMovement(player, now)
+		if arrived {
+			t.Fatal("just-started move should not be arrived")
+		}
+		if pos.X > 10 {
+			t.Errorf("got X=%d, want near start (0)", pos.X)
+		}
+	})
 }

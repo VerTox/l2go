@@ -133,6 +133,7 @@ func (gl *GameLoop) tick() {
 executeEvents:
 	// Execute all events whose time has come
 	now := time.Now()
+	gl.advancePlayerMovement(now)
 	for {
 		e := gl.events.Peek()
 		if e == nil || e.ExecuteAt().After(now) {
@@ -140,6 +141,24 @@ executeEvents:
 		}
 		gl.events.PopEvent()
 		e.Execute(gl)
+	}
+}
+
+// advancePlayerMovement moves every in-progress player along its path using
+// server-side interpolation, so the loop and combat checks always see a fresh
+// position instead of the stale value between client ValidatePosition packets.
+func (gl *GameLoop) advancePlayerMovement(now time.Time) {
+	for charID, player := range gl.world.GetAllPlayers() {
+		if !player.IsMoving {
+			continue
+		}
+		pos, arrived := stepPlayerMovement(player, now)
+		_ = gl.world.UpdatePlayerPosition(context.Background(), charID, pos, player.Heading)
+		if arrived {
+			player.IsMoving = false
+			player.MoveStartPos = models.Position{}
+			player.MoveDestination = models.Position{}
+		}
 	}
 }
 
