@@ -55,6 +55,12 @@ func (e *InteractApproachEvent) Execute(gl *GameLoop) {
 			clearPending()
 			return
 		}
+		// Keep chasing: re-issue MoveToPawn at most ~once per second (same throttle as
+		// attack approach) so a client that stopped short or whose position lagged still
+		// closes in, without stuttering from a move restart every tick.
+		if shouldResendMoveToPawn(e.RetryCount) {
+			gl.approachTarget(e.AccountName, player, npc, gl.interactApproachOffset(player, npc))
+		}
 		gl.events.Schedule(&InteractApproachEvent{
 			At:             time.Now().Add(300 * time.Millisecond),
 			CharID:         e.CharID,
@@ -77,7 +83,7 @@ func (e *InteractApproachEvent) Execute(gl *GameLoop) {
 		Msg("interact approach: arrived, opening NPC dialogue")
 	if conn := gl.connections.GetConnection(e.AccountName); conn != nil {
 		_ = conn.Send(outclient.BuildMoveToPawn(
-			e.CharID, e.TargetObjectID, 100,
+			e.CharID, e.TargetObjectID, int32(gl.interactApproachOffset(player, npc)),
 			player.Position.X, player.Position.Y, player.Position.Z,
 			npc.Position.X, npc.Position.Y, npc.Position.Z,
 		))
@@ -113,23 +119,28 @@ func (e *NextAttackEvent) Execute(gl *GameLoop) {
 		return
 	}
 
-	// Check attack range (use template AttackRange or default 40)
-	attackRange := 40
-	if npc.Template != nil && npc.Template.AttackRange > 0 {
-		attackRange = npc.Template.AttackRange
-	}
-	attackRange += 50 // add collision radius approximation
+	// Attack reach per L2J: player physical attack range + both collision radii.
+	// The same value is the MoveToPawn offset, so the client stops exactly within
+	// range (the old hardcoded offset 60 vs range 90 left big-collision mobs short).
+	reach := gl.meleeReach(player, npc)
 
 	dx := player.Position.X - npc.Position.X
 	dy := player.Position.Y - npc.Position.Y
 	distSq := dx*dx + dy*dy
-	rangeSq := attackRange * attackRange
+	rangeSq := reach * reach
 	if distSq > rangeSq {
-		// Out of range — retry approaching (up to ~9 seconds)
+		// Out of range — keep chasing (re-issue MoveToPawn) and retry (~9 seconds).
 		const maxRetries = 30
 		if e.RetryCount >= maxRetries {
 			gl.stopAttacker(e.AttackerCharID)
 			return
+		}
+		// Re-issue MoveToPawn at most ~once per second (L2J _moveToPawnTimeout) so the
+		// client keeps closing in without stuttering from a move restart every tick.
+		if shouldResendMoveToPawn(e.RetryCount) {
+			if cs, ok := gl.combatState[e.AttackerCharID]; ok {
+				gl.approachTarget(cs.AccountName, player, npc, reach)
+			}
 		}
 		gl.events.Schedule(&NextAttackEvent{
 			At:             time.Now().Add(300 * time.Millisecond),
@@ -153,11 +164,11 @@ func (e *NextAttackEvent) Execute(gl *GameLoop) {
 	crit := false
 	var damage int32
 
-	accuracy := 35  // default
-	evasion := 20   // NPC default
-	pAtk := 10      // default
-	pDef := 10      // default
-	critRate := 4   // default
+	accuracy := 35 // default
+	evasion := 20  // NPC default
+	pAtk := 10     // default
+	pDef := 10     // default
+	critRate := 4  // default
 
 	if player.Character != nil {
 		computed := gl.computePlayerStats(player)

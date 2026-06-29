@@ -41,16 +41,16 @@ type PlayerCombatState struct {
 // GameLoop is the single-goroutine game loop that owns all mutable NPC state
 // and combat logic. Client handlers send commands through the Commands channel.
 type GameLoop struct {
-	commands      chan Command
-	events        EventQueue
-	world         *registry.WorldRegistry
-	connections   *registry.ConnectionRegistry
-	combatState    map[int32]*PlayerCombatState // charID -> auto-attack state
-	npcCombatState map[int32]*NPCCombatState   // NPC objectID -> NPC auto-attack state
-	npcHateLists   map[int32]*HateList          // NPC objectID -> hate
-	npcSpawnInfo   map[int32]SpawnInfo           // NPC objectID -> spawn data for respawn
-	activeRegions  map[string]*ActiveRegion
-	interactPending map[int32]int32             // charID -> NPC objectID (active approach-to-interact)
+	commands        chan Command
+	events          EventQueue
+	world           *registry.WorldRegistry
+	connections     *registry.ConnectionRegistry
+	combatState     map[int32]*PlayerCombatState // charID -> auto-attack state
+	npcCombatState  map[int32]*NPCCombatState    // NPC objectID -> NPC auto-attack state
+	npcHateLists    map[int32]*HateList          // NPC objectID -> hate
+	npcSpawnInfo    map[int32]SpawnInfo          // NPC objectID -> spawn data for respawn
+	activeRegions   map[string]*ActiveRegion
+	interactPending map[int32]int32 // charID -> NPC objectID (active approach-to-interact)
 
 	// Configurable server rates
 	expRate float64
@@ -66,17 +66,17 @@ func New(world *registry.WorldRegistry, connections *registry.ConnectionRegistry
 		spRate = 1.0
 	}
 	return &GameLoop{
-		commands:       make(chan Command, commandChannelSize),
-		world:          world,
-		connections:    connections,
-		combatState:    make(map[int32]*PlayerCombatState),
-		npcCombatState: make(map[int32]*NPCCombatState),
-		npcHateLists:   make(map[int32]*HateList),
-		npcSpawnInfo:   make(map[int32]SpawnInfo),
-		activeRegions:  make(map[string]*ActiveRegion),
+		commands:        make(chan Command, commandChannelSize),
+		world:           world,
+		connections:     connections,
+		combatState:     make(map[int32]*PlayerCombatState),
+		npcCombatState:  make(map[int32]*NPCCombatState),
+		npcHateLists:    make(map[int32]*HateList),
+		npcSpawnInfo:    make(map[int32]SpawnInfo),
+		activeRegions:   make(map[string]*ActiveRegion),
 		interactPending: make(map[int32]int32),
-		expRate:        expRate,
-		spRate:         spRate,
+		expRate:         expRate,
+		spRate:          spRate,
 	}
 }
 
@@ -200,6 +200,19 @@ func (gl *GameLoop) handleAttackRequest(cmd CmdAttackRequest) {
 	startPkt := outclient.BuildAutoAttackStart(cmd.AttackerCharID)
 	gl.broadcastToNearby(cmd.AttackerPos, startPkt)
 
+	// Send the initial MoveToPawn so the client immediately walks into attack reach.
+	// Done here (not in the packet handler) so the move offset uses the same reach
+	// formula as the hit-range check, keeping client and server in sync (L2J: the AI
+	// owns movement). NextAttackEvent re-issues it while out of range.
+	if player, exists := gl.world.GetPlayer(cmd.AttackerCharID); exists {
+		reach := gl.meleeReach(player, npc)
+		dx := player.Position.X - npc.Position.X
+		dy := player.Position.Y - npc.Position.Y
+		if dx*dx+dy*dy > reach*reach {
+			gl.approachTarget(cmd.AccountName, player, npc, reach)
+		}
+	}
+
 	// Schedule first attack with a small delay to let the client approach the target
 	gl.events.Schedule(&NextAttackEvent{
 		At:             time.Now().Add(500 * time.Millisecond),
@@ -226,15 +239,10 @@ func (gl *GameLoop) handleInteractRequest(cmd CmdInteractRequest) {
 	}
 	gl.interactPending[cmd.CharID] = cmd.TargetObjectID
 
-	// Один MoveToPawn запускает движение клиента к NPC (стоп-дистанция 100 < триггера 150,
-	// чтобы персонаж зашёл внутрь радиуса интеракции).
-	if conn := gl.connections.GetConnection(cmd.AccountName); conn != nil {
-		_ = conn.Send(outclient.BuildMoveToPawn(
-			cmd.CharID, cmd.TargetObjectID, 100,
-			player.Position.X, player.Position.Y, player.Position.Z,
-			npc.Position.X, npc.Position.Y, npc.Position.Z,
-		))
-	}
+	// Начальный MoveToPawn запускает движение клиента к NPC. Стоп-дистанция —
+	// collision-aware offset (interact base + радиусы коллизий), заведомо меньше
+	// триггера интеракции (150), чтобы персонаж любого размера зашёл внутрь радиуса.
+	gl.approachTarget(cmd.AccountName, player, npc, gl.interactApproachOffset(player, npc))
 
 	gl.events.Schedule(&InteractApproachEvent{
 		At:             time.Now().Add(300 * time.Millisecond),

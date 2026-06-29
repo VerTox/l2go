@@ -54,16 +54,9 @@ func (h *Handler) handleAction(ctx context.Context, c *client.ClientConn, payloa
 		if targetIsNPC {
 			if npc.IsAttackable() {
 				logger.Info().Msg("sending attack request to game loop")
-				// Send MoveToPawn to approach the target. Стоп-дистанция (60) должна быть
-				// МЕНЬШЕ радиуса удара (NextAttackEvent: AttackRange(деф.40)+50 ≈ 90), иначе
-				// клиент встаёт на 100 > 90 и удар не проходит («недобегает»).
-				if err := c.Send(outclient.BuildMoveToPawn(
-					playerState.CharID, pkt.ObjectID, 60,
-					playerState.Position.X, playerState.Position.Y, playerState.Position.Z,
-					npc.Position.X, npc.Position.Y, npc.Position.Z,
-				)); err != nil {
-					logger.Warn().Err(err).Msg("failed to send MoveToPawn")
-				}
+				// MoveToPawn для подхода к цели шлёт game loop (handleAttackRequest),
+				// чтобы offset движения и проверка дистанции удара считались по одной
+				// формуле reach (L2J: движением управляет AI). См. gameloop/combat_range.go.
 				// Send attack command to game loop
 				h.gameLoopCmd <- gameloop.CmdAttackRequest{
 					AttackerCharID: playerState.CharID,
