@@ -8,6 +8,83 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// interactRange — макс. дистанция открытия диалога NPC (L2J INTERACTION_DISTANCE).
+const interactRange = 150
+
+// InteractApproachEvent опрашивает позицию игрока, пока он не подойдёт к NPC,
+// затем шлёт NpcHtmlMessage. Зеркалит approach-retry из NextAttackEvent.
+type InteractApproachEvent struct {
+	At             time.Time
+	CharID         int32
+	TargetObjectID int32
+	AccountName    string
+	RetryCount     int // ретраи дистанции (max 30 ≈ 9s)
+}
+
+func (e *InteractApproachEvent) ExecuteAt() time.Time { return e.At }
+
+func (e *InteractApproachEvent) Execute(gl *GameLoop) {
+	// Снять отметку pending, если она всё ещё про этот NPC (не затирая более новый подход).
+	clearPending := func() {
+		if gl.interactPending[e.CharID] == e.TargetObjectID {
+			delete(gl.interactPending, e.CharID)
+		}
+	}
+
+	npc, exists := gl.world.GetNPC(e.TargetObjectID)
+	if !exists || npc.IsDead {
+		clearPending()
+		return
+	}
+	player, exists := gl.world.GetPlayer(e.CharID)
+	if !exists {
+		clearPending()
+		return
+	}
+	// Игрок переключил цель/снял выделение — прекращаем подход.
+	if player.TargetID != e.TargetObjectID {
+		clearPending()
+		return
+	}
+
+	dx := player.Position.X - npc.Position.X
+	dy := player.Position.Y - npc.Position.Y
+	if dx*dx+dy*dy > interactRange*interactRange {
+		const maxRetries = 30
+		if e.RetryCount >= maxRetries {
+			clearPending()
+			return
+		}
+		gl.events.Schedule(&InteractApproachEvent{
+			At:             time.Now().Add(300 * time.Millisecond),
+			CharID:         e.CharID,
+			TargetObjectID: e.TargetObjectID,
+			AccountName:    e.AccountName,
+			RetryCount:     e.RetryCount + 1,
+		})
+		return
+	}
+
+	clearPending()
+
+	// Подошли — открываем диалог. ВАЖНО: свежий MoveToPawn непосредственно перед
+	// NpcHtmlMessage (как в близкой интеракции в target.go) — иначе клиент не
+	// открывает диалог (CLAUDE.md: NPC interaction requires MoveToPawn before NpcHtmlMessage).
+	log.Debug().
+		Int32("char_id", e.CharID).
+		Int32("npc_obj_id", e.TargetObjectID).
+		Int("retries", e.RetryCount).
+		Msg("interact approach: arrived, opening NPC dialogue")
+	if conn := gl.connections.GetConnection(e.AccountName); conn != nil {
+		_ = conn.Send(outclient.BuildMoveToPawn(
+			e.CharID, e.TargetObjectID, 100,
+			player.Position.X, player.Position.Y, player.Position.Z,
+			npc.Position.X, npc.Position.Y, npc.Position.Z,
+		))
+		_ = conn.Send(outclient.BuildNpcHtmlMessage(e.TargetObjectID, outclient.DefaultNpcHtml))
+	}
+}
+
 // NextAttackEvent schedules the next auto-attack swing.
 type NextAttackEvent struct {
 	At             time.Time

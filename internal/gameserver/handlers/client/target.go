@@ -71,11 +71,20 @@ func (h *Handler) handleAction(ctx context.Context, c *client.ClientConn, payloa
 				}
 				return c.Send(outclient.BuildActionFailed())
 			}
-			// Distance check — L2J INTERACTION_DISTANCE = 150 units
+			// Distance check — L2J INTERACTION_DISTANCE = 150 units.
+			// Если далеко — передаём подход в gameloop (CmdInteractRequest): он один раз
+			// шлёт MoveToPawn (без ресенда на повторные клики) и открывает диалог по
+			// прибытии (L2J AI_INTENTION_INTERACT). MoveToPawn здесь НЕ шлём — иначе
+			// каждый клик перезапускал бы движение клиента и персонаж бы «спотыкался».
 			dx := playerState.Position.X - npc.Position.X
 			dy := playerState.Position.Y - npc.Position.Y
 			if dx*dx+dy*dy > interactionDistance*interactionDistance {
-				logger.Debug().Msg("NPC too far for interaction")
+				logger.Debug().Msg("NPC out of range — approaching to interact")
+				h.gameLoopCmd <- gameloop.CmdInteractRequest{
+					CharID:         playerState.CharID,
+					TargetObjectID: pkt.ObjectID,
+					AccountName:    session.AccountName,
+				}
 				return c.Send(outclient.BuildActionFailed())
 			}
 			// Interactive NPC — send MoveToPawn to face NPC, then dialogue HTML window

@@ -17,6 +17,16 @@ type CmdAttackRequest struct {
 
 func (CmdAttackRequest) commandMarker() {}
 
+// CmdInteractRequest — player clicked a non-attackable NPC out of interaction
+// range; approach it and open the dialogue on arrival (L2J AI_INTENTION_INTERACT).
+type CmdInteractRequest struct {
+	CharID         int32
+	TargetObjectID int32
+	AccountName    string
+}
+
+func (CmdInteractRequest) commandMarker() {}
+
 // CmdCancelAttack — player cancelled attack (moved, pressed Esc, etc.).
 type CmdCancelAttack struct {
 	CharID int32

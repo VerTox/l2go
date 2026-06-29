@@ -50,6 +50,7 @@ type GameLoop struct {
 	npcHateLists   map[int32]*HateList          // NPC objectID -> hate
 	npcSpawnInfo   map[int32]SpawnInfo           // NPC objectID -> spawn data for respawn
 	activeRegions  map[string]*ActiveRegion
+	interactPending map[int32]int32             // charID -> NPC objectID (active approach-to-interact)
 
 	// Configurable server rates
 	expRate float64
@@ -73,6 +74,7 @@ func New(world *registry.WorldRegistry, connections *registry.ConnectionRegistry
 		npcHateLists:   make(map[int32]*HateList),
 		npcSpawnInfo:   make(map[int32]SpawnInfo),
 		activeRegions:  make(map[string]*ActiveRegion),
+		interactPending: make(map[int32]int32),
 		expRate:        expRate,
 		spRate:         spRate,
 	}
@@ -146,6 +148,8 @@ func (gl *GameLoop) processCommand(cmd Command) {
 	switch c := cmd.(type) {
 	case CmdAttackRequest:
 		gl.handleAttackRequest(c)
+	case CmdInteractRequest:
+		gl.handleInteractRequest(c)
 	case CmdCancelAttack:
 		gl.handleCancelAttack(c)
 	case CmdPlayerDisconnected:
@@ -201,6 +205,42 @@ func (gl *GameLoop) handleAttackRequest(cmd CmdAttackRequest) {
 		At:             time.Now().Add(500 * time.Millisecond),
 		AttackerCharID: cmd.AttackerCharID,
 		TargetObjectID: cmd.TargetObjectID,
+	})
+}
+
+// handleInteractRequest starts approaching a non-attackable NPC to open its
+// dialogue on arrival (mirrors the attack approach via NextAttackEvent).
+func (gl *GameLoop) handleInteractRequest(cmd CmdInteractRequest) {
+	npc, exists := gl.world.GetNPC(cmd.TargetObjectID)
+	if !exists || npc.IsDead || npc.IsAttackable() {
+		return
+	}
+	// Дедуп: повторные клики по тому же NPC во время подхода не плодят новые цепочки
+	// и НЕ ресендят MoveToPawn (иначе клиент перезапускает движение и «спотыкается»).
+	if gl.interactPending[cmd.CharID] == cmd.TargetObjectID {
+		return
+	}
+	player, exists := gl.world.GetPlayer(cmd.CharID)
+	if !exists {
+		return
+	}
+	gl.interactPending[cmd.CharID] = cmd.TargetObjectID
+
+	// Один MoveToPawn запускает движение клиента к NPC (стоп-дистанция 100 < триггера 150,
+	// чтобы персонаж зашёл внутрь радиуса интеракции).
+	if conn := gl.connections.GetConnection(cmd.AccountName); conn != nil {
+		_ = conn.Send(outclient.BuildMoveToPawn(
+			cmd.CharID, cmd.TargetObjectID, 100,
+			player.Position.X, player.Position.Y, player.Position.Z,
+			npc.Position.X, npc.Position.Y, npc.Position.Z,
+		))
+	}
+
+	gl.events.Schedule(&InteractApproachEvent{
+		At:             time.Now().Add(300 * time.Millisecond),
+		CharID:         cmd.CharID,
+		TargetObjectID: cmd.TargetObjectID,
+		AccountName:    cmd.AccountName,
 	})
 }
 
