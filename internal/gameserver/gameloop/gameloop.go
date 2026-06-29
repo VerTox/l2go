@@ -46,6 +46,7 @@ type GameLoop struct {
 	world           *registry.WorldRegistry
 	connections     *registry.ConnectionRegistry
 	combatState     map[int32]*PlayerCombatState // charID -> auto-attack state
+	aiState         map[int32]*PlayerAIState     // charID -> current intention
 	npcCombatState  map[int32]*NPCCombatState    // NPC objectID -> NPC auto-attack state
 	npcHateLists    map[int32]*HateList          // NPC objectID -> hate
 	npcSpawnInfo    map[int32]SpawnInfo          // NPC objectID -> spawn data for respawn
@@ -70,6 +71,7 @@ func New(world *registry.WorldRegistry, connections *registry.ConnectionRegistry
 		world:           world,
 		connections:     connections,
 		combatState:     make(map[int32]*PlayerCombatState),
+		aiState:         make(map[int32]*PlayerAIState),
 		npcCombatState:  make(map[int32]*NPCCombatState),
 		npcHateLists:    make(map[int32]*HateList),
 		npcSpawnInfo:    make(map[int32]SpawnInfo),
