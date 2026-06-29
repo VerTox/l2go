@@ -222,25 +222,21 @@ func (gl *GameLoop) handleAttackRequest(cmd CmdAttackRequest) {
 	startPkt := outclient.BuildAutoAttackStart(cmd.AttackerCharID)
 	gl.broadcastToNearby(cmd.AttackerPos, startPkt)
 
-	// Send the initial MoveToPawn so the client immediately walks into attack reach.
-	// Done here (not in the packet handler) so the move offset uses the same reach
-	// formula as the hit-range check, keeping client and server in sync (L2J: the AI
-	// owns movement). NextAttackEvent re-issues it while out of range.
+	// Set ATTACK intention. If the target is out of reach, start SERVER-SIDE movement
+	// toward it: the tick interpolates the position and fires onMovementArrived (which
+	// begins the swing) on server arrival — no dependency on stale client position.
+	// If already in reach, begin swinging immediately.
+	gl.setIntention(cmd.AttackerCharID, IntentionAttack, cmd.TargetObjectID)
 	if player, exists := gl.world.GetPlayer(cmd.AttackerCharID); exists {
 		reach := gl.meleeReach(player, npc)
 		dx := player.Position.X - npc.Position.X
 		dy := player.Position.Y - npc.Position.Y
 		if dx*dx+dy*dy > reach*reach {
-			gl.approachTarget(cmd.AccountName, player, npc, reach)
+			gl.startMoveToTarget(player, npc, reach)
+		} else {
+			gl.beginAttackSwing(cmd.AttackerCharID, cmd.TargetObjectID)
 		}
 	}
-
-	// Schedule first attack with a small delay to let the client approach the target
-	gl.events.Schedule(&NextAttackEvent{
-		At:             time.Now().Add(500 * time.Millisecond),
-		AttackerCharID: cmd.AttackerCharID,
-		TargetObjectID: cmd.TargetObjectID,
-	})
 }
 
 // handleInteractRequest starts approaching a non-attackable NPC to open its

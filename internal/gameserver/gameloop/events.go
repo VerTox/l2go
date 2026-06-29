@@ -129,25 +129,12 @@ func (e *NextAttackEvent) Execute(gl *GameLoop) {
 	distSq := dx*dx + dy*dy
 	rangeSq := reach * reach
 	if distSq > rangeSq {
-		// Out of range — keep chasing (re-issue MoveToPawn) and retry (~9 seconds).
-		const maxRetries = 30
-		if e.RetryCount >= maxRetries {
-			gl.stopAttacker(e.AttackerCharID)
-			return
+		// Target out of reach (it moved, or we never arrived). Restart server-side
+		// movement toward it; onMovementArrived will resume the swing. No polling of
+		// stale client position — the tick drives both position and arrival.
+		if !player.IsMoving {
+			gl.startMoveToTarget(player, npc, reach)
 		}
-		// Re-issue MoveToPawn at most ~once per second (L2J _moveToPawnTimeout) so the
-		// client keeps closing in without stuttering from a move restart every tick.
-		if shouldResendMoveToPawn(e.RetryCount) {
-			if cs, ok := gl.combatState[e.AttackerCharID]; ok {
-				gl.approachTarget(cs.AccountName, player, npc, reach)
-			}
-		}
-		gl.events.Schedule(&NextAttackEvent{
-			At:             time.Now().Add(300 * time.Millisecond),
-			AttackerCharID: e.AttackerCharID,
-			TargetObjectID: e.TargetObjectID,
-			RetryCount:     e.RetryCount + 1,
-		})
 		return
 	}
 
