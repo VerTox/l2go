@@ -182,39 +182,46 @@ func (h *Handler) handleValidatePosition(ctx context.Context, c *client.ClientCo
 		Z: int(validatePacket.Z),
 	}
 
-	// Validate client position against server expectation
-	correctionResult, err := h.movementUseCase.ValidateClientPosition(
-		ctx, playerState.CharID, clientPos, validatePacket.Heading,
-	)
-	if err != nil {
-		logger.Error().Err(err).Msg("failed to validate client position")
-		return fmt.Errorf("position validation failed: %w", err)
-	}
-
-	// Send position correction if needed
-	if correctionResult.NeedsCorrection {
-		logger.Warn().
-			Float64("deviation", correctionResult.Deviation).
-			Int("expected_x", correctionResult.ExpectedPos.X).
-			Int("expected_y", correctionResult.ExpectedPos.Y).
-			Int("expected_z", correctionResult.ExpectedPos.Z).
-			Int("client_x", correctionResult.ClientPos.X).
-			Int("client_y", correctionResult.ClientPos.Y).
-			Int("client_z", correctionResult.ClientPos.Z).
-			Msg("position correction required")
-
-		return h.sendPositionCorrection(ctx, c, playerState.CharID, correctionResult.ExpectedPos)
-	}
-
-	// While the server is interpolating this player's movement (tick is the
-	// position authority), do NOT overwrite the position with the client packet —
-	// that reintroduced the stale-position bug. Only sync the client position when
-	// the player is standing still. Drift correction above still applies.
+	// While the server tick is the position authority during movement, skip
+	// drift correction entirely — the interpolation uses a hardcoded speed so
+	// any real speed delta would accumulate and trigger rubber-band.
+	// Only validate + sync position when the player is standing still.
 	if !playerState.IsMoving {
+		// Validate client position against server expectation
+		correctionResult, err := h.movementUseCase.ValidateClientPosition(
+			ctx, playerState.CharID, clientPos, validatePacket.Heading,
+		)
+		if err != nil {
+			logger.Error().Err(err).Msg("failed to validate client position")
+			return fmt.Errorf("position validation failed: %w", err)
+		}
+
+		// Send position correction if needed
+		if correctionResult.NeedsCorrection {
+			logger.Warn().
+				Float64("deviation", correctionResult.Deviation).
+				Int("expected_x", correctionResult.ExpectedPos.X).
+				Int("expected_y", correctionResult.ExpectedPos.Y).
+				Int("expected_z", correctionResult.ExpectedPos.Z).
+				Int("client_x", correctionResult.ClientPos.X).
+				Int("client_y", correctionResult.ClientPos.Y).
+				Int("client_z", correctionResult.ClientPos.Z).
+				Msg("position correction required")
+
+			return h.sendPositionCorrection(ctx, c, playerState.CharID, correctionResult.ExpectedPos)
+		}
+
+		// Sync authoritative client position while standing still.
 		if err := h.movementUseCase.UpdatePosition(ctx, playerState.CharID, clientPos, validatePacket.Heading); err != nil {
 			logger.Warn().Err(err).Msg("failed to update position")
 			// Don't fail validation for position update errors
 		}
+
+		logger.Debug().
+			Float64("deviation", correctionResult.Deviation).
+			Msg("position validation passed")
+	} else {
+		logger.Debug().Msg("skip drift validation while moving — tick is position authority")
 	}
 
 	// Notify game loop about position change (for active region tracking)
@@ -225,10 +232,6 @@ func (h *Handler) handleValidatePosition(ctx context.Context, c *client.ClientCo
 
 	// Update NPC visibility as player moves
 	h.updateNPCVisibility(ctx, c, playerState)
-
-	logger.Debug().
-		Float64("deviation", correctionResult.Deviation).
-		Msg("position validation passed")
 
 	return nil
 }
