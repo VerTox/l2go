@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/rs/zerolog/log"
 
@@ -79,12 +80,47 @@ func parseSubOpcode(payload []byte) (uint16, []byte, bool) {
 func statePtr(s ConnState) *ConnState { return &s }
 
 // noopStub — обработчик-заглушка: тихо игнорирует пакет (поведение прежних
-// `continue`-веток). Доменные стабы (cb4.6..) будут логировать на уровне Warn.
+// `continue`-веток). Доменные стабы (cb4.6..) логируют на уровне Warn.
 func noopStub(name string) handlerFunc {
 	return func(_ *Handler, ctx context.Context, _ *client.ClientConn, _ []byte) error {
 		log.Ctx(ctx).Debug().Str("packet", name).Msg("packet ignored (stub)")
 		return nil
 	}
+}
+
+// warnStub — обработчик-заглушка доменного пакета: логирует факт получения
+// (пока без обработки). Используется доменными стаб-файлами через registerStub.
+func warnStub(name string) handlerFunc {
+	return func(_ *Handler, ctx context.Context, _ *client.ClientConn, _ []byte) error {
+		log.Ctx(ctx).Warn().Str("packet", name).Msg("received packet — not implemented")
+		return nil
+	}
+}
+
+// stubRegistrators — самораздача доменных стабов. Каждый доменный файл
+// (handlers/client/<domain>.go) в своём init() вызывает addStubRegistrator,
+// а buildRegistry прогоняет их все. Так домены не редактируют общий buildRegistry
+// и могут разрабатываться независимо/параллельно.
+var stubRegistrators []func(*Registry)
+
+func addStubRegistrator(f func(*Registry)) { stubRegistrators = append(stubRegistrators, f) }
+
+// registerStub регистрирует доменный стаб для обычного опкода в заданном
+// состоянии. Паникует при коллизии (опкод уже занят) — чтобы дубль/конфликт
+// всплыл сразу на тестах, а не молча перезаписал обработчик.
+func (r *Registry) registerStub(state ConnState, opcode uint8, name string) {
+	if e, exists := r.simple[state][opcode]; exists {
+		panic(fmt.Sprintf("duplicate handler: state=%d opcode=0x%x (%s vs %s)", state, opcode, e.Name, name))
+	}
+	r.simple[state][opcode] = packetEntry{Name: name, Handle: warnStub(name)}
+}
+
+// registerMultiStub регистрирует доменный стаб для sub-опкода мультипакета 0xD0.
+func (r *Registry) registerMultiStub(state ConnState, sub uint16, name string) {
+	if e, exists := r.multi[state][sub]; exists {
+		panic(fmt.Sprintf("duplicate handler: state=%d 0xD0:0x%x (%s vs %s)", state, sub, e.Name, name))
+	}
+	r.multi[state][sub] = packetEntry{Name: name, Handle: warnStub(name)}
 }
 
 // buildRegistry строит реестр входящих пакетов. На этапе фундамента (cb4.1)
@@ -143,6 +179,11 @@ func buildRegistry() *Registry {
 	r.multi[StateInGame][0x22] = packetEntry{Name: "RequestSaveKeyMapping", Handle: (*Handler).handleRequestSaveKeyMapping}
 	// Баг cb4.4: 0xD0:0x24 — это RequestSaveInventoryOrder, а не «Unknown».
 	r.multi[StateInGame][0x24] = packetEntry{Name: "RequestSaveInventoryOrder", Handle: noopStub("RequestSaveInventoryOrder")}
+
+	// Доменные стабы (cb4.6..cb4.42) самораздаются через init() + addStubRegistrator.
+	for _, register := range stubRegistrators {
+		register(r)
+	}
 
 	return r
 }
