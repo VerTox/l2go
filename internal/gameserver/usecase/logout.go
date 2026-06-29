@@ -7,6 +7,7 @@ import (
 
 	"github.com/rs/zerolog"
 
+	"github.com/VerTox/l2go/internal/gameserver/models"
 	"github.com/VerTox/l2go/internal/gameserver/registry"
 	"github.com/VerTox/l2go/internal/gameserver/repo"
 )
@@ -200,18 +201,21 @@ func (uc *logoutUseCase) saveCharacterData(ctx context.Context, charID int32) er
 		return nil
 	}
 
-	// Get current character data
-	char, err := uc.charRepo.GetByID(ctx, charID)
-	if err != nil {
-		return fmt.Errorf("failed to get character: %w", err)
-	}
-
-	// Get updated position from world registry
-	playerState, exists := uc.worldRegistry.GetPlayer(charID)
-	if exists {
-		// Update character position from world state
+	// Persist the LIVE in-world character: EXP, level, SP, HP/MP/CP are updated
+	// in memory on playerState.Character during play. Reloading from the DB here
+	// would discard all that progress and save only the position. Fall back to the
+	// DB copy only when the character isn't in the world.
+	var char *models.Character
+	if playerState, exists := uc.worldRegistry.GetPlayer(charID); exists && playerState.Character != nil {
+		char = playerState.Character
 		char.Position = playerState.Position
 		char.SetHeading(int(playerState.Heading))
+	} else {
+		var err error
+		char, err = uc.charRepo.GetByID(ctx, charID)
+		if err != nil {
+			return fmt.Errorf("failed to get character: %w", err)
+		}
 	}
 
 	// Update last access time
@@ -226,6 +230,9 @@ func (uc *logoutUseCase) saveCharacterData(ctx context.Context, charID int32) er
 		Int("x", char.Position.X).
 		Int("y", char.Position.Y).
 		Int("z", char.Position.Z).
+		Int64("exp", char.Experience).
+		Int("level", char.Level).
+		Int("sp", char.SP).
 		Msg("character data saved")
 
 	return nil

@@ -22,6 +22,11 @@ type ClientSession struct {
 	SessionID   uint32
 	LoginKeys   [2]uint32 // LoginOkID1, LoginOkID2
 	PlayKeys    [2]uint32 // PlayOkID1, PlayOkID2
+
+	// pendingState — запрос смены состояния соединения от обработчика, который
+	// меняет состояние УСЛОВНО (напр. RequestRestart только при успешном рестарте).
+	// Применяется в цикле Handle после успешной обработки пакета.
+	pendingState *ConnState
 }
 
 // Handler processes game client connections.
@@ -154,6 +159,12 @@ func (h *Handler) Handle(ctx context.Context, c *client.ClientConn) {
 
 		if entry.Transition != nil {
 			state = *entry.Transition
+		}
+		// Условный переход состояния, запрошенный обработчиком (напр. успешный
+		// RequestRestart возвращает клиента на экран выбора → StateAuthed).
+		if sess := h.getSession(c); sess != nil && sess.pendingState != nil {
+			state = *sess.pendingState
+			sess.pendingState = nil
 		}
 	}
 }

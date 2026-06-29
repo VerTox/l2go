@@ -129,13 +129,23 @@ func (h *Handler) handleRequestRestart(ctx context.Context, c *client.ClientConn
 	// Perform restart through use case
 	if err := h.logoutUseCase.PerformRestart(ctx, session.AccountName, charID); err != nil {
 		logger.Error().Err(err).Msg("restart failed")
-		
+
+		// Сообщаем клиенту причину (чаще всего — бой), иначе RestartResponse(false)
+		// проглатывается молча и пользователь не понимает, почему рестарт не идёт.
+		_ = c.Send(outclient.BuildSystemMessageNoParams(outclient.SysMsgCannotRestartInCombat))
+		_ = c.Send(outclient.BuildActionFailed())
+
 		// Send failure response
 		restartResponse := outclient.NewRestartResponse(false)
 		return c.Send(restartResponse.GetData())
 	}
 
 	logger.Info().Msg("restart successful")
+
+	// Сбрасываем состояние соединения обратно на выбор персонажа (L2J: setState(AUTHED)),
+	// иначе CharacterSelect (0x12) после рестарта попадёт в StateInGame → 'unknown opcode'
+	// и клиент не сможет войти ни одним персонажем.
+	session.pendingState = statePtr(StateAuthed)
 
 	// CRITICAL FIX: Session management for restart
 	// Based on Java L2J: client.setState(GameClientState.AUTHED) 
