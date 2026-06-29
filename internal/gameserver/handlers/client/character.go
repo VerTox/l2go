@@ -196,7 +196,7 @@ func (h *Handler) handleCharacterSelect(ctx context.Context, c *client.ClientCon
 			Msg("failed to add character to world registry")
 		return err
 	}
-	
+
 	// Initialize character state (Java L2J: setRunning(), standUp(), etc.)
 	if err := h.world.UpdatePlayerRunWalkState(ctx, validChar.ID, true); err != nil {
 		log.Ctx(ctx).Warn().Err(err).
@@ -248,7 +248,7 @@ func (h *Handler) handleRequestGotoLobby(ctx context.Context, c *client.ClientCo
 			Int32("char_id", playerState.CharID).
 			Str("account", session.AccountName).
 			Msg("Removing player from world before lobby return")
-		
+
 		// Remove player from world registry
 		if err := h.world.RemovePlayer(ctx, playerState.CharID); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to remove player from world")
@@ -309,6 +309,42 @@ var paperdollSlotToPacketIndex = map[int]int{
 	int(models.SlotBelt):      25, // belt
 }
 
+// toCharSelectInfoPackage converts a character list entry into the packet form
+// used by every CharSelectionInfo sender (login, restart, post-create refresh).
+// Keeping a single converter prevents the field drift that previously left EXP
+// and the paperdoll missing on some code paths (l2go-5bn / l2go-dlk).
+func toCharSelectInfoPackage(char models.CharacterListEntry) outclient.CharSelectInfoPackage {
+	return outclient.CharSelectInfoPackage{
+		Name:             char.Name,
+		ObjectID:         char.ID,
+		ClanID:           int32(char.ClanID),
+		Sex:              int32(char.Sex),
+		Race:             int32(char.Race),
+		BaseClassID:      int32(char.BaseClass),
+		ClassID:          int32(char.ClassID),
+		X:                int32(char.Position.X),
+		Y:                int32(char.Position.Y),
+		Z:                int32(char.Position.Z),
+		CurrentHp:        char.CurrentHP,
+		CurrentMp:        char.CurrentMP,
+		MaxHp:            float64(char.MaxHP),
+		MaxMp:            float64(char.MaxMP),
+		Sp:               int32(char.SP),
+		Exp:              char.Experience,
+		Level:            int32(char.Level),
+		Karma:            int32(char.Karma),
+		PkKills:          int32(char.PKKills),
+		PvPKills:         int32(char.PvPKills),
+		HairStyle:        int32(char.HairStyle),
+		HairColor:        int32(char.HairColor),
+		Face:             int32(char.Face),
+		DeleteTimerMs:    char.DeleteTime,
+		LastAccessMs:     char.LastAccess,
+		VitalityPoints:   int32(char.VitalityPoints),
+		PaperdollItemIDs: buildPaperdollItemIDs(char.PaperdollItems),
+	}
+}
+
 // buildPaperdollItemIDs converts loaded paperdoll items from the DB into
 // the 26-element ItemID array expected by CharSelectionInfo packet.
 func buildPaperdollItemIDs(paperdollItems []models.CharacterItem) []int32 {
@@ -330,39 +366,10 @@ func (h *Handler) sendUpdatedCharacterList(ctx context.Context, c *client.Client
 		return err
 	}
 
-	// Convert domain models to packet format (FIXED: match auth.go exactly)
+	// Convert domain models to packet format via the shared converter.
 	chars := make([]outclient.CharSelectInfoPackage, len(characters))
 	for i, char := range characters {
-		// CharacterListEntry has embedded Character, so we can access fields directly
-		chars[i] = outclient.CharSelectInfoPackage{
-			Name:             char.Name,
-			ObjectID:         char.ID,
-			ClanID:           int32(char.ClanID),
-			Sex:              int32(char.Sex),
-			Race:             int32(char.Race),
-			BaseClassID:      int32(char.BaseClass),
-			ClassID:          int32(char.ClassID),
-			X:                int32(char.Position.X),
-			Y:                int32(char.Position.Y),
-			Z:                int32(char.Position.Z),
-			CurrentHp:        char.CurrentHP,
-			CurrentMp:        char.CurrentMP,
-			MaxHp:            float64(char.MaxHP),
-			MaxMp:            float64(char.MaxMP),
-			Sp:               int32(char.SP),
-			Exp:              char.Experience,
-			Level:            int32(char.Level),
-			Karma:            int32(char.Karma),
-			PkKills:          int32(char.PKKills),
-			PvPKills:         int32(char.PvPKills),
-			HairStyle:        int32(char.HairStyle),
-			HairColor:        int32(char.HairColor),
-			Face:             int32(char.Face),
-			DeleteTimerMs:    char.DeleteTime,
-			LastAccessMs:     char.LastAccess,
-			VitalityPoints:   int32(char.VitalityPoints),
-			PaperdollItemIDs: buildPaperdollItemIDs(char.PaperdollItems),
-		}
+		chars[i] = toCharSelectInfoPackage(char)
 	}
 
 	// Send updated character list

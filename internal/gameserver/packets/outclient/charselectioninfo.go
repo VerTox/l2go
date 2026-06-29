@@ -3,6 +3,7 @@ package outclient
 import (
 	"time"
 
+	"github.com/VerTox/l2go/internal/gameserver/data"
 	"github.com/VerTox/l2go/pkg/l2pkt"
 )
 
@@ -66,10 +67,11 @@ type CharSelectionInfo struct {
 	CharConf  CharacterConfig
 }
 
-// процент прогресса уровня — заглушка; подставишь свою формулу/таблицу
+// процент прогресса уровня как доля 0.0–1.0 (заполнение EXP-бара клиента).
+// Клиент в этом поле, как и в UserInfo, ожидает дробь, а не проценты, поэтому
+// делим результат data.ExpPercent (0–100) на 100.
 func percentFromCurrentLevel(exp int64, level int32) float64 {
-	// TODO: заменить на реальную логику ExperienceData HF
-	return 0.0
+	return data.ExpPercent(int(level), exp) / 100.0
 }
 
 // Write сериализует пакет в payload (начиная с opcode).

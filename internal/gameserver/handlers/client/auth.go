@@ -48,35 +48,7 @@ func (h *Handler) handleAuthLogin(ctx context.Context, c *client.ClientConn, pay
 	// Convert domain models to packet format
 	chars := make([]outclient.CharSelectInfoPackage, len(characters))
 	for i, char := range characters {
-		chars[i] = outclient.CharSelectInfoPackage{
-			Name:             char.Name,
-			ObjectID:         char.ID,
-			ClanID:           int32(char.ClanID),
-			Sex:              int32(char.Sex),
-			Race:             int32(char.Race),
-			BaseClassID:      int32(char.BaseClass),
-			ClassID:          int32(char.ClassID),
-			X:                int32(char.Position.X),
-			Y:                int32(char.Position.Y),
-			Z:                int32(char.Position.Z),
-			CurrentHp:        char.CurrentHP,
-			CurrentMp:        char.CurrentMP,
-			MaxHp:            float64(char.MaxHP),
-			MaxMp:            float64(char.MaxMP),
-			Sp:               int32(char.SP),
-			Exp:              char.Experience,
-			Level:            int32(char.Level),
-			Karma:            int32(char.Karma),
-			PkKills:          int32(char.PKKills),
-			PvPKills:         int32(char.PvPKills),
-			HairStyle:        int32(char.HairStyle),
-			HairColor:        int32(char.HairColor),
-			Face:             int32(char.Face),
-			DeleteTimerMs:    char.DeleteTime,
-			LastAccessMs:     char.LastAccess,
-			VitalityPoints:   int32(char.VitalityPoints),
-			PaperdollItemIDs: buildPaperdollItemIDs(char.PaperdollItems),
-		}
+		chars[i] = toCharSelectInfoPackage(char)
 	}
 
 	// Send character selection screen

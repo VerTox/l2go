@@ -7,6 +7,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	"github.com/VerTox/l2go/internal/gameserver/data"
 	"github.com/VerTox/l2go/internal/gameserver/gameloop"
 	"github.com/VerTox/l2go/internal/gameserver/models"
 	"github.com/VerTox/l2go/internal/gameserver/packets/inclient"
@@ -296,6 +297,10 @@ func (h *Handler) buildUserInfoPacket(char *models.Character) []byte {
 		ClassID:  int32(char.ClassID),
 		Level:    int32(char.Level),
 		EXP:      char.Experience,
+		// EXP-бар клиента заполняется по доле прогресса уровня (0.0–1.0), а не по
+		// абсолютному EXP. Без этого поля бар пуст при входе в мир, пока боевой
+		// UserInfo из game loop не пришлёт корректное значение (баг l2go-dlk).
+		ExpPercent: data.ExpPercent(int(char.Level), char.Experience) / 100.0,
 		// Base stats from character
 		STR: int32(char.BaseSTR),
 		DEX: int32(char.BaseDEX),
@@ -363,11 +368,11 @@ func (h *Handler) buildUserInfoPacket(char *models.Character) []byte {
 		CanEquipCloak: 1, // Allow cloak equipping
 
 		// Combat state - CRITICAL FIX for run/walk animation
-		SittingFlag: 0,              // 0 = standing, 1 = sitting
-		RunningFlag: runningFlag,    // Use actual player state
-		InCombat:    inCombatFlag,   // Use actual combat state
-		Deceased:    0,           // 0 = alive, 1 = dead
-		Invisible:   0,           // 0 = visible, 1 = invisible
+		SittingFlag: 0,            // 0 = standing, 1 = sitting
+		RunningFlag: runningFlag,  // Use actual player state
+		InCombat:    inCombatFlag, // Use actual combat state
+		Deceased:    0,            // 0 = alive, 1 = dead
+		Invisible:   0,            // 0 = visible, 1 = invisible
 
 		// T2 Additional fields
 		Fame:           0, // TODO: Load character fame
@@ -707,8 +712,8 @@ func (h *Handler) sendPlayerSpawnToClient(ctx context.Context, c *client.ClientC
 	}
 
 	// Get character's current running/combat state from world registry
-	var isRunning bool = true   // Default to running
-	var inCombat bool = false   // Default to peaceful
+	var isRunning bool = true // Default to running
+	var inCombat bool = false // Default to peaceful
 	if playerState, exists := h.world.GetPlayer(char.ID); exists {
 		isRunning = playerState.IsRunning
 		inCombat = playerState.InCombat

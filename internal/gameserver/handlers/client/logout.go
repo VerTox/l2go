@@ -92,7 +92,7 @@ func (h *Handler) handleLogout(ctx context.Context, c *client.ClientConn, payloa
 	time.Sleep(500 * time.Millisecond)
 
 	logger.Info().Msg("logout completed - closing connection")
-	
+
 	// Close connection after LeaveWorld packet delivery
 	c.Close()
 	return nil
@@ -148,11 +148,11 @@ func (h *Handler) handleRequestRestart(ctx context.Context, c *client.ClientConn
 	session.pendingState = statePtr(StateAuthed)
 
 	// CRITICAL FIX: Session management for restart
-	// Based on Java L2J: client.setState(GameClientState.AUTHED) 
+	// Based on Java L2J: client.setState(GameClientState.AUTHED)
 	// Session must stay alive (can select characters) but character should be removed from world
 	// The use case already removed character from world registry
 	// Session data (AccountName, SessionID, Keys) remains intact for character selection
-	
+
 	logger.Debug().
 		Str("account", session.AccountName).
 		Uint32("session_id", session.SessionID).
@@ -177,36 +177,11 @@ func (h *Handler) handleRequestRestart(ctx context.Context, c *client.ClientConn
 		return err
 	}
 
-	// Convert domain models to packet format (FIXED: match auth.go exactly)
+	// Convert domain models to packet format via the shared converter so the
+	// restart lobby keeps the paperdoll and appearance (previously sent empty).
 	chars := make([]outclient.CharSelectInfoPackage, len(characters))
 	for i, char := range characters {
-		// CharacterListEntry has embedded Character, so we can access fields directly
-		chars[i] = outclient.CharSelectInfoPackage{
-			Name:             char.Name,
-			ObjectID:         char.ID,
-			ClanID:           int32(char.ClanID),
-			Sex:              int32(char.Sex),
-			Race:             int32(char.Race),
-			BaseClassID:      int32(char.BaseClass),
-			ClassID:          int32(char.ClassID),
-			X:                int32(char.Position.X),
-			Y:                int32(char.Position.Y),
-			Z:                int32(char.Position.Z),
-			CurrentHp:        char.CurrentHP,
-			CurrentMp:        char.CurrentMP,
-			MaxHp:            float64(char.MaxHP),
-			MaxMp:            float64(char.MaxMP),
-			Sp:               int32(char.SP),
-			Exp:              char.Experience,
-			Level:            int32(char.Level),
-			Karma:            int32(char.Karma),
-			PkKills:          int32(char.PKKills),
-			PvPKills:         int32(char.PvPKills),
-			DeleteTimerMs:    char.DeleteTime,
-			LastAccessMs:     char.LastAccess,
-			VitalityPoints:   int32(char.VitalityPoints),
-			PaperdollItemIDs: make([]int32, 26), // CRITICAL FIX: Missing in restart!
-		}
+		chars[i] = toCharSelectInfoPackage(char)
 	}
 
 	charSelectionInfo := outclient.CharSelectionInfo{
@@ -227,5 +202,3 @@ func (h *Handler) handleRequestRestart(ctx context.Context, c *client.ClientConn
 	logger.Debug().Msg("CharSelectionInfo sent successfully")
 	return nil
 }
-
-
