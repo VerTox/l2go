@@ -160,6 +160,7 @@ func (gl *GameLoop) advancePlayerMovement(now time.Time) {
 			player.IsMoving = false
 			player.MoveStartPos = models.Position{}
 			player.MoveDestination = models.Position{}
+			gl.onMovementArrived(charID)
 		}
 	}
 }

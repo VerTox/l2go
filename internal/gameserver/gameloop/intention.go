@@ -2,8 +2,10 @@ package gameloop
 
 import (
 	"math"
+	"time"
 
 	"github.com/VerTox/l2go/internal/gameserver/models"
+	"github.com/VerTox/l2go/internal/gameserver/registry"
 )
 
 // Intention is the player's current AI intention (L2J AI_INTENTION_*).
@@ -42,6 +44,52 @@ func (gl *GameLoop) clearIntention(charID int32) {
 		st.Intention = IntentionIdle
 		st.TargetObjectID = 0
 	}
+}
+
+// startMoveToTarget begins SERVER-SIDE movement of the player toward npc, stopping
+// within `reach`. It sets the movement fields the tick interpolation (phase 1) reads,
+// and sends a MoveToPawn so the client walks the same path. No-op if already in reach.
+func (gl *GameLoop) startMoveToTarget(player *registry.PlayerWorldState, npc *models.NpcInstance, reach int) {
+	dest := stopPointWithinReach(player.Position, npc.Position, reach)
+	if dest == player.Position {
+		return // already within reach
+	}
+	player.IsMoving = true
+	player.MoveStartPos = player.Position
+	player.MoveDestination = dest
+	player.MoveStarted = time.Now()
+	gl.approachTarget(player.AccountName, player, npc, reach)
+}
+
+// onMovementArrived is called by the tick when a player's server-side movement
+// completes. It dispatches on the player's current intention.
+func (gl *GameLoop) onMovementArrived(charID int32) {
+	st, ok := gl.aiState[charID]
+	if !ok {
+		return
+	}
+	switch st.Intention {
+	case IntentionAttack:
+		gl.beginAttackSwing(charID, st.TargetObjectID)
+	case IntentionInteract:
+		// handled in phase 2 part 2
+	default:
+		// MoveTo / Idle / scaffolded intentions: nothing to do on arrival
+	}
+}
+
+// beginAttackSwing schedules an immediate attack swing (no approach delay); range
+// is re-checked inside NextAttackEvent.
+func (gl *GameLoop) beginAttackSwing(charID int32, targetObjectID int32) {
+	cs, ok := gl.combatState[charID]
+	if !ok || !cs.IsAutoAttacking || cs.TargetObjectID != targetObjectID {
+		return
+	}
+	gl.events.Schedule(&NextAttackEvent{
+		At:             time.Now(),
+		AttackerCharID: charID,
+		TargetObjectID: targetObjectID,
+	})
 }
 
 // stopPointWithinReach returns the point on the line from target toward `from`

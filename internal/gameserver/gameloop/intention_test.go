@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/VerTox/l2go/internal/gameserver/models"
+	"github.com/VerTox/l2go/internal/gameserver/registry"
 )
 
 func TestStopPointWithinReach(t *testing.T) {
@@ -33,6 +34,50 @@ func TestStopPointWithinReach(t *testing.T) {
 			t.Errorf("got %+v, want X=60 Y=80", p)
 		}
 	})
+}
+
+func TestStartMoveToTargetSetsServerMovement(t *testing.T) {
+	gl := &GameLoop{
+		aiState:     make(map[int32]*PlayerAIState),
+		connections: registry.NewConnectionRegistry(), // no conn for charID → approachTarget is a no-op send
+	}
+	player := &registry.PlayerWorldState{
+		CharID:    7,
+		Position:  models.Position{X: 1000, Y: 0, Z: 100},
+		IsRunning: true,
+	}
+	npc := &models.NpcInstance{ObjectID: 1003, Position: models.Position{X: 0, Y: 0, Z: 100}}
+
+	gl.startMoveToTarget(player, npc, 80)
+
+	if !player.IsMoving {
+		t.Fatal("expected IsMoving=true after startMoveToTarget")
+	}
+	if player.MoveStartPos != (models.Position{X: 1000, Y: 0, Z: 100}) {
+		t.Errorf("MoveStartPos = %+v, want player start", player.MoveStartPos)
+	}
+	// destination is on +X axis at reach 80 from target
+	if player.MoveDestination.X != 80 || player.MoveDestination.Y != 0 {
+		t.Errorf("MoveDestination = %+v, want X=80 Y=0", player.MoveDestination)
+	}
+}
+
+func TestStartMoveToTargetNoopWhenInReach(t *testing.T) {
+	gl := &GameLoop{
+		aiState:     make(map[int32]*PlayerAIState),
+		connections: registry.NewConnectionRegistry(),
+	}
+	player := &registry.PlayerWorldState{
+		CharID:   7,
+		Position: models.Position{X: 50, Y: 0, Z: 100},
+	}
+	npc := &models.NpcInstance{ObjectID: 1003, Position: models.Position{X: 0, Y: 0, Z: 100}}
+
+	gl.startMoveToTarget(player, npc, 80)
+
+	if player.IsMoving {
+		t.Error("expected no movement when already within reach")
+	}
 }
 
 func TestSetAndClearIntention(t *testing.T) {
