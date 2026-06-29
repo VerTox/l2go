@@ -233,10 +233,13 @@ func (gl *GameLoop) handleAttackRequest(cmd CmdAttackRequest) {
 		dy := player.Position.Y - npc.Position.Y
 		if dx*dx+dy*dy > reach*reach {
 			gl.startMoveToTarget(player, npc, reach)
-		} else {
-			gl.beginAttackSwing(cmd.AttackerCharID, cmd.TargetObjectID)
 		}
 	}
+	// Always schedule the first NextAttackEvent regardless of distance. If out of
+	// reach, NextAttackEvent will see distSq > rangeSq and enter the heartbeat loop
+	// (re-schedule every 400 ms) until the player closes in. This ensures the chain
+	// exists even when startMoveToTarget is a no-op or IsMoving is cleared off-tick.
+	gl.beginAttackSwing(cmd.AttackerCharID, cmd.TargetObjectID)
 }
 
 // handleInteractRequest starts approaching a non-attackable NPC to open its
@@ -325,6 +328,8 @@ func (gl *GameLoop) stopAttacker(charID int32) {
 		At:     time.Now().Add(combatStanceTimeout),
 		CharID: charID,
 	})
+
+	gl.clearIntention(charID)
 }
 
 // handleNPCDeath processes an NPC death: broadcasts Die, stops all attackers, schedules respawn.

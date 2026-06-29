@@ -129,12 +129,20 @@ func (e *NextAttackEvent) Execute(gl *GameLoop) {
 	distSq := dx*dx + dy*dy
 	rangeSq := reach * reach
 	if distSq > rangeSq {
-		// Target out of reach (it moved, or we never arrived). Restart server-side
-		// movement toward it; onMovementArrived will resume the swing. No polling of
-		// stale client position — the tick drives both position and arrival.
+		// Out of reach: drive server-side movement toward the target (the tick
+		// interpolates position) and re-check on the next heartbeat. This is a
+		// combat heartbeat, NOT client-position polling — distance is checked
+		// against the server position the tick maintains. Re-scheduling here is the
+		// safety net: IsMoving can be cleared off-tick (CannotMoveAnymore /
+		// StartMovement no-op), and onMovementArrived alone would then never resume.
 		if !player.IsMoving {
 			gl.startMoveToTarget(player, npc, reach)
 		}
+		gl.events.Schedule(&NextAttackEvent{
+			At:             time.Now().Add(400 * time.Millisecond),
+			AttackerCharID: e.AttackerCharID,
+			TargetObjectID: e.TargetObjectID,
+		})
 		return
 	}
 

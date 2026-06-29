@@ -70,7 +70,10 @@ func (gl *GameLoop) onMovementArrived(charID int32) {
 	}
 	switch st.Intention {
 	case IntentionAttack:
-		gl.beginAttackSwing(charID, st.TargetObjectID)
+		// No-op: the combat heartbeat (NextAttackEvent) drives the swing chain.
+		// beginAttackSwing from handleAttackRequest starts the chain; the heartbeat
+		// re-schedules itself (in-range: next swing; out-of-range: 400 ms retry).
+		// Calling beginAttackSwing here would create a second parallel chain.
 	case IntentionInteract:
 		// handled in phase 2 part 2
 	default:
