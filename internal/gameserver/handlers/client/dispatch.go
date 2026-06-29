@@ -50,18 +50,21 @@ type Registry struct {
 // не зарегистрирован в данном состоянии. Для opcode==0xD0 используется sub.
 func (r *Registry) Resolve(state ConnState, opcode uint8, sub uint16) (packetEntry, bool) {
 	if opcode == multiPacketOpcode {
-		m, ok := r.multi[state]
-		if !ok {
-			return packetEntry{}, false
+		if e, ok := r.multi[state][sub]; ok {
+			return e, true
 		}
-		e, ok := m[sub]
-		return e, ok
-	}
-	m, ok := r.simple[state]
-	if !ok {
+		// Fallback: на экране выбора (StateAuthed) клиент шлёт gameplay-config
+		// пакеты 0xD0 (RequestKeyMapping и др.), зарегистрированные в StateInGame.
+		// Ищем их там. Прямые попадания в текущем состоянии имеют приоритет, поэтому
+		// state-коллизии (0xD0:0x36 GotoLobby/ExGetOnAirShip) не ломаются.
+		if state != StateInGame {
+			if e, ok := r.multi[StateInGame][sub]; ok {
+				return e, true
+			}
+		}
 		return packetEntry{}, false
 	}
-	e, ok := m[opcode]
+	e, ok := r.simple[state][opcode]
 	return e, ok
 }
 

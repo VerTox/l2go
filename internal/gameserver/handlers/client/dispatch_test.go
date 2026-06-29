@@ -107,6 +107,30 @@ func TestD024IsSaveInventoryOrder(t *testing.T) {
 	}
 }
 
+// l2go-4v9: на экране выбора (StateAuthed) клиент шлёт config-пакеты 0xD0
+// (RequestKeyMapping и др.), зарегистрированные в StateInGame. Они должны
+// резолвиться через fallback на InGame, а не падать в "unknown".
+func TestMultiPacketFallbackFromAuthedToInGame(t *testing.T) {
+	r := buildRegistry()
+	e, ok := r.Resolve(StateAuthed, 0xD0, 0x21) // RequestKeyMapping зарегистрирован в InGame
+	if !ok {
+		t.Fatal("0xD0:0x21 в StateAuthed должен резолвиться через fallback на InGame")
+	}
+	if e.Name != "RequestKeyMapping" {
+		t.Errorf("Name = %q, want RequestKeyMapping", e.Name)
+	}
+}
+
+// Fallback НЕ должен ломать state-коллизию: 0xD0:0x36 в Authed остаётся GotoLobby
+// (зарегистрирован в Authed напрямую, fallback на InGame/ExGetOnAirShip не срабатывает).
+func TestMultiPacketCollisionSurvivesFallback(t *testing.T) {
+	r := buildRegistry()
+	e, ok := r.Resolve(StateAuthed, 0xD0, 0x36)
+	if !ok || e.Name != "RequestGotoLobby" {
+		t.Errorf("0xD0:0x36 в Authed = %q, want RequestGotoLobby", e.Name)
+	}
+}
+
 func TestUnknownOpcodeDoesNotResolve(t *testing.T) {
 	r := buildRegistry()
 	if _, ok := r.Resolve(StateInGame, 0xEE, 0); ok {
