@@ -66,8 +66,8 @@ func (r *Registry) Resolve(state ConnState, opcode uint8, sub uint16) (packetEnt
 }
 
 // parseSubOpcode читает 2-байтный sub-опкод (LE) мультипакета 0xD0 и возвращает
-// оставшийся payload. В L2J sub-опкод — это readH (2 байта), поэтому тело пакета
-// начинается со смещения 2 (исправление прежнего чтения одного байта).
+// оставшийся payload. Подтверждено реальными байтами клиента (GotoLobby = "3600" =
+// sub 0x0036, тело пустое): sub-опкод — это readH (2 байта), как в L2J.
 func parseSubOpcode(payload []byte) (uint16, []byte, bool) {
 	if len(payload) < 2 {
 		return 0, nil, false

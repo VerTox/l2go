@@ -64,6 +64,7 @@ func TestResolveMultiPacketGotoLobby(t *testing.T) {
 }
 
 // Баг cb4.2: sub-опкод 0xD0 читается как 2-байтный uint16 LE, payload сдвигается на 2.
+// Подтверждено реальными байтами клиента (GotoLobby = "3600").
 func TestParseSubOpcodeTwoBytesLittleEndian(t *testing.T) {
 	sub, rest, ok := parseSubOpcode([]byte{0x36, 0x00, 0xAA, 0xBB})
 	if !ok {

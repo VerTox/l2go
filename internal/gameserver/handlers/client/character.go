@@ -93,13 +93,15 @@ func (h *Handler) handleCharacterCreate(ctx context.Context, c *client.ClientCon
 		Int32("char_id", character.ID).
 		Msg("Character created successfully")
 
-	// Send success response
+	// Send success response. ВАЖНО: после CharCreateOk НЕ отправляем CharSelectionInfo.
+	// L2J (CharacterCreate.initNewChar) лишь кеширует список (setCharSelection), но НЕ
+	// шлёт его. Клиент сам пришлёт RequestGotoLobby, и список уйдёт в ответ на него.
+	// Лишний CharSelectionInfo здесь оставляет клиент в некорректном состоянии и
+	// приводит к дисконнекту при возврате в лобби после создания персонажа.
 	if err := c.Send(outclient.NewCharCreateOk(true)); err != nil {
 		return err
 	}
-
-	// Send updated character list after creation
-	return h.sendUpdatedCharacterList(ctx, c, session)
+	return nil
 }
 
 // handleCharacterDelete processes character deletion
