@@ -198,6 +198,14 @@ func (gl *GameLoop) buildUserInfoForPlayer(player *registry.PlayerWorldState) []
 		inCombatFlag = 1
 	}
 
+	// Папердолл из кэшированных на персонаже слотов (display + object IDs), чтобы
+	// UserInfo из game loop (старт боя, combat stance, level up) не «раздевал» персонажа.
+	paperdoll := outclient.NewPaperdollInfo()
+	for slot := 0; slot < len(char.PaperdollItems); slot++ {
+		paperdoll.DisplayIDs[slot] = char.PaperdollItems[slot]
+		paperdoll.ObjectIDs[slot] = char.PaperdollObjectIDs[slot]
+	}
+
 	userInfo := outclient.UserInfo{
 		X:        int32(player.Position.X),
 		Y:        int32(player.Position.Y),
@@ -256,6 +264,8 @@ func (gl *GameLoop) buildUserInfoForPlayer(player *registry.PlayerWorldState) []
 		// Collision values based on race/sex
 		CollisionRadius: getCollisionRadiusForPlayer(char.Race, char.Sex),
 		CollisionHeight: getCollisionHeightForPlayer(char.Race, char.Sex),
+		// Экипировка — иначе клиент показывает персонажа «голым» при боевом UserInfo.
+		Paperdoll: paperdoll,
 	}
 
 	return outclient.BuildUserInfo(userInfo)

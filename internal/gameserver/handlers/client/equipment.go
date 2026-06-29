@@ -162,12 +162,14 @@ func (h *Handler) refreshCharacterPaperdoll(ctx context.Context, char *models.Ch
 	// Reset paperdoll
 	for i := range char.PaperdollItems {
 		char.PaperdollItems[i] = 0
+		char.PaperdollObjectIDs[i] = 0
 	}
 
 	// Fill from equipped items
 	for _, item := range items {
 		if item.Loc == string(models.LocPaperdoll) && item.LocData >= 0 && item.LocData < len(char.PaperdollItems) {
 			char.PaperdollItems[item.LocData] = item.ItemID
+			char.PaperdollObjectIDs[item.LocData] = item.ObjectID
 		}
 	}
 }

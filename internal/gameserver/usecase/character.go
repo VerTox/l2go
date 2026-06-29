@@ -139,8 +139,9 @@ func (uc *CharacterUseCase) SelectCharacter(ctx context.Context, charID int32, a
 	}
 
 	for _, item := range items {
-		if item.LocData >= 0 {
+		if item.LocData >= 0 && item.LocData < len(char.PaperdollItems) {
 			char.PaperdollItems[item.LocData] = item.ItemID
+			char.PaperdollObjectIDs[item.LocData] = item.ObjectID
 		}
 	}
 

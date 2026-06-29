@@ -4,10 +4,11 @@ import "github.com/VerTox/l2go/pkg/l2pkt"
 
 // SystemMessage IDs (from L2J SystemMessageId.java).
 const (
-	SysMsgEarnedS1Exp            = 45   // "You have earned $s1 experience."
-	SysMsgEarnedS1ExpAndS2SP     = 95   // "You have earned $s1 experience and $s2 SP."
-	SysMsgYouIncreasedYourLevel  = 96   // "Your level has increased!"
-	SysMsgCannotLogoutInCombat   = 1116 // "You may not log out while in combat."
+	SysMsgEarnedS1Exp            = 45  // "You have earned $s1 experience."
+	SysMsgEarnedS1ExpAndS2SP     = 95  // "You have earned $s1 experience and $s2 SP."
+	SysMsgYouIncreasedYourLevel  = 96  // "Your level has increased!"
+	SysMsgCannotLogoutInCombat   = 101 // CANT_LOGOUT_WHILE_FIGHTING "You cannot exit the game while in combat."
+	SysMsgCannotRestartInCombat  = 102 // CANT_RESTART_WHILE_FIGHTING "You cannot restart while in combat."
 )
 
 // SystemMessage parameter types.

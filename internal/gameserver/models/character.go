@@ -82,7 +82,11 @@ type Character struct {
 	// Fame and fishing
 	Fame           int       `json:"fame" db:"fame"`
 	FishingPoints  int       `json:"fishing_points" db:"fishing_points"`
-	PaperdollItems [26]int32 `json:"paperdoll_items" db:"paperdoll_items"` // Inventory item object IDs for paperdoll slots
+	PaperdollItems [26]int32 `json:"paperdoll_items" db:"paperdoll_items"` // Equipped item template (display) IDs per paperdoll slot
+	// PaperdollObjectIDs — instance (object) IDs per paperdoll slot, parallel to
+	// PaperdollItems. Нужны для UserInfo (флаг оружия + корректная отрисовка), чтобы
+	// game loop мог собрать папердолл без обращения к БД.
+	PaperdollObjectIDs [26]int32 `json:"paperdoll_object_ids"`
 
 	// Base stats (STR/DEX/CON/INT/WIT/MEN) — set from class template at creation
 	BaseSTR int `json:"base_str" db:"base_str"`
