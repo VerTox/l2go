@@ -31,18 +31,18 @@ type Config struct {
 }
 
 type gameServer struct {
-	ServerID     int    `envconfig:"GAME_SERVER_ID" default:"1"`
-	ServerName   string `envconfig:"GAME_SERVER_NAME" default:"L2Go Bartz"`
-	ServerPort   int    `envconfig:"GAME_SERVER_PORT" default:"7777"`
-	MaxPlayers   int    `envconfig:"GAME_SERVER_MAX_PLAYERS" default:"1000"`
-	ServerType   int    `envconfig:"GAME_SERVER_TYPE" default:"1"` // 1=Normal, 2=Relax, 4=Test
-	MinLevel     int    `envconfig:"GAME_SERVER_MIN_LEVEL" default:"1"`
-	MaxLevel     int    `envconfig:"GAME_SERVER_MAX_LEVEL" default:"85"`
-	AgeLimit     int    `envconfig:"GAME_SERVER_AGE_LIMIT" default:"0"`
-	ShowBrackets bool   `envconfig:"GAME_SERVER_SHOW_BRACKETS" default:"false"`
-	PvP          bool   `envconfig:"GAME_SERVER_PVP" default:"true"`
-	TestServer   bool   `envconfig:"GAME_SERVER_TEST" default:"false"`
-	ShowClock    bool   `envconfig:"GAME_SERVER_SHOW_CLOCK" default:"true"`
+	ServerID     int     `envconfig:"GAME_SERVER_ID" default:"1"`
+	ServerName   string  `envconfig:"GAME_SERVER_NAME" default:"L2Go Bartz"`
+	ServerPort   int     `envconfig:"GAME_SERVER_PORT" default:"7777"`
+	MaxPlayers   int     `envconfig:"GAME_SERVER_MAX_PLAYERS" default:"1000"`
+	ServerType   int     `envconfig:"GAME_SERVER_TYPE" default:"1"` // 1=Normal, 2=Relax, 4=Test
+	MinLevel     int     `envconfig:"GAME_SERVER_MIN_LEVEL" default:"1"`
+	MaxLevel     int     `envconfig:"GAME_SERVER_MAX_LEVEL" default:"85"`
+	AgeLimit     int     `envconfig:"GAME_SERVER_AGE_LIMIT" default:"0"`
+	ShowBrackets bool    `envconfig:"GAME_SERVER_SHOW_BRACKETS" default:"false"`
+	PvP          bool    `envconfig:"GAME_SERVER_PVP" default:"true"`
+	TestServer   bool    `envconfig:"GAME_SERVER_TEST" default:"false"`
+	ShowClock    bool    `envconfig:"GAME_SERVER_SHOW_CLOCK" default:"true"`
 	ExpRate      float64 `envconfig:"GAME_SERVER_EXP_RATE" default:"1.0"`
 	SpRate       float64 `envconfig:"GAME_SERVER_SP_RATE" default:"1.0"`
 }
@@ -55,7 +55,7 @@ type loginServerConnection struct {
 type networkCfg struct {
 	GameHost string `envconfig:"GAME_HOST" default:"0.0.0.0"`
 	GamePort string `envconfig:"GAME_PORT" default:"7777"`
-	External string `envconfig:"EXTERNAL_HOST" default:"192.168.88.21"`
+	External string `envconfig:"EXTERNAL_HOST" default:"192.168.88.26"`
 }
 
 type databaseCfg struct {
