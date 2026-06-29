@@ -206,10 +206,15 @@ func (h *Handler) handleValidatePosition(ctx context.Context, c *client.ClientCo
 		return h.sendPositionCorrection(ctx, c, playerState.CharID, correctionResult.ExpectedPos)
 	}
 
-	// Update position if client is close enough
-	if err := h.movementUseCase.UpdatePosition(ctx, playerState.CharID, clientPos, validatePacket.Heading); err != nil {
-		logger.Warn().Err(err).Msg("failed to update position")
-		// Don't fail validation for position update errors
+	// While the server is interpolating this player's movement (tick is the
+	// position authority), do NOT overwrite the position with the client packet —
+	// that reintroduced the stale-position bug. Only sync the client position when
+	// the player is standing still. Drift correction above still applies.
+	if !playerState.IsMoving {
+		if err := h.movementUseCase.UpdatePosition(ctx, playerState.CharID, clientPos, validatePacket.Heading); err != nil {
+			logger.Warn().Err(err).Msg("failed to update position")
+			// Don't fail validation for position update errors
+		}
 	}
 
 	// Notify game loop about position change (for active region tracking)
