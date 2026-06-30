@@ -260,10 +260,11 @@ func (gl *GameLoop) handleInteractRequest(cmd CmdInteractRequest) {
 	}
 	gl.interactPending[cmd.CharID] = cmd.TargetObjectID
 
-	// Начальный MoveToPawn запускает движение клиента к NPC. Стоп-дистанция —
-	// collision-aware offset (interact base + радиусы коллизий), заведомо меньше
-	// триггера интеракции (150), чтобы персонаж любого размера зашёл внутрь радиуса.
-	gl.approachTarget(cmd.AccountName, player, npc, gl.interactApproachOffset(player, npc))
+	// INTERACT intention + server-side movement toward the NPC (the tick interpolates
+	// position). InteractApproachEvent is a heartbeat that re-checks distance against
+	// the SERVER position and opens the dialogue on arrival — no stale-client polling.
+	gl.setIntention(cmd.CharID, IntentionInteract, cmd.TargetObjectID)
+	gl.startMoveToTarget(player, npc, gl.interactApproachOffset(player, npc))
 
 	gl.events.Schedule(&InteractApproachEvent{
 		At:             time.Now().Add(300 * time.Millisecond),

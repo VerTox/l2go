@@ -18,7 +18,6 @@ type InteractApproachEvent struct {
 	CharID         int32
 	TargetObjectID int32
 	AccountName    string
-	RetryCount     int // ретраи дистанции (max 30 ≈ 9s)
 }
 
 func (e *InteractApproachEvent) ExecuteAt() time.Time { return e.At }
@@ -50,23 +49,18 @@ func (e *InteractApproachEvent) Execute(gl *GameLoop) {
 	dx := player.Position.X - npc.Position.X
 	dy := player.Position.Y - npc.Position.Y
 	if dx*dx+dy*dy > interactRange*interactRange {
-		const maxRetries = 30
-		if e.RetryCount >= maxRetries {
-			clearPending()
-			return
-		}
-		// Keep chasing: re-issue MoveToPawn at most ~once per second (same throttle as
-		// attack approach) so a client that stopped short or whose position lagged still
-		// closes in, without stuttering from a move restart every tick.
-		if shouldResendMoveToPawn(e.RetryCount) {
-			gl.approachTarget(e.AccountName, player, npc, gl.interactApproachOffset(player, npc))
+		// Out of range: drive server-side movement (tick interpolates) and re-check on
+		// the next heartbeat. Distance is checked against the server position, not a
+		// stale client packet. Mirrors the attack heartbeat. interactPending is the
+		// cancellation guard: a move/retarget command clears it and this stops.
+		if !player.IsMoving {
+			gl.startMoveToTarget(player, npc, gl.interactApproachOffset(player, npc))
 		}
 		gl.events.Schedule(&InteractApproachEvent{
-			At:             time.Now().Add(300 * time.Millisecond),
+			At:             time.Now().Add(400 * time.Millisecond),
 			CharID:         e.CharID,
 			TargetObjectID: e.TargetObjectID,
 			AccountName:    e.AccountName,
-			RetryCount:     e.RetryCount + 1,
 		})
 		return
 	}
@@ -79,7 +73,6 @@ func (e *InteractApproachEvent) Execute(gl *GameLoop) {
 	log.Debug().
 		Int32("char_id", e.CharID).
 		Int32("npc_obj_id", e.TargetObjectID).
-		Int("retries", e.RetryCount).
 		Msg("interact approach: arrived, opening NPC dialogue")
 	if conn := gl.connections.GetConnection(e.AccountName); conn != nil {
 		_ = conn.Send(outclient.BuildMoveToPawn(
