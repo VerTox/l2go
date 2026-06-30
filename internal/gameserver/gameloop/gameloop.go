@@ -262,6 +262,12 @@ func (gl *GameLoop) handleInteractRequest(cmd CmdInteractRequest) {
 	}
 	gl.interactPending[cmd.CharID] = cmd.TargetObjectID
 
+	// New interact intention abandons any active attack (L2J: a new intention
+	// abandons the previous one), so the two heartbeats don't fight over movement.
+	if cs, ok := gl.combatState[cmd.CharID]; ok && cs.IsAutoAttacking {
+		gl.stopAttacker(cmd.CharID)
+	}
+
 	// INTERACT intention + server-side movement toward the NPC (the tick interpolates
 	// position). InteractApproachEvent is a heartbeat that re-checks distance against
 	// the SERVER position and opens the dialogue on arrival — no stale-client polling.
@@ -285,10 +291,10 @@ func (gl *GameLoop) handleCancelAttack(cmd CmdCancelAttack) {
 // ground move, so the combat/interact heartbeat stops chasing the old target.
 func (gl *GameLoop) handleMoveToLocation(cmd CmdMoveToLocation) {
 	// Stop auto-attack if active (stopAttacker also clears intention).
+	// setIntention(MoveTo) below overwrites intention unconditionally, so the
+	// else-clearIntention branch is dead and has been removed.
 	if cs, ok := gl.combatState[cmd.CharID]; ok && cs.IsAutoAttacking {
 		gl.stopAttacker(cmd.CharID)
-	} else {
-		gl.clearIntention(cmd.CharID)
 	}
 	// Drop any pending interact approach.
 	delete(gl.interactPending, cmd.CharID)

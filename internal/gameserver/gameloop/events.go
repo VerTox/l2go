@@ -45,6 +45,12 @@ func (e *InteractApproachEvent) Execute(gl *GameLoop) {
 		clearPending()
 		return
 	}
+	// interactPending is the authoritative liveness key for the interact approach
+	// (mirrors combatState.IsAutoAttacking for the attack heartbeat). A ground move or
+	// retarget clears it via handleMoveToLocation, which must stop this heartbeat.
+	if gl.interactPending[e.CharID] != e.TargetObjectID {
+		return
+	}
 
 	dx := player.Position.X - npc.Position.X
 	dy := player.Position.Y - npc.Position.Y

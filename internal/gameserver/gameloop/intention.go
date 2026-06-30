@@ -75,7 +75,8 @@ func (gl *GameLoop) onMovementArrived(charID int32) {
 		// re-schedules itself (in-range: next swing; out-of-range: 400 ms retry).
 		// Calling beginAttackSwing here would create a second parallel chain.
 	case IntentionInteract:
-		// handled in phase 2 part 2
+		// No-op: the interact heartbeat (InteractApproachEvent) opens the dialogue on
+		// arrival, mirroring the attack no-op above.
 	default:
 		// MoveTo / Idle / scaffolded intentions: nothing to do on arrival
 	}
