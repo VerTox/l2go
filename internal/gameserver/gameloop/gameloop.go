@@ -180,6 +180,8 @@ func (gl *GameLoop) processCommand(cmd Command) {
 		gl.handlePlayerEnteredWorld(c)
 	case CmdPlayerMoved:
 		gl.handlePlayerMoved(c)
+	case CmdMoveToLocation:
+		gl.handleMoveToLocation(c)
 	}
 }
 
@@ -277,6 +279,20 @@ func (gl *GameLoop) handleInteractRequest(cmd CmdInteractRequest) {
 // handleCancelAttack stops a player's auto-attack.
 func (gl *GameLoop) handleCancelAttack(cmd CmdCancelAttack) {
 	gl.stopAttacker(cmd.CharID)
+}
+
+// handleMoveToLocation cancels attack/interact intention when the player issues a
+// ground move, so the combat/interact heartbeat stops chasing the old target.
+func (gl *GameLoop) handleMoveToLocation(cmd CmdMoveToLocation) {
+	// Stop auto-attack if active (stopAttacker also clears intention).
+	if cs, ok := gl.combatState[cmd.CharID]; ok && cs.IsAutoAttacking {
+		gl.stopAttacker(cmd.CharID)
+	} else {
+		gl.clearIntention(cmd.CharID)
+	}
+	// Drop any pending interact approach.
+	delete(gl.interactPending, cmd.CharID)
+	gl.setIntention(cmd.CharID, IntentionMoveTo, 0)
 }
 
 // handlePlayerDisconnected cleans up combat state for a disconnected player.

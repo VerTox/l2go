@@ -9,10 +9,10 @@ type Command interface {
 
 // CmdAttackRequest — player wants to attack a target.
 type CmdAttackRequest struct {
-	AttackerCharID  int32
-	TargetObjectID  int32
-	AttackerPos     models.Position
-	AccountName     string
+	AttackerCharID int32
+	TargetObjectID int32
+	AttackerPos    models.Position
+	AccountName    string
 }
 
 func (CmdAttackRequest) commandMarker() {}
@@ -57,3 +57,11 @@ type CmdPlayerMoved struct {
 }
 
 func (CmdPlayerMoved) commandMarker() {}
+
+// CmdMoveToLocation — player issued a ground move (clicked the ground). Cancels any
+// attack/interact intention so the loop stops chasing the previous target.
+type CmdMoveToLocation struct {
+	CharID int32
+}
+
+func (CmdMoveToLocation) commandMarker() {}

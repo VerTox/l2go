@@ -120,6 +120,9 @@ func (h *Handler) handleMoveBackwardToLocation(ctx context.Context, c *client.Cl
 		return fmt.Errorf("failed to confirm movement: %w", err)
 	}
 
+	// Ground move cancels attack/interact intention in the game loop (stop chasing).
+	h.gameLoopCmd <- gameloop.CmdMoveToLocation{CharID: playerState.CharID}
+
 	logger.Debug().Msg("MoveToLocation confirmation sent to client")
 
 	// Broadcast movement to visible players (excluding the moving player)
