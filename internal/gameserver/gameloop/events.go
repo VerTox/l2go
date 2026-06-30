@@ -89,7 +89,6 @@ type NextAttackEvent struct {
 	At             time.Time
 	AttackerCharID int32
 	TargetObjectID int32
-	RetryCount     int // number of distance-check retries (max 30 ≈ 9s)
 }
 
 func (e *NextAttackEvent) ExecuteAt() time.Time { return e.At }

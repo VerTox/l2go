@@ -29,13 +29,6 @@ func (gl *GameLoop) collisionRadii(player *registry.PlayerWorldState, npc *model
 	return playerCollision, npcCollision
 }
 
-// shouldResendMoveToPawn throttles MoveToPawn re-sends to roughly once per second
-// (retries fire every 300ms). L2J's moveToPawn enforces a ~1s _moveToPawnTimeout;
-// re-sending every tick makes the client restart its move and "stutter".
-func shouldResendMoveToPawn(retryCount int) bool {
-	return retryCount > 0 && retryCount%3 == 0
-}
-
 // attackReach returns the center-to-center distance within which an attack of the
 // given base range connects. Per L2J (L2CharacterAI.maybeMoveToPawn) the offset is
 // baseRange + attacker collision radius + target collision radius, and the very
