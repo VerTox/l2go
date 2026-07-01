@@ -322,7 +322,9 @@ func (e *RespawnEvent) Execute(gl *GameLoop) {
 		CurrentMP:  tpl.MP,
 	}
 
-	// Cache spawn info for the new object ID
+	// Move the spawn info to the new object ID (drop the dead one's entry so
+	// npcSpawnInfo doesn't leak an entry per respawn).
+	delete(gl.npcSpawnInfo, e.ObjectID)
 	gl.npcSpawnInfo[newNPC.ObjectID] = info
 
 	// Add to world

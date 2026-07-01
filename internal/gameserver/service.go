@@ -678,6 +678,10 @@ func (g *GameServer) Run(ctx context.Context) error {
 	// Create game loop before use cases (handlers need the command channel)
 	g.gameLoop = gameloop.New(g.world, g.connections, g.config.expRate, g.config.spRate)
 
+	// Seed respawn data from the NPCs loaded into the world above, so killed NPCs
+	// can respawn (otherwise RespawnEvent finds no spawn info). (l2go-c44)
+	g.gameLoop.RegisterWorldSpawns()
+
 	g.prepareUseCases()
 	g.prepareHandlers()
 

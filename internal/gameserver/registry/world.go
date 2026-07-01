@@ -384,6 +384,18 @@ func (wr *WorldRegistry) GetNPCCount() int {
 	return len(wr.npcs)
 }
 
+// GetAllNPCs returns a snapshot slice of all NPC instances in the world.
+func (wr *WorldRegistry) GetAllNPCs() []*models.NpcInstance {
+	wr.mu.RLock()
+	defer wr.mu.RUnlock()
+
+	result := make([]*models.NpcInstance, 0, len(wr.npcs))
+	for _, npc := range wr.npcs {
+		result = append(result, npc)
+	}
+	return result
+}
+
 // Statistics
 
 // GetOnlinePlayerCount returns the number of online players

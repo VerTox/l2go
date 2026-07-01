@@ -92,6 +92,22 @@ func (gl *GameLoop) RegisterSpawnInfo(objectID int32, info SpawnInfo) {
 	gl.npcSpawnInfo[objectID] = info
 }
 
+// RegisterWorldSpawns seeds npcSpawnInfo from the NPCs already loaded into the world,
+// treating each NPC's initial position/heading as its spawn point. Must be called once
+// at startup after the world is populated — otherwise npcSpawnInfo is empty and no NPC
+// ever respawns (RespawnEvent logs 'spawn info not found'). (l2go-c44)
+func (gl *GameLoop) RegisterWorldSpawns() {
+	npcs := gl.world.GetAllNPCs()
+	for _, npc := range npcs {
+		gl.npcSpawnInfo[npc.ObjectID] = SpawnInfo{
+			TemplateID: npc.TemplateID,
+			Position:   npc.Position,
+			Heading:    npc.Heading,
+		}
+	}
+	log.Info().Int("count", len(npcs)).Msg("Registered NPC spawn info for respawn")
+}
+
 // Run starts the game loop. It blocks until ctx is cancelled.
 func (gl *GameLoop) Run(ctx context.Context) error {
 	ticker := time.NewTicker(tickInterval)
