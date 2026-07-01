@@ -131,8 +131,6 @@ func (h *Handler) handleMoveBackwardToLocation(ctx context.Context, c *client.Cl
 		// Don't fail the movement for broadcast errors
 	}
 
-	// REMOVED: updatePlayerVisibility - CharInfo should only be sent on status changes, not movement
-
 	logger.Info().
 		Int32("char_id", playerState.CharID).
 		Float64("distance", h.calculateDistance(result.StartPosition, result.TargetPosition)).
@@ -400,85 +398,9 @@ func (h *Handler) calculateDistance(pos1, pos2 models.Position) float64 {
 	return math.Sqrt(dx*dx + dy*dy) // Return actual distance, not squared
 }
 
-// updatePlayerVisibility handles dynamic player visibility updates during movement
-// Players appear/disappear as they enter/leave visibility range
-func (h *Handler) updatePlayerVisibility(ctx context.Context, movingCharID int32, movingClient *client.ClientConn) {
-	logger := log.Ctx(ctx).With().
-		Int32("moving_char_id", movingCharID).
-		Logger()
-
-	// Get moving player's current state
-	movingPlayer, exists := h.world.GetPlayer(movingCharID)
-	if !exists {
-		logger.Debug().Msg("moving player not found in world registry")
-		return
-	}
-
-	// Get all players in visibility range from new position
-	const VISIBILITY_RADIUS = 1500
-	nearbyPlayers := h.world.GetPlayersInRange(movingPlayer.Position, VISIBILITY_RADIUS)
-
-	// Track visibility changes
-	var newVisiblePlayers []string   // account names of newly visible players
-	var newVisibleToPlayers []string // account names of players who can now see the moving player
-
-	logger.Debug().
-		Int("nearby_players_found", len(nearbyPlayers)).
-		Msg("checking visibility updates")
-
-	// Process each nearby player
-	for _, nearby := range nearbyPlayers {
-		if nearby.CharID == movingCharID {
-			continue // Skip self
-		}
-
-		nearbyConn := h.getConnectionByAccount(nearby.Character.AccountName)
-		if nearbyConn == nil {
-			continue // Player not connected
-		}
-
-		// Check if this nearby player is newly visible to the moving player
-		// For now, we'll show all nearby players (in production, track previous visibility state)
-		if h.shouldShowPlayerToPlayer(movingPlayer, nearby) {
-			// Send CharInfo of nearby player to moving player
-			if err := h.sendPlayerSpawnToClient(ctx, movingClient, nearby.Character); err != nil {
-				logger.Warn().Err(err).
-					Str("nearby_account", nearby.Character.AccountName).
-					Msg("failed to show nearby player to moving player")
-			} else {
-				newVisiblePlayers = append(newVisiblePlayers, nearby.Character.AccountName)
-			}
-		}
-
-		// Check if moving player is newly visible to this nearby player
-		if h.shouldShowPlayerToPlayer(nearby, movingPlayer) {
-			// Send CharInfo of moving player to nearby player
-			if err := h.sendPlayerSpawnToClient(ctx, nearbyConn, movingPlayer.Character); err != nil {
-				logger.Warn().Err(err).
-					Str("nearby_account", nearby.Character.AccountName).
-					Msg("failed to show moving player to nearby player")
-			} else {
-				newVisibleToPlayers = append(newVisibleToPlayers, nearby.Character.AccountName)
-			}
-		}
-	}
-
-	if len(newVisiblePlayers) > 0 || len(newVisibleToPlayers) > 0 {
-		logger.Info().
-			Int("newly_visible_to_moving", len(newVisiblePlayers)).
-			Int("newly_visible_to_others", len(newVisibleToPlayers)).
-			Msg("visibility updates completed")
-	}
-}
-
-// shouldShowPlayerToPlayer determines if playerA should see playerB
-// In a full implementation, this would check previous visibility state
-// For now, we'll use a simple distance-based approach
-func (h *Handler) shouldShowPlayerToPlayer(playerA, playerB *registry.PlayerWorldState) bool {
-	// Simple distance check (in production, track previous visibility)
-	distance := h.calculateDistance(playerA.Position, playerB.Position)
-	return distance <= 1500.0 // Within visibility radius
-}
+// Dynamic player-to-player visibility now lives in the game loop
+// (reconcilePlayerVisibility), which owns every player's KnownPlayers set and drives
+// spawn/despawn off the authoritative server position. (l2go-23g)
 
 // updateNPCVisibility sends NpcInfo for newly visible NPCs and DeleteObject
 // for NPCs that left the visibility range. Called during position updates.

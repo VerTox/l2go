@@ -201,14 +201,12 @@ func (h *Handler) removeSession(c *client.ClientConn) {
 				Int32("char_id", playerState.CharID).
 				Msg("Removing player from world due to disconnect")
 
-			// Notify game loop about disconnect (stops auto-attack, deactivates regions)
+			// Notify game loop about disconnect: it stops auto-attack, deactivates
+			// regions, and despawns this player from everyone who had them in view.
 			h.gameLoopCmd <- gameloop.CmdPlayerDisconnected{CharID: playerState.CharID}
 
-			// Send DeleteObject to nearby players first (before removing from world)
-			ctx := context.Background()
-			h.broadcastPlayerDespawn(ctx, playerState)
-
 			// Remove from world registry
+			ctx := context.Background()
 			h.world.RemovePlayer(ctx, playerState.CharID)
 
 			// If we have logout use case, perform cleanup
@@ -234,47 +232,3 @@ func (h *Handler) removeSession(c *client.ClientConn) {
 	log.Debug().Msg("Session cleanup completed")
 }
 
-// broadcastPlayerDespawn sends DeleteObject packet to nearby players when a player leaves
-func (h *Handler) broadcastPlayerDespawn(ctx context.Context, playerState *registry.PlayerWorldState) {
-	logger := log.Ctx(ctx).With().
-		Int32("leaving_char_id", playerState.CharID).
-		Str("leaving_name", playerState.Character.Name).
-		Logger()
-
-	// Get nearby players who can see this player
-	nearbyPlayers := h.world.GetPlayersInRange(playerState.Position, 1500)
-	if len(nearbyPlayers) == 0 {
-		logger.Debug().Msg("no nearby players to notify of despawn")
-		return
-	}
-
-	// Create DeleteObject packet
-	deletePacket := outclient.NewDeleteObject(playerState.CharID)
-	packetData := deletePacket.GetData()
-	
-	broadcastCount := 0
-	
-	// Send to all nearby players
-	for _, nearby := range nearbyPlayers {
-		if nearby.CharID != playerState.CharID { // Don't send to the leaving player
-			nearbyConn := h.connections.GetConnection(nearby.Character.AccountName)
-			if nearbyConn != nil {
-				if err := nearbyConn.Send(packetData); err != nil {
-					logger.Warn().Err(err).
-						Str("nearby_account", nearby.Character.AccountName).
-						Msg("failed to send DeleteObject to nearby player")
-				} else {
-					broadcastCount++
-					logger.Debug().
-						Str("nearby_account", nearby.Character.AccountName).
-						Msg("DeleteObject sent to nearby player")
-				}
-			}
-		}
-	}
-	
-	logger.Info().
-		Int("broadcasts_sent", broadcastCount).
-		Int("nearby_players", len(nearbyPlayers)-1). // -1 for the leaving player
-		Msg("player despawn broadcasted to nearby players")
-}

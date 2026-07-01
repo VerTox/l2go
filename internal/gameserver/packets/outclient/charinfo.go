@@ -350,9 +350,11 @@ func BuildCharInfo(info CharInfo) []byte {
 }
 
 // NewCharInfo creates a CharInfo packet from character and player state data.
-// heading is the character's live facing (from the world registry); passing 0
-// makes every player face north.
-func NewCharInfo(char *models.Character, playerState *models.Position, equipment []models.CharacterItem, isRunning bool, inCombat bool, heading int32) *CharInfo {
+// paperdollDisplayIDs are the visible equipment item IDs per paperdoll slot (from
+// the cached char.PaperdollItems, so no DB lookup is needed). heading is the
+// character's live facing (from the world registry); passing 0 makes every player
+// face north.
+func NewCharInfo(char *models.Character, playerState *models.Position, paperdollDisplayIDs [26]int32, isRunning bool, inCombat bool, heading int32) *CharInfo {
 	// Compute stats once for this character
 	computed := computeCharInfoStats(char)
 
@@ -461,15 +463,9 @@ func NewCharInfo(char *models.Character, playerState *models.Position, equipment
 		SpecialAbnormalMask: 0,
 	}
 
-	// Process equipment for display - map equipped items to paperdoll slots
-	if equipment != nil {
-		for _, item := range equipment {
-			if item.LocData >= 0 && item.LocData < 26 {
-				charInfo.PaperdollDisplayIDs[item.LocData] = item.ItemID
-				charInfo.PaperdollAugmentIDs[item.LocData] = int32(item.AugmentationID)
-			}
-		}
-	}
+	// Visible equipment for display, taken from the cached paperdoll (no DB lookup).
+	// Augment display IDs are not cached yet — left zero (no augment glow). (l2go-23g)
+	charInfo.PaperdollDisplayIDs = paperdollDisplayIDs
 
 	return charInfo
 }

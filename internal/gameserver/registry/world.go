@@ -60,6 +60,10 @@ type PlayerWorldState struct {
 
 	// Known objects (sent to client, used for visibility tracking)
 	KnownNPCs map[int32]bool `json:"-"` // NPC objectIDs already sent to this client
+	// KnownPlayers tracks other players already spawned to this client (CharInfo sent).
+	// Owned exclusively by the game loop — only the loop goroutine reads/writes it, so
+	// no locking is needed despite being shared world state. (l2go-23g)
+	KnownPlayers map[int32]bool `json:"-"`
 
 	// Session info
 	SessionData map[string]interface{} `json:"session_data,omitempty"`
@@ -105,6 +109,7 @@ func (wr *WorldRegistry) AddPlayer(ctx context.Context, char *models.Character) 
 		IsMoving:    false,
 		IsRunning:   true, // L2J default: players start in running mode
 		KnownNPCs:   make(map[int32]bool),
+		KnownPlayers: make(map[int32]bool),
 		SessionData: make(map[string]interface{}),
 	}
 	

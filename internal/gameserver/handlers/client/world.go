@@ -47,10 +47,12 @@ func (h *Handler) handleEnterWorld(ctx context.Context, c *client.ClientConn, pa
 		return err
 	}
 
-	// Establish visibility: send nearby players/NPCs to us and us to nearby players.
-	otherPlayers := h.establishPlayerVisibility(ctx, c, playerState)
+	// Send nearby NPCs to us. Player-to-player visibility is established by the game
+	// loop when it processes CmdPlayerEnteredWorld below.
+	h.establishNpcVisibility(ctx, c, playerState)
 
-	// Notify game loop about player entering the world (activates regions)
+	// Notify game loop about player entering the world (activates regions + spawns
+	// nearby players to us and us to them).
 	h.gameLoopCmd <- gameloop.CmdPlayerEnteredWorld{
 		CharID:      playerState.CharID,
 		AccountName: session.AccountName,
@@ -63,7 +65,6 @@ func (h *Handler) handleEnterWorld(ctx context.Context, c *client.ClientConn, pa
 		Int("x", playerState.Position.X).
 		Int("y", playerState.Position.Y).
 		Int("z", playerState.Position.Z).
-		Int("nearby_players", otherPlayers).
 		Msg("Player fully entered world with visibility system")
 
 	return nil
@@ -631,23 +632,10 @@ func getItemType(itemID int32) int32 {
 // position: sends nearby players (CharInfo) and NPCs (NpcInfo, repopulating KnownNPCs)
 // to this client, and sends this player (CharInfo) to nearby clients. Shared by world
 // entry and teleport arrival (Appearing). Returns the number of other nearby players.
-func (h *Handler) establishPlayerVisibility(ctx context.Context, c *client.ClientConn, playerState *registry.PlayerWorldState) int {
-	nearbyPlayers := h.world.GetPlayersInRange(playerState.Position, 1500)
-	otherPlayers := 0
-
-	// Nearby players → this client.
-	for _, nearby := range nearbyPlayers {
-		if nearby.CharID == playerState.CharID {
-			continue
-		}
-		otherPlayers++
-		if err := h.sendPlayerSpawnToClient(ctx, c, nearby.Character); err != nil {
-			log.Ctx(ctx).Error().Err(err).Int32("nearby_char_id", nearby.CharID).
-				Msg("failed to send nearby player spawn")
-		}
-	}
-
-	// Nearby NPCs → this client (repopulate known set).
+// establishNpcVisibility sends nearby NPCs to the client and repopulates the known
+// NPC set. Player-to-player visibility is owned by the game loop (it spawns players
+// on CmdPlayerEnteredWorld / movement), so it is intentionally not handled here. (l2go-23g)
+func (h *Handler) establishNpcVisibility(ctx context.Context, c *client.ClientConn, playerState *registry.PlayerWorldState) {
 	nearbyNPCs := h.world.GetNPCsInRange(playerState.Position, 2500)
 	for _, npc := range nearbyNPCs {
 		if err := c.Send(outclient.BuildNpcInfo(npc)); err != nil {
@@ -656,102 +644,36 @@ func (h *Handler) establishPlayerVisibility(ctx context.Context, c *client.Clien
 		playerState.KnownNPCs[npc.ObjectID] = true
 	}
 
-	// This player → nearby clients.
-	for _, nearby := range nearbyPlayers {
-		if nearby.CharID == playerState.CharID {
-			continue
-		}
-		nearbyConn := h.getConnectionByAccount(nearby.Character.AccountName)
-		if nearbyConn == nil {
-			continue
-		}
-		if err := h.sendPlayerSpawnToClient(ctx, nearbyConn, playerState.Character); err != nil {
-			log.Ctx(ctx).Error().Err(err).Int32("nearby_char_id", nearby.CharID).
-				Msg("failed to send player spawn to nearby player")
-		}
-	}
-
 	log.Ctx(ctx).Debug().
-		Int("nearby_players", otherPlayers).
 		Int("nearby_npcs", len(nearbyNPCs)).
-		Msg("player visibility established")
-	return otherPlayers
+		Msg("NPC visibility established")
 }
 
-// sendPlayerSpawnToClient sends spawn information about another player using CharInfo packet
+// sendPlayerSpawnToClient sends a player's CharInfo (+ RelationChanged) to a client,
+// used to refresh appearance after an equipment change. Visuals come from the cached
+// paperdoll and live registry state, so no DB lookup is needed.
 func (h *Handler) sendPlayerSpawnToClient(ctx context.Context, c *client.ClientConn, char *models.Character) error {
-	logger := log.Ctx(ctx).With().
-		Int32("char_id", char.ID).
-		Str("char_name", char.Name).
-		Logger()
-
-	// Get character's equipped items for proper visual display
-	items, err := h.characterUseCase.GetCharacterAllItems(ctx, char.ID)
-	if err != nil {
-		logger.Warn().Err(err).Msg("failed to get character items for CharInfo, using empty equipment")
-		items = []models.CharacterItem{} // Continue with empty equipment
-	}
-
-	// Filter equipped items only
-	var equippedItems []models.CharacterItem
-	for _, item := range items {
-		if item.Loc == string(models.LocPaperdoll) {
-			equippedItems = append(equippedItems, item)
-		}
-	}
-
-	// Get character's current running/combat state and heading from world registry
-	var isRunning bool = true    // Default to running
-	var inCombat bool = false     // Default to peaceful
-	var heading int32 = int32(char.Heading) // Fallback to persisted heading
+	// Live running/combat/heading from the world registry (fall back to persisted).
+	isRunning, inCombat, heading := true, false, int32(char.Heading)
 	if playerState, exists := h.world.GetPlayer(char.ID); exists {
 		isRunning = playerState.IsRunning
 		inCombat = playerState.InCombat
 		heading = playerState.Heading
-		logger.Debug().
-			Int32("char_id", char.ID).
-			Bool("is_running", isRunning).
-			Bool("in_combat", inCombat).
-			Int32("heading", heading).
-			Msg("CharInfo: got running/combat/heading state from world registry")
-	} else {
-		logger.Debug().
-			Int32("char_id", char.ID).
-			Bool("is_running", isRunning).
-			Msg("CharInfo: player not in world registry, using defaults")
 	}
 
-	// Create CharInfo packet for the other player with correct running/combat state
-	charInfo := outclient.NewCharInfo(char, &char.Position, equippedItems, isRunning, inCombat, heading)
-
-	logger.Debug().
-		Int("equipped_items", len(equippedItems)).
-		Int32("x", charInfo.X).
-		Int32("y", charInfo.Y).
-		Int32("z", charInfo.Z).
-		Msg("sending CharInfo packet for other player")
-
-	// Send CharInfo packet
+	charInfo := outclient.NewCharInfo(char, &char.Position, char.PaperdollItems, isRunning, inCombat, heading)
 	if err := c.Send(charInfo.GetData()); err != nil {
 		return fmt.Errorf("failed to send CharInfo packet: %w", err)
 	}
 
-	// Send RelationChanged packet to establish normal non-hostile relationship
-	// This prevents the sword cursor from appearing when hovering over the player
-	relationPacket := outclient.NewSingleRelation(char.ID, int32(char.Karma), 0) // 0 PvP flag for normal state
+	// RelationChanged establishes a normal (non-attackable) cursor for the player.
+	relationPacket := outclient.NewSingleRelation(char.ID, int32(char.Karma), 0)
 	if err := c.Send(relationPacket.GetData()); err != nil {
-		logger.Warn().Err(err).Msg("failed to send RelationChanged packet, cursor may show as attackable")
-	} else {
-		logger.Debug().Msg("RelationChanged packet sent - player should show normal cursor")
+		log.Ctx(ctx).Warn().Err(err).Int32("char_id", char.ID).
+			Msg("failed to send RelationChanged packet, cursor may show as attackable")
 	}
 
-	logger.Info().Msg("CharInfo and RelationChanged packets sent successfully")
 	return nil
-}
-
-// getConnectionByAccount finds client connection by account name
-func (h *Handler) getConnectionByAccount(accountName string) *client.ClientConn {
-	return h.connections.GetConnection(accountName)
 }
 
 // getBodyPartBitmask returns the body part bitmask for items

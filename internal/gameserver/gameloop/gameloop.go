@@ -187,6 +187,9 @@ func (gl *GameLoop) advancePlayerMovement(now time.Time) {
 		speed := usecase.PlayerMoveSpeed(gl.computePlayerStats(player), player.IsRunning)
 		pos, arrived := stepPlayerMovement(player, speed, now)
 		_ = gl.world.UpdatePlayerPosition(context.Background(), charID, pos, player.Heading)
+		// Dynamic player-to-player visibility follows the authoritative server
+		// position: spawn/despawn other players as this one crosses their range.
+		gl.reconcilePlayerVisibility(charID)
 		if arrived {
 			player.IsMoving = false
 			player.MoveStartPos = models.Position{}
@@ -335,15 +338,22 @@ func (gl *GameLoop) handlePlayerDisconnected(cmd CmdPlayerDisconnected) {
 	// Stop all NPCs attacking this player
 	gl.stopAllNPCAttacksOnPlayer(cmd.CharID)
 
+	// Despawn this player from everyone who had them in view (and clear the known
+	// sets) so a later reconnect is spawned fresh.
+	gl.despawnPlayerFromAll(cmd.CharID)
+
 	// Deactivate regions for this player
 	if player, exists := gl.world.GetPlayer(cmd.CharID); exists {
 		gl.deactivateRegions(player.Position.X, player.Position.Y)
 	}
 }
 
-// handlePlayerEnteredWorld activates regions around the player.
+// handlePlayerEnteredWorld activates regions around the player and establishes the
+// initial player-to-player visibility (spawns nearby players to the newcomer and
+// the newcomer to them).
 func (gl *GameLoop) handlePlayerEnteredWorld(cmd CmdPlayerEnteredWorld) {
 	gl.activateRegions(cmd.Position.X, cmd.Position.Y)
+	gl.reconcilePlayerVisibility(cmd.CharID)
 }
 
 // handlePlayerMoved updates active regions when a player moves.

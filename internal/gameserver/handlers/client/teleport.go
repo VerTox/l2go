@@ -32,7 +32,7 @@ func (h *Handler) handleAppearing(ctx context.Context, c *client.ClientConn, _ [
 		// Reset the known-object set (old area is gone client-side) and rebuild visibility
 		// at the new position.
 		playerState.KnownNPCs = make(map[int32]bool)
-		h.establishPlayerVisibility(ctx, c, playerState)
+		h.establishNpcVisibility(ctx, c, playerState)
 		playerState.IsTeleporting = false
 
 		if err := c.Send(h.buildUserInfoPacket(playerState.Character)); err != nil {

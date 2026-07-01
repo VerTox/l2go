@@ -6,6 +6,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	"github.com/VerTox/l2go/internal/gameserver/gameloop"
 	"github.com/VerTox/l2go/internal/gameserver/packets/inclient"
 	"github.com/VerTox/l2go/internal/gameserver/packets/outclient"
 	"github.com/VerTox/l2go/internal/gameserver/transport/client"
@@ -62,13 +63,10 @@ func (h *Handler) handleLogout(ctx context.Context, c *client.ClientConn, payloa
 		}
 	}
 
-	// Get player state for despawn broadcast BEFORE removing from world
-	if playerState, exists := h.world.GetPlayer(charID); exists {
-		// Broadcast DeleteObject to nearby players
-		h.broadcastPlayerDespawn(ctx, playerState)
-		logger.Debug().Msg("player despawn broadcasted to nearby players")
-	} else {
-		logger.Debug().Msg("player not in world registry - no despawn broadcast needed")
+	// Tell the game loop to despawn this player from everyone who had them in view
+	// (and clear the known-sets) BEFORE the use case removes them from the world.
+	if charID > 0 {
+		h.gameLoopCmd <- gameloop.CmdPlayerDisconnected{CharID: charID}
 	}
 
 	// Perform graceful logout through use case
@@ -124,6 +122,11 @@ func (h *Handler) handleRequestRestart(ctx context.Context, c *client.ClientConn
 	var charID int32 = 0
 	if playerState, exists := h.world.GetPlayerByAccount(session.AccountName); exists {
 		charID = playerState.CharID
+	}
+
+	// Despawn from everyone who had this player in view before it leaves the world.
+	if charID > 0 {
+		h.gameLoopCmd <- gameloop.CmdPlayerDisconnected{CharID: charID}
 	}
 
 	// Perform restart through use case

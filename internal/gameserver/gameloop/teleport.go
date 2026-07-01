@@ -40,7 +40,8 @@ func (gl *GameLoop) handleTeleport(cmd CmdTeleport) {
 	gl.broadcastToNearby(oldPos, telePkt)
 
 	// Decay: drop the player from everyone else's view (the client unloads the old area
-	// itself on TeleportToLocation, so exclude the player's own connection).
+	// itself on TeleportToLocation, so exclude the player's own connection). Also clear
+	// the known-set both ways so the player is spawned fresh at the destination. (l2go-23g)
 	deletePkt := outclient.BuildDeleteObject(cmd.CharID)
 	for _, p := range gl.world.GetPlayersInRange(oldPos, broadcastRadius) {
 		if p.CharID == cmd.CharID {
@@ -49,7 +50,11 @@ func (gl *GameLoop) handleTeleport(cmd CmdTeleport) {
 		if conn := gl.connections.GetConnection(p.AccountName); conn != nil {
 			_ = conn.Send(deletePkt)
 		}
+		delete(p.KnownPlayers, cmd.CharID)
 	}
+	// The teleporting client unloaded its whole area, so it no longer knows anyone;
+	// visibility is rebuilt on Appearing (CmdPlayerEnteredWorld → reconcile).
+	player.KnownPlayers = make(map[int32]bool)
 
 	player.IsTeleporting = true
 	_ = gl.world.UpdatePlayerPosition(context.Background(), cmd.CharID, dest, cmd.Heading)

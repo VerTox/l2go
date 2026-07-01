@@ -140,7 +140,7 @@ func TestNewCharInfo_HeadingPassthrough(t *testing.T) {
 	char := &models.Character{ID: 1, Name: "Hero", Race: 0, Sex: 1, ClassID: 0}
 	pos := &models.Position{X: 10, Y: 20, Z: 30}
 
-	ci := NewCharInfo(char, pos, nil, true, false, 0x7FFF)
+	ci := NewCharInfo(char, pos, [26]int32{}, true, false, 0x7FFF)
 	got := decodeCharInfo(t, BuildCharInfo(*ci))
 
 	if got.heading != 0x7FFF {
