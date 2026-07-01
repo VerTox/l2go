@@ -7,8 +7,10 @@ const (
 	SysMsgEarnedS1Exp            = 45  // "You have earned $s1 experience."
 	SysMsgEarnedS1ExpAndS2SP     = 95  // "You have earned $s1 experience and $s2 SP."
 	SysMsgYouIncreasedYourLevel  = 96  // "Your level has increased!"
-	SysMsgCannotLogoutInCombat   = 101 // CANT_LOGOUT_WHILE_FIGHTING "You cannot exit the game while in combat."
-	SysMsgCannotRestartInCombat  = 102 // CANT_RESTART_WHILE_FIGHTING "You cannot restart while in combat."
+	SysMsgCannotLogoutInCombat   = 101  // CANT_LOGOUT_WHILE_FIGHTING "You cannot exit the game while in combat."
+	SysMsgCannotRestartInCombat  = 102  // CANT_RESTART_WHILE_FIGHTING "You cannot restart while in combat."
+	SysMsgTargetNotFound         = 145  // TARGET_IS_NOT_FOUND_IN_THE_GAME (TELL to offline player)
+	SysMsgDontSpam               = 1078 // DONT_SPAM "Please refrain from constant individual purchases."
 )
 
 // SystemMessage parameter types.
