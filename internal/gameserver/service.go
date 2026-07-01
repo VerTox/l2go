@@ -244,6 +244,26 @@ func (g *GameServer) initDatabase(ctx context.Context) error {
 		log.Ctx(ctx).Warn().Msg("Failed to load NPC templates from any path")
 	}
 
+	// Load map-region respawn data (nearest-town lookup for revive/teleport). (l2go-3xh.3)
+	mapRegionPaths := []string{
+		"data/mapregion",
+		"../../data/mapregion",
+		"references/data/mapregion",
+		"../../references/data/mapregion",
+	}
+	for _, dir := range mapRegionPaths {
+		if err := registry.GetMapRegionRegistry().LoadFromDirectory(dir); err == nil {
+			log.Ctx(ctx).Info().
+				Int("count", registry.GetMapRegionRegistry().Count()).
+				Str("dir", dir).
+				Msg("Map regions loaded successfully")
+			break
+		}
+	}
+	if !registry.GetMapRegionRegistry().IsLoaded() {
+		log.Ctx(ctx).Warn().Msg("Failed to load map regions from any path")
+	}
+
 	// Load NPC spawns from database and populate world
 	if npcTemplatesLoaded {
 		// Seed spawnlist table if empty (one-time import from L2J datapack)
