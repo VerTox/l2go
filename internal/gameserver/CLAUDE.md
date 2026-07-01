@@ -87,6 +87,7 @@ internal/gameserver/
 - **Combat stance**: `PlayerWorldState.InCombat` flag propagated to CharInfo/UserInfo packets. 15s timeout after last attack via `CombatStanceTimeoutEvent`
 - **Logout in combat**: Blocked with SystemMessage(1116) + ActionFailed. Allowed after combat stance expires
 - **NPC retaliation**: NPCs auto-attack back when hit (via hate list)
+- **No player auto-retaliation**: a player hit by a mob enters combat stance but does NOT auto-attack back — matches retail HF. L2J's `L2PlayerAI` doesn't override `onEvtAttacked`; the base `L2CharacterAI.onEvtAttacked` only calls `clientStartAutoAttack()` (stance/AutoAttackStart), never `doAttack`. Players attack only on explicit request. (l2go-i75)
 - **Death/respawn**: Die packet → corpse decay (7s) → respawn (60s) with new ObjectID
 
 ## Character Persistence
