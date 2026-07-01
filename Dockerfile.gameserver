@@ -1,0 +1,57 @@
+# Build stage
+FROM golang:1.23-alpine AS builder
+
+# Install git for go modules
+RUN apk add --no-cache git
+
+WORKDIR /app
+
+# Copy go mod files and download dependencies (cached layer)
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build the gameserver binary (migrations are embedded via go:embed, no data needed at build time)
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gameserver ./cmd/gameserver
+
+# Final stage
+FROM alpine:latest
+
+# ca-certificates for TLS, netcat for the healthcheck
+RUN apk --no-cache add ca-certificates netcat-openbsd
+
+# Create non-root user
+RUN addgroup -g 1001 -S l2go && \
+    adduser -u 1001 -S l2go -G l2go
+
+WORKDIR /app
+
+# Copy the binary from builder stage
+COPY --from=builder /app/gameserver .
+
+RUN chown -R l2go:l2go /app
+
+USER l2go
+
+# Defaults (overridden by docker-compose). Runtime data dirs are bind-mounted, not baked in.
+ENV POSTGRES_HOST=postgres \
+    POSTGRES_PORT=5432 \
+    POSTGRES_USERNAME=postgres \
+    POSTGRES_PASSWORD=postgres \
+    POSTGRES_DATABASE=l2go_gameserver \
+    LOGIN_SERVER_HOST=loginserver \
+    LOGIN_SERVER_PORT=9014 \
+    GAME_HOST=0.0.0.0 \
+    GAME_PORT=7777 \
+    GAME_SERVER_PORT=7777 \
+    EXTERNAL_HOST=127.0.0.1 \
+    LOG_LEVEL=info
+
+EXPOSE 7777
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD nc -z localhost 7777 || exit 1
+
+ENTRYPOINT ["./gameserver"]

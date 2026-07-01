@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -52,6 +50,45 @@ services:
       - ./cmd/loginserver/.env:/app/.env:ro
     healthcheck:
       test: ["CMD-SHELL", "nc -z localhost 2106 || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  gameserver:
+    build:
+      context: .
+      dockerfile: Dockerfile.gameserver
+    container_name: l2go-gameserver
+    ports:
+      - "7777:7777"  # Client connections
+    depends_on:
+      postgres:
+        condition: service_healthy
+      loginserver:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - l2go-network
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USERNAME=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DATABASE=l2go_gameserver
+      - LOGIN_SERVER_HOST=loginserver
+      - LOGIN_SERVER_PORT=9014
+      - GAME_HOST=0.0.0.0
+      - GAME_PORT=7777
+      - GAME_SERVER_PORT=7777
+      - EXTERNAL_HOST=127.0.0.1
+      - LOG_LEVEL=info
+    volumes:
+      # Runtime data (not baked into the image). Item templates are read from
+      # data/stats/items (a host symlink into references/data), so mount that path explicitly.
+      - ./references/data:/app/references/data:ro
+      - ./references/data/stats/items:/app/data/stats/items:ro
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 7777 || exit 1"]
       interval: 30s
       timeout: 3s
       retries: 3

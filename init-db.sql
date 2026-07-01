@@ -1,8 +1,10 @@
 -- L2Go Database Initialization Script
 -- This script is executed when the PostgreSQL container starts for the first time
 
--- Create additional databases if needed
--- CREATE DATABASE l2go_game;
+-- Create the gameserver database if it does not exist (runs once on a fresh volume).
+-- CREATE DATABASE cannot use IF NOT EXISTS, so generate it conditionally via \gexec.
+SELECT 'CREATE DATABASE l2go_gameserver'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'l2go_gameserver')\gexec
 
 -- Create user with appropriate permissions (optional, since we're using postgres user)
 -- CREATE USER l2go_user WITH PASSWORD 'l2go_password';

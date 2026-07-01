@@ -43,8 +43,10 @@ docker-compose*.yml
 .DS_Store
 Thumbs.db
 
-# Reference Java code (not needed in container)
+# Reference Java code + datapack (not needed to compile; data is bind-mounted at runtime)
 l2jserver/
+references/
+data/
 
 # Legacy files
 loginserver/
