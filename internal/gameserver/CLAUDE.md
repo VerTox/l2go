@@ -98,6 +98,12 @@ internal/gameserver/
 - **Save-on-shutdown**: after `eg.Wait()` (loop stopped → progress stable) the saver is flushed, then `saveOnlinePlayersOnShutdown` writes the freshest snapshot under the registry lock, **then** the DB closes. Order matters: flush old queued copies before the authoritative shutdown save so a stale copy can't overwrite it.
 - **Position**: `movement.UpdatePosition` writes **only** the in-memory registry (no per-move DB write — it fires on every move start/stop and ~1-2s standing ValidatePosition). Position reaches the DB via the same unified persist (autosave/shutdown/logout), baked into each snapshot from `PlayerWorldState.Position`. On crash, position is ≤5 min stale (same tolerance as EXP/HP).
 
+## Goroutine Ownership (read before touching world state)
+
+- **Player visibility → game loop.** `PlayerWorldState.KnownPlayers` is written **only** by the loop goroutine (`gameloop/visibility.go`: `reconcilePlayerVisibility` on movement/enter-world, `despawnPlayerFromAll` on disconnect, cleared on teleport). Handlers must **not** touch it — route through commands (`CmdPlayerEnteredWorld`, `CmdPlayerDisconnected`). Spawn/despawn is bidirectional (a stationary player still sees a mover) and driven off the authoritative server position.
+- **NPC visibility → the player's own connection goroutine.** `KnownNPCs` is touched only by that player's handler (`updateNPCVisibility`, `establishNpcVisibility`). Never from the loop.
+- **Visibility distance** is one shared pair in `registry/visibility.go`: `VisibilityWatchRadius` (3400, spawn) / `VisibilityForgetRadius` (3900, despawn) — hysteresis, L2J HF. `broadcastRadius` = forget. Change in one place.
+
 ## Account Name Canonicalization
 
 - Account names are **case-insensitive**, stored/compared as **lowercase everywhere** (matches L2J). Normalize at every ingress with `models.NormalizeAccountName` (lowercase + trim).
