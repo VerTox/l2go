@@ -575,6 +575,28 @@ func (g *GameServer) SendAuthRequest(ctx context.Context) error {
 	return g.sendAuthRequest(ctx)
 }
 
+// buildServerAddresses builds the paired subnet/host lists reported to the
+// LoginServer. The LoginServer relays the host matching a connecting client's
+// IP back to that client. Local clients (127.0.0.0/8) always get 127.0.0.1;
+// everyone else (0.0.0.0/0 fallback) gets the configured external host.
+//
+// externalHost may be an IP literal or a hostname. It is passed through as-is
+// so the LoginServer can resolve hostnames; only a valid IP literal is
+// normalized via net.IP.String(). An empty value falls back to 127.0.0.1 to
+// avoid advertising an unreachable "<nil>" address.
+func buildServerAddresses(externalHost string) (subnets, hosts []string) {
+	external := externalHost
+	if external == "" {
+		external = "127.0.0.1"
+	} else if ip := net.ParseIP(external); ip != nil {
+		external = ip.String()
+	}
+
+	subnets = []string{"127.0.0.0/8", "0.0.0.0/0"}
+	hosts = []string{"127.0.0.1", external}
+	return subnets, hosts
+}
+
 func (g *GameServer) sendAuthRequest(ctx context.Context) error {
 	log.Ctx(ctx).Info().Msg("Sending AuthRequest to LoginServer")
 
@@ -582,13 +604,7 @@ func (g *GameServer) sendAuthRequest(ctx context.Context) error {
 	// For now, use a simple placeholder
 	hexID := []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}
 
-	// TODO: Configure proper subnet/host lists
-	subnets := []string{"127.0.0.0/8"}
-	hosts := []string{"127.0.0.1"}
-
-	extIP := net.ParseIP(g.config.externalIP)
-	subnets = append(subnets, "0.0.0.0/0")
-	hosts = append(hosts, extIP.String())
+	subnets, hosts := buildServerAddresses(g.config.externalIP)
 
 	err := g.loginServerHandler.SendAuthRequest(g.usc.serverConfig, hexID, subnets, hosts)
 	if err != nil {
