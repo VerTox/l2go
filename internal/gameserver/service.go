@@ -392,8 +392,8 @@ func (g *GameServer) runMigrations(ctx context.Context) error {
 }
 
 func (g *GameServer) prepareUseCases() {
-	// Initialize mock implementations (TODO: replace with real implementations)
-	g.usc.playerManager = usecase.NewMockPlayerManager()
+	// Player manager backed by the character repository (real character counts). (l2go-rx4)
+	g.usc.playerManager = usecase.NewPlayerManager(g.repo.Character())
 
 	// Initialize server config with real values from service config
 	g.usc.serverConfig = usecase.NewServerConfigWithParams(
@@ -421,6 +421,11 @@ func (g *GameServer) prepareUseCases() {
 		g.usc.serverConfig,
 		g.SetAuthenticated, // Callback to update authentication status
 		g.SendAuthRequest,  // Callback to send AuthRequest after InitLS
+		// Callback to reply with the account's character count. loginServerHandler is set
+		// in prepareHandlers (right after this), well before any RequestCharacters arrives.
+		func(account string, charCount, charsInDel int) error {
+			return g.loginServerHandler.SendReplyCharacters(account, charCount, charsInDel)
+		},
 	)
 }
 

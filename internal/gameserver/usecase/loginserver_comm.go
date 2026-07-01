@@ -21,6 +21,8 @@ type LoginServerCommUseCaseImpl struct {
 	onAuthenticatedCallback func(bool)
 	// Callback for sending AuthRequest after InitLS processing
 	onSendAuthRequestCallback func(context.Context) error
+	// Callback for sending ReplyCharacters back to the LoginServer
+	onSendReplyCharacters func(account string, charCount, charsInDel int) error
 }
 
 // NewLoginServerCommUseCase creates a new LoginServerCommUseCase
@@ -41,12 +43,13 @@ func NewLoginServerCommUseCaseWithCallback(playerManager PlayerManager, serverCo
 }
 
 // NewLoginServerCommUseCaseWithCallbacks creates a new LoginServerCommUseCase with multiple callbacks
-func NewLoginServerCommUseCaseWithCallbacks(playerManager PlayerManager, serverConfig ServerConfig, onAuthenticatedCallback func(bool), onSendAuthRequestCallback func(context.Context) error) LoginServerCommUseCase {
+func NewLoginServerCommUseCaseWithCallbacks(playerManager PlayerManager, serverConfig ServerConfig, onAuthenticatedCallback func(bool), onSendAuthRequestCallback func(context.Context) error, onSendReplyCharacters func(account string, charCount, charsInDel int) error) LoginServerCommUseCase {
 	return &LoginServerCommUseCaseImpl{
 		playerManager:             playerManager,
 		serverConfig:              serverConfig,
 		onAuthenticatedCallback:   onAuthenticatedCallback,
 		onSendAuthRequestCallback: onSendAuthRequestCallback,
+		onSendReplyCharacters:     onSendReplyCharacters,
 	}
 }
 
@@ -151,9 +154,16 @@ func (uc *LoginServerCommUseCaseImpl) HandleRequestCharacters(ctx context.Contex
 		Int("chars_in_del", charsInDel).
 		Msg("Retrieved character count")
 
-	// TODO: Send ReplyCharacters packet back to LoginServer
-	log.Ctx(ctx).Warn().Msg("TODO: Implement ReplyCharacters packet sending")
-
+	// Send ReplyCharacters back to the LoginServer so the account's character count is
+	// correct on the server-select screen.
+	if uc.onSendReplyCharacters == nil {
+		log.Ctx(ctx).Warn().Msg("no ReplyCharacters sender configured — reply skipped")
+		return nil
+	}
+	if err := uc.onSendReplyCharacters(packet.GetAccount(), charCount, charsInDel); err != nil {
+		log.Ctx(ctx).Error().Err(err).Str("account", packet.GetAccount()).Msg("failed to send ReplyCharacters")
+		return err
+	}
 	return nil
 }
 

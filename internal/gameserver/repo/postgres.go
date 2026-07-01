@@ -411,14 +411,17 @@ func (r *CharacterRepositoryImpl) Delete(ctx context.Context, charID int32) erro
 	return nil
 }
 
-// GetCount returns total and in-deletion character count for account
+// GetCount returns total and in-deletion character count for account.
+// Account matching is case-insensitive: the LoginServer lowercases account names
+// (RequestCharacters sends e.g. "vertox"), while characters may be stored with the
+// original case ("VerTox"), so a case-sensitive match would return 0. (l2go-rx4)
 func (r *CharacterRepositoryImpl) GetCount(ctx context.Context, accountName string) (int, int, error) {
 	query := `
-		SELECT 
+		SELECT
 			COUNT(*) as total,
 			COUNT(*) FILTER (WHERE delete_time > 0) as in_deletion
-		FROM characters 
-		WHERE account_name = $1`
+		FROM characters
+		WHERE LOWER(account_name) = LOWER($1)`
 
 	var total, inDeletion int
 	err := r.db.QueryRow(ctx, query, accountName).Scan(&total, &inDeletion)

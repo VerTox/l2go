@@ -23,5 +23,14 @@ func (rc *ReplyCharacters) GetData() []byte {
 	buffer.WriteC(byte(rc.charCount))
 	buffer.WriteC(byte(rc.charsInDel))
 
+	// L2J writes one deletion timestamp (writeQ) per character pending deletion, and the
+	// LoginServer reads exactly charsInDel of them — so we MUST write that many to keep
+	// the stream aligned. We don't plumb the real delete_time values yet, so send zeros.
+	// The char-select deletion countdown is driven by the game server's CharSelectionInfo,
+	// not this packet; real timestamps here are a minor follow-up. (l2go-rx4)
+	for i := 0; i < rc.charsInDel; i++ {
+		buffer.WriteQ(0)
+	}
+
 	return buffer.Bytes()
 }
