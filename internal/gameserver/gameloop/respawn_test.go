@@ -40,6 +40,32 @@ func TestHandleTeleportRelocatesAndFlags(t *testing.T) {
 	}
 }
 
+// TestHandleReviveRestoresHPAndTeleports verifies that a revive restores full HP and
+// relocates the (dead) player to the respawn point. (l2go-3xh.4)
+func TestHandleReviveRestoresHPAndTeleports(t *testing.T) {
+	gl, player := newTestLoopWithPlayer(t)
+	player.Character.MaxHP = 500
+	player.Character.CurrentHP = 0 // dead
+	player.Position = models.Position{X: 1000, Y: 1000, Z: 100}
+
+	gl.handleRevive(CmdRevive{
+		CharID:  7,
+		Dest:    models.Position{X: -83990, Y: 243336, Z: -3700},
+		Heading: 0,
+	})
+
+	if player.Character.CurrentHP != 500 {
+		t.Errorf("CurrentHP = %v, want full 500", player.Character.CurrentHP)
+	}
+	if !player.IsTeleporting {
+		t.Error("expected a teleport in flight after revive")
+	}
+	wantZ := -3700 + teleportZOffset
+	if player.Position.X != -83990 || player.Position.Y != 243336 || player.Position.Z != wantZ {
+		t.Errorf("position = %+v, want town respawn with z+5 (=%d)", player.Position, wantZ)
+	}
+}
+
 // TestRegisterWorldSpawnsPopulatesSpawnInfo verifies that spawn data is registered
 // for NPCs already loaded into the world, so RespawnEvent can find it. Without this
 // npcSpawnInfo is empty at startup and no NPC ever respawns ('spawn info not found').

@@ -76,3 +76,13 @@ type CmdTeleport struct {
 }
 
 func (CmdTeleport) commandMarker() {}
+
+// CmdRevive — resurrect a dead player and teleport it to a respawn point (Dest).
+// Restores HP, broadcasts Revive, then teleports. Used by RequestRestartPoint.
+type CmdRevive struct {
+	CharID  int32
+	Dest    models.Position
+	Heading int32
+}
+
+func (CmdRevive) commandMarker() {}

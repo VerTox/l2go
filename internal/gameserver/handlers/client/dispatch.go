@@ -163,6 +163,7 @@ func buildRegistry() *Registry {
 	// --- StateInGame: игрок в мире ---
 	r.simple[StateInGame][0x1f] = packetEntry{Name: "Action", Handle: (*Handler).handleAction}
 	r.simple[StateInGame][0x3a] = packetEntry{Name: "Appearing", Handle: (*Handler).handleAppearing}
+	r.simple[StateInGame][0x7d] = packetEntry{Name: "RequestRestartPoint", Handle: (*Handler).handleRequestRestartPoint}
 	r.simple[StateInGame][0x48] = packetEntry{Name: "RequestTargetCancel", Handle: (*Handler).handleRequestTargetCancel}
 	r.simple[StateInGame][0x0f] = packetEntry{Name: "MoveBackwardToLocation", Handle: (*Handler).handleMoveBackwardToLocation}
 	r.simple[StateInGame][0x59] = packetEntry{Name: "ValidatePosition", Handle: (*Handler).handleValidatePosition}

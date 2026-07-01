@@ -54,3 +54,22 @@ func (gl *GameLoop) handleTeleport(cmd CmdTeleport) {
 	player.IsTeleporting = true
 	_ = gl.world.UpdatePlayerPosition(context.Background(), cmd.CharID, dest, cmd.Heading)
 }
+
+// handleRevive resurrects a dead player and teleports it to the respawn point. Restores
+// HP to full, broadcasts Revive (clears the death state client-side), then reuses the
+// teleport primitive to move the player to the destination. (l2go-3xh.4)
+func (gl *GameLoop) handleRevive(cmd CmdRevive) {
+	player, exists := gl.world.GetPlayer(cmd.CharID)
+	if !exists || player.Character == nil {
+		return
+	}
+
+	// Restore HP before Revive so the UserInfo the client gets on Appearing shows it.
+	player.Character.CurrentHP = float64(player.Character.MaxHP)
+
+	// Revive clears the death state on the reviving client and everyone watching.
+	gl.broadcastToNearby(player.Position, outclient.BuildRevive(cmd.CharID))
+
+	// Relocate to the respawn point (broadcasts TeleportToLocation, decays, moves).
+	gl.handleTeleport(CmdTeleport{CharID: cmd.CharID, Dest: cmd.Dest, Heading: cmd.Heading})
+}

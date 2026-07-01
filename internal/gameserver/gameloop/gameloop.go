@@ -200,6 +200,8 @@ func (gl *GameLoop) processCommand(cmd Command) {
 		gl.handleMoveToLocation(c)
 	case CmdTeleport:
 		gl.handleTeleport(c)
+	case CmdRevive:
+		gl.handleRevive(c)
 	}
 }
 

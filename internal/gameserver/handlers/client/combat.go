@@ -15,8 +15,6 @@ func registerCombatStubs(r *Registry) {
 	r.registerStub(StateInGame, 0x5b, "StartRotating")
 	// FinishRotating (0x5c): конец поворота персонажа.
 	r.registerStub(StateInGame, 0x5c, "FinishRotating")
-	// RequestRestartPoint (0x7d): выбор точки воскрешения после смерти.
-	r.registerStub(StateInGame, 0x7d, "RequestRestartPoint")
 	// RequestExMagicSkillUseGround (0xD0:0x44): применение скилла по точке на земле.
 	r.registerMultiStub(StateInGame, 0x44, "RequestExMagicSkillUseGround")
 	// RequestDispel (0xD0:0x4b): снять баф/дебаф.
