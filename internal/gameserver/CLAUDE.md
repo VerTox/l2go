@@ -89,6 +89,15 @@ internal/gameserver/
 - **NPC retaliation**: NPCs auto-attack back when hit (via hate list)
 - **Death/respawn**: Die packet → corpse decay (7s) → respawn (60s) with new ObjectID
 
+## Character Persistence
+
+- **Sole writer**: the game loop mutates `player.Character` progress (EXP/SP/level/HP) **without a lock**. Never read those fields from another goroutine — snapshot instead.
+- **Async saver** (`service.go run()`): a goroutine drains `saveCh chan models.Character` and calls `charRepo.Update`. The loop enqueues **value-copy** snapshots (`PlayerWorldState.SnapshotCharacter`) so DB latency never stalls the tick and the write can't race the loop.
+- **Autosave**: every 5 min the loop snapshots all online players to `saveCh` (timer inside `tick`, like region cleanup).
+- **Level-up**: persisted immediately (`experience.go`, in the level-up branch).
+- **Save-on-shutdown**: after `eg.Wait()` (loop stopped → progress stable) the saver is flushed, then `saveOnlinePlayersOnShutdown` writes the freshest snapshot under the registry lock, **then** the DB closes. Order matters: flush old queued copies before the authoritative shutdown save so a stale copy can't overwrite it.
+- **Position**: also persisted async during movement (`movement.UpdatePosition`), and baked into every snapshot from `PlayerWorldState.Position`.
+
 ## Known Limitations
 
 - Movement speed computed per-character (base×DEX from race/class); item/buff modifiers are a no-op hook (`applyMoveSpeedBonus`) pending item-stats/skill systems

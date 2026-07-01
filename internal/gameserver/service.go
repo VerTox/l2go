@@ -719,55 +719,97 @@ func (g *GameServer) Run(ctx context.Context) error {
 }
 
 func (g *GameServer) run(ctx context.Context) error {
-	eg, ctx := errgroup.WithContext(ctx)
+	// Async character saver: the game loop enqueues value-copy snapshots (autosave +
+	// level-up) here, and this goroutine performs the DB writes so persistence latency
+	// never stalls the loop. It lives outside the errgroup so it stays alive through
+	// shutdown to flush anything still queued before the DB closes.
+	saveCh := make(chan models.Character, 256)
+	saverDone := make(chan struct{})
+	go func() {
+		defer close(saverDone)
+		for char := range saveCh {
+			if err := g.repo.Character().Update(context.Background(), &char); err != nil {
+				log.Ctx(ctx).Error().Err(err).Int32("char_id", char.ID).Msg("autosave: failed to persist character")
+			}
+		}
+	}()
+	g.gameLoop.SetPersistSink(saveCh)
+
+	eg, egctx := errgroup.WithContext(ctx)
 
 	// Start heartbeat routine
 	eg.Go(func() error {
-		g.startHeartbeat(ctx)
+		g.startHeartbeat(egctx)
 		return nil
 	})
 
 	// Start world cleanup routine
 	eg.Go(func() error {
-		g.startWorldCleanup(ctx)
+		g.startWorldCleanup(egctx)
 		return nil
 	})
 
 	// Start game loop
 	eg.Go(func() error {
-		return g.gameLoop.Run(ctx)
+		return g.gameLoop.Run(egctx)
 	})
 
 	// Start game client listener
 	eg.Go(func() error {
-		return clienttransport.ListenAndServe(ctx, g.config.gameListener(), g.handlers.client.Handle)
+		return clienttransport.ListenAndServe(egctx, g.config.gameListener(), g.handlers.client.Handle)
 	})
 
-	// Graceful shutdown
-	eg.Go(func() error {
-		<-ctx.Done()
+	// Wait for every worker — the game loop included — to stop before touching shared
+	// state. Once this returns, no goroutine mutates character progress anymore, so
+	// the shutdown save below is race-free.
+	err := eg.Wait()
 
-		log.Ctx(ctx).Info().Msg("GameServer shutting down...")
+	log.Ctx(ctx).Info().Msg("GameServer shutting down...")
 
-		// Disconnect from LoginServer
-		if g.loginServerHandler != nil {
-			g.loginServerHandler.Disconnect()
+	// Flush queued autosave snapshots first (they are older), then close the saver so
+	// the authoritative shutdown save below wins over any stale queued copy.
+	close(saveCh)
+	<-saverDone
+
+	// Save-on-shutdown: persist the freshest snapshot of every online player before
+	// the DB closes, so a graceful stop never loses session progress.
+	g.saveOnlinePlayersOnShutdown(context.Background())
+
+	// Disconnect from LoginServer
+	if g.loginServerHandler != nil {
+		g.loginServerHandler.Disconnect()
+	}
+
+	// Close database connection (after all saves have completed)
+	if g.db != nil {
+		g.db.Close()
+		log.Ctx(ctx).Info().Msg("Database connection closed")
+	}
+
+	log.Ctx(ctx).Info().Msg("GameServer shutdown complete")
+	return err
+}
+
+// saveOnlinePlayersOnShutdown persists every online player's character to the DB.
+// Called after the game loop has stopped, so character progress fields are stable;
+// the snapshot is taken under the registry lock to serialize with any lingering
+// connection goroutines still writing position.
+func (g *GameServer) saveOnlinePlayersOnShutdown(ctx context.Context) {
+	snapshots := g.world.SnapshotOnlineCharacters()
+	if len(snapshots) == 0 {
+		return
+	}
+
+	saved := 0
+	for i := range snapshots {
+		if err := g.repo.Character().Update(ctx, &snapshots[i]); err != nil {
+			log.Ctx(ctx).Error().Err(err).Int32("char_id", snapshots[i].ID).Msg("save-on-shutdown: failed to persist character")
+			continue
 		}
+		saved++
+	}
 
-		// Close database connection
-		if g.db != nil {
-			g.db.Close()
-			log.Ctx(ctx).Info().Msg("Database connection closed")
-		}
-
-		// TODO: Close client handlers
-		// g.handlers.client.Close()
-
-		log.Ctx(ctx).Info().Msg("GameServer shutdown complete")
-		return nil
-	})
-
-	return eg.Wait()
+	log.Ctx(ctx).Info().Int("saved", saved).Int("total", len(snapshots)).Msg("Saved online players on shutdown")
 }
 
 // GetStatus returns current server status

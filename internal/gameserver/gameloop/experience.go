@@ -78,6 +78,9 @@ func (gl *GameLoop) awardExpForNPCKill(npc *models.NpcInstance) {
 		if leveledUp {
 			player.Character.Level = newLevel
 			gl.applyLevelUp(player, oldLevel, newLevel)
+			// Persist immediately: a level-up is the most painful progress to lose
+			// on a crash. Async (value-copy) write, so it does not stall the loop.
+			gl.persistPlayer(player)
 		}
 
 		// Send notifications to the player

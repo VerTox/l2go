@@ -20,6 +20,7 @@ const (
 	combatStanceTimeout   = 15 * time.Second
 	broadcastRadius       = 2500
 	regionCleanupInterval = 10 * time.Second
+	autosaveInterval      = 5 * time.Minute
 )
 
 // SpawnInfo stores the original spawn data for respawning an NPC.
@@ -56,6 +57,10 @@ type GameLoop struct {
 	// Configurable server rates
 	expRate float64
 	spRate  float64
+
+	// persistSink receives value-copy character snapshots for async persistence
+	// (autosave + level-up). nil until SetPersistSink is called.
+	persistSink chan<- models.Character
 }
 
 // New creates a new GameLoop. expRate and spRate control experience/SP multipliers (default 1.0).
@@ -114,6 +119,7 @@ func (gl *GameLoop) Run(ctx context.Context) error {
 	defer ticker.Stop()
 
 	lastRegionCleanup := time.Now()
+	lastAutosave := time.Now()
 
 	log.Info().Msg("Game loop started")
 
@@ -131,6 +137,14 @@ func (gl *GameLoop) Run(ctx context.Context) error {
 			if time.Since(lastRegionCleanup) > regionCleanupInterval {
 				gl.deactivateStaleRegions()
 				lastRegionCleanup = time.Now()
+			}
+
+			// Periodic autosave of online players (crash-loss safety net). Runs on
+			// this goroutine so character reads are race-free; the DB write happens
+			// off-loop via the persist sink.
+			if time.Since(lastAutosave) > autosaveInterval {
+				gl.autosaveOnlinePlayers()
+				lastAutosave = time.Now()
 			}
 		}
 	}
