@@ -415,7 +415,8 @@ func (h *Handler) handleRequestItemList(ctx context.Context, c *client.ClientCon
 		return nil
 	}
 
-	itemlist := h.buildItemListPacket(ctx, playerState.Character)
+	// Client-initiated RequestItemList: open the inventory window (L2J sends true).
+	itemlist := h.buildItemListPacket(ctx, playerState.Character, true)
 
 	c.Send(itemlist)
 

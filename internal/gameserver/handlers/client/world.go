@@ -83,7 +83,8 @@ func (h *Handler) sendWorldEntryPackets(ctx context.Context, c *client.ClientCon
 		return fmt.Errorf("failed to send ShortCut: %w", err)
 	}
 
-	itemListData := h.buildItemListPacket(ctx, char)
+	// World entry: send inventory contents but keep the window closed (L2J parity).
+	itemListData := h.buildItemListPacket(ctx, char, false)
 	if err := c.Send(itemListData); err != nil {
 		return fmt.Errorf("failed to send ItemList: %w", err)
 	}
@@ -426,7 +427,11 @@ func (h *Handler) BuildShortCutPacket(char *models.Character) []byte {
 	return outclient.BuildShortCutInit(shortCut)
 }
 
-func (h *Handler) buildItemListPacket(ctx context.Context, char *models.Character) []byte {
+// buildItemListPacket builds the ItemList (0x11) packet. showWindow controls the
+// leading flag: L2J opens the inventory window only in response to a client
+// RequestItemList (true); it stays closed on world entry (false) so the inventory
+// does not auto-open. See l2go-9j1.
+func (h *Handler) buildItemListPacket(ctx context.Context, char *models.Character, showWindow bool) []byte {
 	// Load character items for debugging
 	items, err := h.characterUseCase.GetCharacterAllItems(ctx, char.ID)
 	if err != nil {
@@ -435,7 +440,7 @@ func (h *Handler) buildItemListPacket(ctx context.Context, char *models.Characte
 			Msg("failed to load character items for ItemList")
 		// Return empty list on error
 		itemList := outclient.ItemList{
-			ShowWindow: false,
+			ShowWindow: showWindow,
 			Items:      []outclient.ItemEntry{},
 		}
 		return l2pkt.BuildPacket(itemList)
@@ -451,7 +456,7 @@ func (h *Handler) buildItemListPacket(ctx context.Context, char *models.Characte
 		Msg("Converted items for ItemList")
 
 	itemList := outclient.ItemList{
-		ShowWindow: false, // Don't show inventory window automatically
+		ShowWindow: showWindow,
 		Items:      itemEntries,
 	}
 
