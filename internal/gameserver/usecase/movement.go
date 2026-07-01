@@ -9,7 +9,6 @@ import (
 
 	"github.com/VerTox/l2go/internal/gameserver/models"
 	"github.com/VerTox/l2go/internal/gameserver/registry"
-	"github.com/VerTox/l2go/internal/gameserver/repo"
 )
 
 // MovementUseCase interface defines movement-related business logic
@@ -61,20 +60,19 @@ type MovementBroadcast struct {
 // movementUseCase implements MovementUseCase interface
 type movementUseCase struct {
 	worldRegistry *registry.WorldRegistry
-	charRepo      repo.CharacterRepository
 	validator     *MovementValidator
 	logger        zerolog.Logger
 }
 
-// NewMovementUseCase creates a new movement use case
+// NewMovementUseCase creates a new movement use case. Movement works purely against
+// the in-memory world registry — position persistence is owned by the unified
+// autosave/shutdown/logout mechanism, so no character repository is needed here.
 func NewMovementUseCase(
 	worldRegistry *registry.WorldRegistry,
-	charRepo repo.CharacterRepository,
 	logger zerolog.Logger,
 ) MovementUseCase {
 	return &movementUseCase{
 		worldRegistry: worldRegistry,
-		charRepo:      charRepo,
 		validator:     NewMovementValidator(),
 		logger:        logger.With().Str("component", "movement").Logger(),
 	}
@@ -196,38 +194,22 @@ func (uc *movementUseCase) ValidateMovement(
 	return uc.validator.ValidateMovementRequest(charID, from, to, isRunning)
 }
 
-// UpdatePosition updates character position in world and database
+// UpdatePosition updates character position in the in-memory world registry, which
+// is the source of truth during play. It deliberately does NOT write to the DB:
+// position is persisted by the unified mechanism (periodic autosave, save-on-shutdown,
+// logout/restart). This is called on every movement start/stop and on each standing
+// ValidatePosition (~1-2s), so per-call DB writes would flood the database and add a
+// goroutine per call for no benefit — the registry already holds the live position.
 func (uc *movementUseCase) UpdatePosition(
 	ctx context.Context,
 	charID int32,
 	position models.Position,
 	heading int32,
 ) error {
-	logger := uc.logger.With().
-		Int32("char_id", charID).
-		Int("x", position.X).
-		Int("y", position.Y).
-		Int("z", position.Z).
-		Int32("heading", heading).
-		Logger()
-	
-	logger.Debug().Msg("updating position")
-	
-	// 1. Update world registry
 	if err := uc.worldRegistry.UpdatePlayerPosition(ctx, charID, position, heading); err != nil {
-		logger.Error().Err(err).Msg("failed to update world registry")
+		uc.logger.Error().Err(err).Int32("char_id", charID).Msg("failed to update world position")
 		return fmt.Errorf("failed to update world position: %w", err)
 	}
-	
-	// 2. Update database (async for performance)
-	go func() {
-		ctx := context.Background()
-		if err := uc.updateDatabasePosition(ctx, charID, position, heading); err != nil {
-			logger.Error().Err(err).Msg("failed to update database position")
-		}
-	}()
-	
-	logger.Debug().Msg("position updated successfully")
 	return nil
 }
 
@@ -399,31 +381,6 @@ func (uc *movementUseCase) updateMovementState(
 	// Position will be updated when client sends ValidatePosition or CannotMoveAnymore
 	
 	// Just update movement state - keep current position unchanged
-	return nil
-}
-
-// updateDatabasePosition updates character position in database
-func (uc *movementUseCase) updateDatabasePosition(
-	ctx context.Context,
-	charID int32,
-	position models.Position,
-	heading int32,
-) error {
-	// Get character from database
-	char, err := uc.charRepo.GetByID(ctx, charID)
-	if err != nil {
-		return fmt.Errorf("failed to get character: %w", err)
-	}
-	
-	// Update position
-	char.Position = position
-	char.SetHeading(int(heading))
-	
-	// Save to database
-	if err := uc.charRepo.Update(ctx, char); err != nil {
-		return fmt.Errorf("failed to update character position: %w", err)
-	}
-	
 	return nil
 }
 

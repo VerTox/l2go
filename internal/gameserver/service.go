@@ -407,7 +407,7 @@ func (g *GameServer) prepareUseCases() {
 	g.usc.character = usecase.NewCharacterUseCase(g.repo)
 	
 	// Initialize movement use case
-	g.usc.movement = usecase.NewMovementUseCase(g.world, g.repo.Character(), log.Logger)
+	g.usc.movement = usecase.NewMovementUseCase(g.world, log.Logger)
 	
 	// Initialize logout use case
 	g.usc.logout = usecase.NewLogoutUseCase(g.world, g.repo.Character(), log.Logger)

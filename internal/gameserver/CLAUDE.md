@@ -96,7 +96,7 @@ internal/gameserver/
 - **Autosave**: every 5 min the loop snapshots all online players to `saveCh` (timer inside `tick`, like region cleanup).
 - **Level-up**: persisted immediately (`experience.go`, in the level-up branch).
 - **Save-on-shutdown**: after `eg.Wait()` (loop stopped → progress stable) the saver is flushed, then `saveOnlinePlayersOnShutdown` writes the freshest snapshot under the registry lock, **then** the DB closes. Order matters: flush old queued copies before the authoritative shutdown save so a stale copy can't overwrite it.
-- **Position**: also persisted async during movement (`movement.UpdatePosition`), and baked into every snapshot from `PlayerWorldState.Position`.
+- **Position**: `movement.UpdatePosition` writes **only** the in-memory registry (no per-move DB write — it fires on every move start/stop and ~1-2s standing ValidatePosition). Position reaches the DB via the same unified persist (autosave/shutdown/logout), baked into each snapshot from `PlayerWorldState.Position`. On crash, position is ≤5 min stale (same tolerance as EXP/HP).
 
 ## Known Limitations
 
