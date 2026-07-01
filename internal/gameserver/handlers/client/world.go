@@ -700,17 +700,20 @@ func (h *Handler) sendPlayerSpawnToClient(ctx context.Context, c *client.ClientC
 		}
 	}
 
-	// Get character's current running/combat state from world registry
-	var isRunning bool = true // Default to running
-	var inCombat bool = false // Default to peaceful
+	// Get character's current running/combat state and heading from world registry
+	var isRunning bool = true    // Default to running
+	var inCombat bool = false     // Default to peaceful
+	var heading int32 = int32(char.Heading) // Fallback to persisted heading
 	if playerState, exists := h.world.GetPlayer(char.ID); exists {
 		isRunning = playerState.IsRunning
 		inCombat = playerState.InCombat
+		heading = playerState.Heading
 		logger.Debug().
 			Int32("char_id", char.ID).
 			Bool("is_running", isRunning).
 			Bool("in_combat", inCombat).
-			Msg("CharInfo: got running/combat state from world registry")
+			Int32("heading", heading).
+			Msg("CharInfo: got running/combat/heading state from world registry")
 	} else {
 		logger.Debug().
 			Int32("char_id", char.ID).
@@ -719,7 +722,7 @@ func (h *Handler) sendPlayerSpawnToClient(ctx context.Context, c *client.ClientC
 	}
 
 	// Create CharInfo packet for the other player with correct running/combat state
-	charInfo := outclient.NewCharInfo(char, &char.Position, equippedItems, isRunning, inCombat)
+	charInfo := outclient.NewCharInfo(char, &char.Position, equippedItems, isRunning, inCombat, heading)
 
 	logger.Debug().
 		Int("equipped_items", len(equippedItems)).

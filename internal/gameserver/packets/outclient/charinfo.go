@@ -1,8 +1,6 @@
 package outclient
 
 import (
-	"fmt"
-
 	"github.com/VerTox/l2go/internal/gameserver/models"
 	"github.com/VerTox/l2go/pkg/l2pkt"
 )
@@ -170,10 +168,7 @@ func BuildCharInfo(info CharInfo) []byte {
 	w := l2pkt.NewWriter()
 	w.WriteC(0x31) // CharInfo opcode for normal characters
 
-	// Debug logging for CharInfo packet
 	collisionRadius, collisionHeight := getCollisionValues(info.Race, info.Sex)
-	fmt.Printf("[DEBUG] CharInfo packet for %s (ID:%d) - Race:%d Sex:%d Position:(%d,%d,%d) Collision:(%.1f,%.1f)\n",
-		info.Name, info.ObjectID, info.Race, info.Sex, info.X, info.Y, info.Z, collisionRadius, collisionHeight)
 
 	// Position and identity
 	w.WriteD(info.X)
@@ -275,7 +270,14 @@ func BuildCharInfo(info CharInfo) []byte {
 	w.WriteD(info.AllyCrest)
 
 	// Status flags
-	w.WriteC(uint8(info.Sitting))   // Sitting flag
+	// L2J writes standing = 1, sitting = 0 (writeC(isSitting ? 0 : 1)), so a
+	// standing player MUST encode as 1 — writing the raw 0 makes the client render
+	// everyone seated on the ground.
+	if info.Sitting != 0 {
+		w.WriteC(0) // sitting
+	} else {
+		w.WriteC(1) // standing
+	}
 	w.WriteC(uint8(info.Running))   // Running flag
 	w.WriteC(uint8(info.InCombat))  // In combat flag
 	w.WriteC(uint8(info.Dead))      // Dead flag
@@ -315,8 +317,10 @@ func BuildCharInfo(info CharInfo) []byte {
 	w.WriteC(uint8(info.Noble))
 	w.WriteC(uint8(info.Hero))
 
-	// Fishing info
-	w.WriteD(info.FishingFlag)
+	// Fishing info — L2J writes the fishing flag as a single byte (writeC). Writing
+	// it as a 4-byte D shifts every following field (name color, heading, title
+	// color, ...) by 3 bytes, so the client reads garbage colors/heading.
+	w.WriteC(uint8(info.FishingFlag))
 	w.WriteD(info.FishingX)
 	w.WriteD(info.FishingY)
 	w.WriteD(info.FishingZ)
@@ -345,8 +349,10 @@ func BuildCharInfo(info CharInfo) []byte {
 	return w.Bytes()
 }
 
-// NewCharInfo creates a CharInfo packet from character and player state data
-func NewCharInfo(char *models.Character, playerState *models.Position, equipment []models.CharacterItem, isRunning bool, inCombat bool) *CharInfo {
+// NewCharInfo creates a CharInfo packet from character and player state data.
+// heading is the character's live facing (from the world registry); passing 0
+// makes every player face north.
+func NewCharInfo(char *models.Character, playerState *models.Position, equipment []models.CharacterItem, isRunning bool, inCombat bool, heading int32) *CharInfo {
 	// Compute stats once for this character
 	computed := computeCharInfoStats(char)
 
@@ -355,7 +361,7 @@ func NewCharInfo(char *models.Character, playerState *models.Position, equipment
 		X:        int32(playerState.X),
 		Y:        int32(playerState.Y),
 		Z:        int32(playerState.Z),
-		Heading:  0, // TODO: Get character heading from position data
+		Heading:  heading,
 		ObjectID: char.ID,
 		Name:     char.Name,
 
