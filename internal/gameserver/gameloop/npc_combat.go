@@ -206,6 +206,11 @@ func (gl *GameLoop) handlePlayerDeath(charID int32, player *registry.PlayerWorld
 	gl.stopAllNPCAttacksOnPlayer(charID)
 	gl.stopAttacker(charID)
 
+	// A dead player is no longer in combat (L2J: isInCombat resets on death). Clear the
+	// flag immediately rather than waiting out the 15s stance timeout — otherwise logout
+	// and restart stay blocked and the player is soft-locked until it expires. (l2go-3xh.1)
+	_ = gl.world.SetPlayerCombatState(charID, false)
+
 	log.Debug().
 		Int32("char_id", charID).
 		Str("name", player.Character.Name).
