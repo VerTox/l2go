@@ -447,6 +447,22 @@ func isValidClassForRace(race, classID int) bool {
 	return false
 }
 
+// ComputeCharacterStats computes derived combat stats for a character from its
+// base stats, level, and per-class combat base stats. Single source of truth for
+// stat calculation across handlers, gameloop, and movement.
+func ComputeCharacterStats(char *models.Character) models.ComputedStats {
+	baseStats := models.CharacterStats{
+		STR: char.BaseSTR,
+		DEX: char.BaseDEX,
+		CON: char.BaseCON,
+		INT: char.BaseINT,
+		WIT: char.BaseWIT,
+		MEN: char.BaseMEN,
+	}
+	combat := GetCombatBaseStatsByClass(char.ClassID)
+	return models.ComputeStats(baseStats, char.Level, combat)
+}
+
 // GetCombatBaseStatsByClass returns combat base stats for a given class ID.
 // This is used by handlers to compute stats when building packets.
 func GetCombatBaseStatsByClass(classID int) models.CombatBaseStats {

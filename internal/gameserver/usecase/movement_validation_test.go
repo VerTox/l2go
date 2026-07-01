@@ -210,42 +210,70 @@ func TestMovementValidator_ShouldCorrectPosition(t *testing.T) {
 
 func TestCalculateMovementTime(t *testing.T) {
 	tests := []struct {
-		name      string
-		distance  float64
-		isRunning bool
-		want      time.Duration
+		name     string
+		distance float64
+		speed    float64
+		want     time.Duration
 	}{
 		{
-			name:      "Walking 80 units",
-			distance:  80.0,
-			isRunning: false,
-			want:      time.Second, // 80 units / 80 units/sec = 1 second
+			name:     "80 units at speed 80",
+			distance: 80.0,
+			speed:    80.0,
+			want:     time.Second, // 80 / 80 = 1 second
 		},
 		{
-			name:      "Running 120 units",
-			distance:  120.0,
-			isRunning: true,
-			want:      time.Second, // 120 units / 120 units/sec = 1 second
+			name:     "120 units at speed 120",
+			distance: 120.0,
+			speed:    120.0,
+			want:     time.Second, // 120 / 120 = 1 second
 		},
 		{
-			name:      "Walking 40 units",
-			distance:  40.0,
-			isRunning: false,
-			want:      500 * time.Millisecond, // 40 units / 80 units/sec = 0.5 seconds
+			name:     "40 units at speed 80",
+			distance: 40.0,
+			speed:    80.0,
+			want:     500 * time.Millisecond, // 40 / 80 = 0.5 seconds
 		},
 		{
-			name:      "Running 240 units",
-			distance:  240.0,
-			isRunning: true,
-			want:      2 * time.Second, // 240 units / 120 units/sec = 2 seconds
+			name:     "240 units at speed 120",
+			distance: 240.0,
+			speed:    120.0,
+			want:     2 * time.Second, // 240 / 120 = 2 seconds
+		},
+		{
+			name:     "computed speed from stats (150 units/sec)",
+			distance: 300.0,
+			speed:    150.0,
+			want:     2 * time.Second, // 300 / 150 = 2 seconds
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := CalculateMovementTime(tt.distance, tt.isRunning)
+			got := CalculateMovementTime(tt.distance, tt.speed)
 			if got != tt.want {
 				t.Errorf("CalculateMovementTime() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPlayerMoveSpeed(t *testing.T) {
+	computed := models.ComputedStats{RunSpd: 130, WalkSpd: 85}
+
+	tests := []struct {
+		name      string
+		isRunning bool
+		want      float64
+	}{
+		{name: "running uses RunSpd", isRunning: true, want: 130},
+		{name: "walking uses WalkSpd", isRunning: false, want: 85},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := PlayerMoveSpeed(computed, tt.isRunning)
+			if got != tt.want {
+				t.Errorf("PlayerMoveSpeed() = %v, want %v", got, tt.want)
 			}
 		})
 	}

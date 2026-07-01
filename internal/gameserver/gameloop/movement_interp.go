@@ -35,9 +35,10 @@ func distanceBetween(a, b models.Position) float64 {
 }
 
 // stepPlayerMovement computes a moving player's position at time `now` via
-// server-side interpolation, and whether the move has completed.
-func stepPlayerMovement(player *registry.PlayerWorldState, now time.Time) (models.Position, bool) {
+// server-side interpolation, and whether the move has completed. `speed` is the
+// player's effective movement speed (units/sec) from PlayerMoveSpeed.
+func stepPlayerMovement(player *registry.PlayerWorldState, speed float64, now time.Time) (models.Position, bool) {
 	distance := distanceBetween(player.MoveStartPos, player.MoveDestination)
-	total := usecase.CalculateMovementTime(distance, player.IsRunning)
+	total := usecase.CalculateMovementTime(distance, speed)
 	return interpolatePosition(player.MoveStartPos, player.MoveDestination, now.Sub(player.MoveStarted), total)
 }

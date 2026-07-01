@@ -11,11 +11,8 @@ import (
 // MovementValidator provides anti-cheat validation for character movement
 // Based on Java L2J movement validation system
 type MovementValidator struct {
-	// Base movement speeds (L2J units per second)
-	maxWalkSpeed float64
-	maxRunSpeed  float64
-	
-	// L2J validation parameters
+	// L2J validation parameters (movement speed is now computed per-character;
+	// the validator only enforces teleport/bounds limits, not per-tick speed)
 	maxMovementDistance   float64 // Maximum movement distance per request (L2J: 9900)
 	correctionThreshold   float64 // Position correction threshold (L2J: ~500)
 	maxPositionDeviation  float64 // Maximum acceptable position difference (L2J: ~600)
@@ -24,19 +21,13 @@ type MovementValidator struct {
 // NewMovementValidator creates a new movement validator with L2J-compatible settings
 func NewMovementValidator() *MovementValidator {
 	const (
-		// L2J base movement speeds (units per second)
-		baseWalkSpeed = 80.0  // Standard walking speed
-		baseRunSpeed  = 120.0 // Standard running speed
-		
 		// L2J movement validation constants (from MoveBackwardToLocation.java)
 		maxMovementDistance  = 9900.0 // Maximum movement distance per request
 		correctionThreshold  = 500.0  // Position difference threshold for correction
 		maxPositionDeviation = 600.0  // Maximum acceptable position difference
 	)
-	
+
 	return &MovementValidator{
-		maxWalkSpeed:         baseWalkSpeed,
-		maxRunSpeed:          baseRunSpeed,
 		maxMovementDistance:  maxMovementDistance,
 		correctionThreshold:  correctionThreshold,
 		maxPositionDeviation: maxPositionDeviation,
@@ -196,12 +187,28 @@ func IsSignificantMovement(from, to models.Position, threshold float64) bool {
 }
 
 // CalculateMovementTime estimates movement time based on distance and speed
-func CalculateMovementTime(distance float64, isRunning bool) time.Duration {
-	speed := 80.0 // walk speed
-	if isRunning {
-		speed = 120.0 // run speed
+func CalculateMovementTime(distance, speed float64) time.Duration {
+	if speed <= 0 {
+		return 0
 	}
-	
 	seconds := distance / speed
 	return time.Duration(seconds * float64(time.Second))
+}
+
+// PlayerMoveSpeed returns a character's effective movement speed (units/sec)
+// from its computed stats: RunSpd when running, WalkSpd otherwise. The base is
+// passed through applyMoveSpeedBonus so item/buff modifiers can hook in later.
+func PlayerMoveSpeed(computed models.ComputedStats, isRunning bool) float64 {
+	base := float64(computed.WalkSpd)
+	if isRunning {
+		base = float64(computed.RunSpd)
+	}
+	return applyMoveSpeedBonus(base)
+}
+
+// applyMoveSpeedBonus is the hook for item/buff move-speed modifiers. It is
+// currently an identity function — the item-stats and skill/buff systems are
+// not yet implemented (see l2go-tl9.2). L2J applies these on top of base*DEX.
+func applyMoveSpeedBonus(base float64) float64 {
+	return base
 }

@@ -170,7 +170,8 @@ func (gl *GameLoop) advancePlayerMovement(now time.Time) {
 		if !player.IsMoving {
 			continue
 		}
-		pos, arrived := stepPlayerMovement(player, now)
+		speed := usecase.PlayerMoveSpeed(gl.computePlayerStats(player), player.IsRunning)
+		pos, arrived := stepPlayerMovement(player, speed, now)
 		_ = gl.world.UpdatePlayerPosition(context.Background(), charID, pos, player.Heading)
 		if arrived {
 			player.IsMoving = false
@@ -483,17 +484,7 @@ func (gl *GameLoop) broadcastToTargeters(objectID int32, data []byte) {
 
 // computePlayerStats computes derived combat stats for a player.
 func (gl *GameLoop) computePlayerStats(player *registry.PlayerWorldState) models.ComputedStats {
-	char := player.Character
-	baseStats := models.CharacterStats{
-		STR: char.BaseSTR,
-		DEX: char.BaseDEX,
-		CON: char.BaseCON,
-		INT: char.BaseINT,
-		WIT: char.BaseWIT,
-		MEN: char.BaseMEN,
-	}
-	combat := usecase.GetCombatBaseStatsByClass(char.ClassID)
-	return models.ComputeStats(baseStats, char.Level, combat)
+	return usecase.ComputeCharacterStats(player.Character)
 }
 
 // getNpcTemplate looks up an NPC template by ID.

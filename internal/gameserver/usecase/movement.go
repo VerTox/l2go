@@ -167,7 +167,8 @@ func (uc *movementUseCase) StartMovement(
 	
 	// 6. Calculate estimated movement time
 	distance := uc.validator.CalculateDistance(currentPos, destination)
-	estimatedTime := CalculateMovementTime(distance, isRunning)
+	speed := PlayerMoveSpeed(ComputeCharacterStats(playerState.Character), isRunning)
+	estimatedTime := CalculateMovementTime(distance, speed)
 	
 	logger.Info().
 		Float64("distance", distance).
@@ -442,7 +443,8 @@ func (uc *movementUseCase) calculatePositionDuringMovement(
 	
 	// Calculate total distance and expected movement time
 	distance := uc.validator.CalculateDistance(startPos, destPos)
-	expectedTime := CalculateMovementTime(distance, playerState.IsRunning)
+	speed := PlayerMoveSpeed(ComputeCharacterStats(playerState.Character), playerState.IsRunning)
+	expectedTime := CalculateMovementTime(distance, speed)
 	
 	// Calculate movement progress (0.0 to 1.0)
 	progress := float64(elapsedTime) / float64(expectedTime)

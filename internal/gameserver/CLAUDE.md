@@ -91,7 +91,7 @@ internal/gameserver/
 
 ## Known Limitations
 
-- Movement speeds hardcoded (80 walk, 120 run) — needs character-based calculation
+- Movement speed computed per-character (base×DEX from race/class); item/buff modifiers are a no-op hook (`applyMoveSpeedBonus`) pending item-stats/skill systems
 - Item type classification approximate (no full item template DB yet)
 - Multi-packet handler covers only a few sub-opcodes of 50+
 - No collision detection

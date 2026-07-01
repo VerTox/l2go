@@ -60,7 +60,7 @@ func TestStepPlayerMovement(t *testing.T) {
 			MoveDestination: models.Position{X: 1000, Y: 0, Z: 0},
 			MoveStarted:     time.Now().Add(-1 * time.Hour), // заведомо дошёл
 		}
-		pos, arrived := stepPlayerMovement(player, time.Now())
+		pos, arrived := stepPlayerMovement(player, 120, time.Now())
 		if !arrived || pos != player.MoveDestination {
 			t.Errorf("got pos=%+v arrived=%v, want dest arrived", pos, arrived)
 		}
@@ -75,7 +75,7 @@ func TestStepPlayerMovement(t *testing.T) {
 			MoveDestination: models.Position{X: 1000, Y: 0, Z: 0},
 			MoveStarted:     now,
 		}
-		pos, arrived := stepPlayerMovement(player, now)
+		pos, arrived := stepPlayerMovement(player, 120, now)
 		if arrived {
 			t.Fatal("just-started move should not be arrived")
 		}
