@@ -43,6 +43,11 @@ type PlayerWorldState struct {
 	InCombat    bool            `json:"in_combat"`
 	LastUpdate  time.Time       `json:"last_update"`
 	
+	// IsTeleporting is set while a teleport is in flight: the server has sent
+	// TeleportToLocation and decayed the player, and is waiting for the client's
+	// Appearing packet to re-establish visibility at the new position.
+	IsTeleporting bool `json:"is_teleporting"`
+
 	// Movement state
 	IsMoving        bool            `json:"is_moving"`
 	MoveStarted     time.Time       `json:"move_started,omitempty"`

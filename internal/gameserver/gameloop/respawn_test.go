@@ -7,6 +7,39 @@ import (
 	"github.com/VerTox/l2go/internal/gameserver/registry"
 )
 
+// TestHandleTeleportRelocatesAndFlags verifies the game-loop teleport primitive:
+// the player is moved to the destination (with the L2J z+5 nudge), flagged teleporting,
+// and its action/movement/target are aborted. (l2go-3xh.2)
+func TestHandleTeleportRelocatesAndFlags(t *testing.T) {
+	gl, player := newTestLoopWithPlayer(t)
+	player.Position = models.Position{X: 1000, Y: 2000, Z: 100}
+	player.TargetID = 555
+	player.IsMoving = true
+
+	gl.handleTeleport(CmdTeleport{
+		CharID:  7,
+		Dest:    models.Position{X: -84318, Y: 244579, Z: -3730},
+		Heading: 16384,
+	})
+
+	if !player.IsTeleporting {
+		t.Error("expected IsTeleporting=true after teleport")
+	}
+	wantZ := -3730 + teleportZOffset
+	if player.Position.X != -84318 || player.Position.Y != 244579 || player.Position.Z != wantZ {
+		t.Errorf("position = %+v, want {-84318, 244579, %d}", player.Position, wantZ)
+	}
+	if player.Heading != 16384 {
+		t.Errorf("heading = %d, want 16384", player.Heading)
+	}
+	if player.TargetID != 0 {
+		t.Error("target must be cleared on teleport")
+	}
+	if player.IsMoving {
+		t.Error("server-side movement must stop on teleport")
+	}
+}
+
 // TestRegisterWorldSpawnsPopulatesSpawnInfo verifies that spawn data is registered
 // for NPCs already loaded into the world, so RespawnEvent can find it. Without this
 // npcSpawnInfo is empty at startup and no NPC ever respawns ('spawn info not found').

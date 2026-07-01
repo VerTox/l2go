@@ -47,70 +47,8 @@ func (h *Handler) handleEnterWorld(ctx context.Context, c *client.ClientConn, pa
 		return err
 	}
 
-	// Mark player as fully entered the world - implement player visibility system
-	nearbyPlayers := h.world.GetPlayersInRange(playerState.Position, 1500) // 1500 units range
-	otherPlayers := 0
-
-	// Send nearby players to the entering player using CharInfo packets
-	for _, nearby := range nearbyPlayers {
-		if nearby.CharID != playerState.CharID {
-			otherPlayers++
-			log.Ctx(ctx).Debug().
-				Int32("nearby_char_id", nearby.CharID).
-				Str("nearby_name", nearby.Character.Name).
-				Msg("nearby player detected - sending CharInfo packet")
-
-			// Send CharInfo packet for other players
-			if err := h.sendPlayerSpawnToClient(ctx, c, nearby.Character); err != nil {
-				log.Ctx(ctx).Error().Err(err).
-					Int32("nearby_char_id", nearby.CharID).
-					Str("nearby_name", nearby.Character.Name).
-					Msg("failed to send nearby player spawn")
-				// Continue with other players
-			}
-		}
-	}
-
-	// Send nearby NPCs to the entering player and populate known NPC set
-	nearbyNPCs := h.world.GetNPCsInRange(playerState.Position, 2500)
-	for _, npc := range nearbyNPCs {
-		npcInfoData := outclient.BuildNpcInfo(npc)
-		if err := c.Send(npcInfoData); err != nil {
-			log.Ctx(ctx).Warn().Err(err).Int32("npc_obj_id", npc.ObjectID).Msg("failed to send NpcInfo")
-		}
-		playerState.KnownNPCs[npc.ObjectID] = true
-	}
-
-	log.Ctx(ctx).Debug().
-		Int("nearby_npcs", len(nearbyNPCs)).
-		Msg("Sent NpcInfo packets for nearby NPCs")
-
-	// Send the entering player to nearby players using CharInfo packets
-	for _, nearby := range nearbyPlayers {
-		if nearby.CharID != playerState.CharID {
-			nearbyConn := h.getConnectionByAccount(nearby.Character.AccountName)
-			if nearbyConn != nil {
-				log.Ctx(ctx).Debug().
-					Int32("nearby_char_id", nearby.CharID).
-					Str("nearby_name", nearby.Character.Name).
-					Str("entering_name", playerState.Character.Name).
-					Msg("sending entering player to nearby player")
-
-				if err := h.sendPlayerSpawnToClient(ctx, nearbyConn, playerState.Character); err != nil {
-					log.Ctx(ctx).Error().Err(err).
-						Int32("nearby_char_id", nearby.CharID).
-						Str("nearby_name", nearby.Character.Name).
-						Msg("failed to send entering player spawn to nearby player")
-					// Continue with other players
-				}
-			} else {
-				log.Ctx(ctx).Debug().
-					Int32("nearby_char_id", nearby.CharID).
-					Str("nearby_name", nearby.Character.Name).
-					Msg("connection not found for nearby player - broadcast skipped")
-			}
-		}
-	}
+	// Establish visibility: send nearby players/NPCs to us and us to nearby players.
+	otherPlayers := h.establishPlayerVisibility(ctx, c, playerState)
 
 	// Notify game loop about player entering the world (activates regions)
 	h.gameLoopCmd <- gameloop.CmdPlayerEnteredWorld{
@@ -687,6 +625,57 @@ func getItemType(itemID int32) int32 {
 	// First try to get from item template registry
 	itemType2 := registry.GetItemType2(itemID)
 	return int32(itemType2)
+}
+
+// establishPlayerVisibility wires up mutual visibility for a player at its current
+// position: sends nearby players (CharInfo) and NPCs (NpcInfo, repopulating KnownNPCs)
+// to this client, and sends this player (CharInfo) to nearby clients. Shared by world
+// entry and teleport arrival (Appearing). Returns the number of other nearby players.
+func (h *Handler) establishPlayerVisibility(ctx context.Context, c *client.ClientConn, playerState *registry.PlayerWorldState) int {
+	nearbyPlayers := h.world.GetPlayersInRange(playerState.Position, 1500)
+	otherPlayers := 0
+
+	// Nearby players → this client.
+	for _, nearby := range nearbyPlayers {
+		if nearby.CharID == playerState.CharID {
+			continue
+		}
+		otherPlayers++
+		if err := h.sendPlayerSpawnToClient(ctx, c, nearby.Character); err != nil {
+			log.Ctx(ctx).Error().Err(err).Int32("nearby_char_id", nearby.CharID).
+				Msg("failed to send nearby player spawn")
+		}
+	}
+
+	// Nearby NPCs → this client (repopulate known set).
+	nearbyNPCs := h.world.GetNPCsInRange(playerState.Position, 2500)
+	for _, npc := range nearbyNPCs {
+		if err := c.Send(outclient.BuildNpcInfo(npc)); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Int32("npc_obj_id", npc.ObjectID).Msg("failed to send NpcInfo")
+		}
+		playerState.KnownNPCs[npc.ObjectID] = true
+	}
+
+	// This player → nearby clients.
+	for _, nearby := range nearbyPlayers {
+		if nearby.CharID == playerState.CharID {
+			continue
+		}
+		nearbyConn := h.getConnectionByAccount(nearby.Character.AccountName)
+		if nearbyConn == nil {
+			continue
+		}
+		if err := h.sendPlayerSpawnToClient(ctx, nearbyConn, playerState.Character); err != nil {
+			log.Ctx(ctx).Error().Err(err).Int32("nearby_char_id", nearby.CharID).
+				Msg("failed to send player spawn to nearby player")
+		}
+	}
+
+	log.Ctx(ctx).Debug().
+		Int("nearby_players", otherPlayers).
+		Int("nearby_npcs", len(nearbyNPCs)).
+		Msg("player visibility established")
+	return otherPlayers
 }
 
 // sendPlayerSpawnToClient sends spawn information about another player using CharInfo packet

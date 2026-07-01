@@ -65,3 +65,14 @@ type CmdMoveToLocation struct {
 }
 
 func (CmdMoveToLocation) commandMarker() {}
+
+// CmdTeleport — relocate a player to a new position. The loop broadcasts
+// TeleportToLocation + DeleteObject (decay), moves the player and flags it teleporting;
+// visibility at the destination is re-established when the client sends Appearing.
+type CmdTeleport struct {
+	CharID  int32
+	Dest    models.Position
+	Heading int32
+}
+
+func (CmdTeleport) commandMarker() {}

@@ -11,8 +11,6 @@ func registerCombatStubs(r *Registry) {
 	r.registerStub(StateInGame, 0x32, "AttackRequest")
 	// RequestMagicSkillUse (0x39): использование скилла.
 	r.registerStub(StateInGame, 0x39, "RequestMagicSkillUse")
-	// Appearing (0x3a): окончание телепорта, игрок появился в мире.
-	r.registerStub(StateInGame, 0x3a, "Appearing")
 	// StartRotating (0x5b): начало поворота персонажа.
 	r.registerStub(StateInGame, 0x5b, "StartRotating")
 	// FinishRotating (0x5c): конец поворота персонажа.
