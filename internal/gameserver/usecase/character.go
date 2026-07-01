@@ -58,6 +58,10 @@ func (uc *CharacterUseCase) GetCharacterListEntries(ctx context.Context, account
 
 // CreateCharacter creates a new character with validation
 func (uc *CharacterUseCase) CreateCharacter(ctx context.Context, req *models.CharacterCreateRequest) (*models.Character, error) {
+	// Canonicalize the account name so characters are always stored lowercase,
+	// regardless of the case the request arrived in. (l2go-xhp)
+	req.AccountName = models.NormalizeAccountName(req.AccountName)
+
 	// Validate request
 	if err := uc.validateCharacterCreation(ctx, req); err != nil {
 		return nil, err

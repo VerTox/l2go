@@ -17,12 +17,18 @@ import (
 func (h *Handler) handleAuthLogin(ctx context.Context, c *client.ClientConn, payload []byte) error {
 	packet := &inclient.AuthLogin{}
 	l2pkt.ParsePacket(payload, packet)
-	log.Ctx(ctx).Info().Str("account", packet.Account).Msg("AuthLogin request")
+
+	// Canonicalize the account name to lowercase at this single ingress point. The
+	// LoginServer already lowercases logins, while the client sends the original
+	// case; normalizing here keeps the session, created characters, DB queries and
+	// registry map keys all in one canonical case. (l2go-xhp)
+	account := models.NormalizeAccountName(packet.Account)
+	log.Ctx(ctx).Info().Str("account", account).Msg("AuthLogin request")
 
 	// Validate session keys with LoginServer
-	if !h.validateSessionKeys(ctx, packet.Account, packet.LoginKey1, packet.LoginKey2, packet.PlayKey1, packet.PlayKey2) {
+	if !h.validateSessionKeys(ctx, account, packet.LoginKey1, packet.LoginKey2, packet.PlayKey1, packet.PlayKey2) {
 		log.Ctx(ctx).Warn().
-			Str("account", packet.Account).
+			Str("account", account).
 			Msg("session key validation failed")
 		// TODO: Send authentication failure packet and disconnect
 		return nil
@@ -30,7 +36,7 @@ func (h *Handler) handleAuthLogin(ctx context.Context, c *client.ClientConn, pay
 
 	// Create session for this client
 	session := &ClientSession{
-		AccountName: packet.Account,
+		AccountName: account,
 		SessionID:   123456, // TODO: Generate proper session ID
 		LoginKeys:   [2]uint32{uint32(packet.LoginKey1), uint32(packet.LoginKey2)},
 		PlayKeys:    [2]uint32{uint32(packet.PlayKey1), uint32(packet.PlayKey2)},
@@ -38,9 +44,9 @@ func (h *Handler) handleAuthLogin(ctx context.Context, c *client.ClientConn, pay
 	h.setSession(c, session)
 
 	// Load real characters from database
-	characters, err := h.characterUseCase.GetCharacterListEntries(ctx, packet.Account)
+	characters, err := h.characterUseCase.GetCharacterListEntries(ctx, account)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Str("account", packet.Account).Msg("failed to load characters")
+		log.Ctx(ctx).Error().Err(err).Str("account", account).Msg("failed to load characters")
 		// Send empty character list on error
 		characters = []models.CharacterListEntry{}
 	}
@@ -53,7 +59,7 @@ func (h *Handler) handleAuthLogin(ctx context.Context, c *client.ClientConn, pay
 
 	// Send character selection screen
 	charSelectionInfo := outclient.CharSelectionInfo{
-		LoginName: packet.Account,
+		LoginName: account,
 		SessionID: int32(session.SessionID),
 		ActiveIdx: -1, // No character selected initially
 		Chars:     chars,
@@ -68,7 +74,7 @@ func (h *Handler) handleAuthLogin(ctx context.Context, c *client.ClientConn, pay
 	}
 
 	log.Ctx(ctx).Info().
-		Str("account", packet.Account).
+		Str("account", account).
 		Int("character_count", len(characters)).
 		Msg("Character list sent successfully")
 
