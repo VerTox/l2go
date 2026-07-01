@@ -172,6 +172,10 @@ func (e *NPCHitEvent) Execute(gl *GameLoop) {
 		return
 	}
 
+	// Taking damage puts the player into combat stance (L2J: stance on real hit/being
+	// hit, not on the attack request). (l2go-7qv)
+	gl.enterCombatStance(e.TargetCharID)
+
 	player.Character.CurrentHP -= float64(e.Damage)
 	if player.Character.CurrentHP < 0 {
 		player.Character.CurrentHP = 0

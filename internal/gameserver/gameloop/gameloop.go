@@ -209,20 +209,12 @@ func (gl *GameLoop) handleAttackRequest(cmd CmdAttackRequest) {
 		AccountName:     cmd.AccountName,
 	}
 
-	// Set player in combat
-	gl.world.SetPlayerCombatState(cmd.AttackerCharID, true)
-
-	// Send updated UserInfo to the player (InCombat=1 for combat stance)
-	if player, exists := gl.world.GetPlayer(cmd.AttackerCharID); exists {
-		userInfoData := gl.buildUserInfoForPlayer(player)
-		if conn := gl.connections.GetConnection(cmd.AccountName); conn != nil {
-			_ = conn.Send(userInfoData)
-		}
-	}
-
-	// Broadcast AutoAttackStart
-	startPkt := outclient.BuildAutoAttackStart(cmd.AttackerCharID)
-	gl.broadcastToNearby(cmd.AttackerPos, startPkt)
+	// NOTE: combat stance (AutoAttackStart + InCombat) is intentionally NOT started here.
+	// Per L2J the weapon-drawn stance begins on the first real swing (doAttack →
+	// clientStartAutoAttack) or on being hit, NOT on the attack request — otherwise a
+	// click that never connects (target out of reach / cancelled) would draw the weapon
+	// for nothing. See enterCombatStance, called from the swing in NextAttackEvent and
+	// from NPCHitEvent (taking damage). (l2go-7qv)
 
 	// Set ATTACK intention. If the target is out of reach, start SERVER-SIDE movement
 	// toward it: the tick interpolates the position and fires onMovementArrived (which
@@ -326,6 +318,23 @@ func (gl *GameLoop) handlePlayerMoved(cmd CmdPlayerMoved) {
 	gl.activateRegions(cmd.Position.X, cmd.Position.Y)
 }
 
+// enterCombatStance puts a player into the weapon-drawn combat stance on the first
+// real swing dealt (or on being hit). Per L2J, AutoAttackStart(objectId) is broadcast
+// from doAttack()/onEvtAttacked() — NOT from the attack request — and the stance is
+// sheathed only after the 15s timeout (CombatStanceTimeoutEvent), never immediately.
+// The broadcast happens once per stance, guarded by the InCombat flag; that flag also
+// feeds CharInfo's isInCombat byte (HP-bar/combat state seen by nearby players). The
+// UserInfo InCombat field is not serialised to the owner's client, so no UserInfo
+// refresh is needed here. (l2go-7qv)
+func (gl *GameLoop) enterCombatStance(charID int32) {
+	player, exists := gl.world.GetPlayer(charID)
+	if !exists || player.InCombat {
+		return
+	}
+	gl.world.SetPlayerCombatState(charID, true)
+	gl.broadcastToNearby(player.Position, outclient.BuildAutoAttackStart(charID))
+}
+
 // stopAttacker stops a player's auto-attack and cleans up combat state.
 func (gl *GameLoop) stopAttacker(charID int32) {
 	cs, ok := gl.combatState[charID]
@@ -335,18 +344,9 @@ func (gl *GameLoop) stopAttacker(charID int32) {
 
 	cs.IsAutoAttacking = false
 
-	// Send AutoAttackStop to the player
-	stopPkt := outclient.BuildAutoAttackStop(charID)
-	if conn := gl.connections.GetConnection(cs.AccountName); conn != nil {
-		_ = conn.Send(stopPkt)
-	}
-
-	// Also broadcast to nearby players
-	if player, exists := gl.world.GetPlayer(charID); exists {
-		gl.broadcastToNearby(player.Position, stopPkt)
-	}
-
-	// Schedule combat stance timeout
+	// Per L2J the weapon-drawn stance is NOT sheathed when auto-attack stops —
+	// clientStopAutoAttack() is a no-op for players; AutoAttackStop is sent only after
+	// the 15s AttackStanceTaskManager timeout (CombatStanceTimeoutEvent below).
 	gl.events.Schedule(&CombatStanceTimeoutEvent{
 		At:     time.Now().Add(combatStanceTimeout),
 		CharID: charID,
@@ -393,28 +393,49 @@ func (gl *GameLoop) handleNPCDeath(npc *models.NpcInstance) {
 		Msg("NPC died")
 }
 
-// stopAllAttackersOnTarget stops all players attacking a specific NPC.
+// stopAllAttackersOnTarget releases every player attacking a now-dead NPC. Mirrors
+// L2J's lazy onIntentionIdle on target death (thinkAttack → checkTargetLostOrDead →
+// AI_INTENTION_ACTIVE/IDLE): stop the auto-attack, reset intention, halt server-side
+// approach movement, and broadcast StopMove so the client leaves "follow pawn" mode
+// and becomes movable again. Without StopMove the client stays locked onto the corpse
+// and ignores ground-move clicks until ESC, even after the corpse decays (l2go-p80).
+// The weapon-drawn stance is intentionally kept for the 15s stance timeout (retail
+// behaviour), and the player's target is NOT cleared (the dead NPC stays selected).
 func (gl *GameLoop) stopAllAttackersOnTarget(targetObjectID int32) {
 	for charID, cs := range gl.combatState {
-		if cs.TargetObjectID == targetObjectID && cs.IsAutoAttacking {
-			cs.IsAutoAttacking = false
-
-			stopPkt := outclient.BuildAutoAttackStop(charID)
-			if conn := gl.connections.GetConnection(cs.AccountName); conn != nil {
-				_ = conn.Send(stopPkt)
-			}
-
-			// Also broadcast to nearby players
-			if player, exists := gl.world.GetPlayer(charID); exists {
-				gl.broadcastToNearby(player.Position, stopPkt)
-			}
-
-			// Schedule combat stance timeout
-			gl.events.Schedule(&CombatStanceTimeoutEvent{
-				At:     time.Now().Add(combatStanceTimeout),
-				CharID: charID,
-			})
+		if cs.TargetObjectID != targetObjectID || !cs.IsAutoAttacking {
+			continue
 		}
+		cs.IsAutoAttacking = false
+		gl.clearIntention(charID)
+
+		// Halt server-side approach movement and tell the client to stop where it is,
+		// breaking the follow-pawn lock on the dead target (the actual unblock).
+		if player, exists := gl.world.GetPlayer(charID); exists {
+			player.IsMoving = false
+			player.MoveStartPos = models.Position{}
+			player.MoveDestination = models.Position{}
+			gl.broadcastToNearby(player.Position, outclient.BuildStopMove(
+				charID,
+				int32(player.Position.X), int32(player.Position.Y), int32(player.Position.Z),
+				player.Heading,
+			))
+		}
+
+		// ActionFailed to the attacker only (not broadcast): clears any "pending action"
+		// left by a re-click on the target landed just before it died. Without it the
+		// client waits forever for that click's confirmation and ignores the Die/StopMove
+		// above, freezing until the target is cancelled (L2J onIntentionAttack
+		// "else client freezes until cancel target" / L2Object.onAction). (l2go-p80)
+		if conn := gl.connections.GetConnection(cs.AccountName); conn != nil {
+			_ = conn.Send(outclient.BuildActionFailed())
+		}
+
+		// Sheath the weapon only after the 15s stance timeout (L2J AttackStanceTaskManager).
+		gl.events.Schedule(&CombatStanceTimeoutEvent{
+			At:     time.Now().Add(combatStanceTimeout),
+			CharID: charID,
+		})
 	}
 }
 

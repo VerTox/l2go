@@ -201,6 +201,10 @@ func (e *NextAttackEvent) Execute(gl *GameLoop) {
 		flags |= 0x20 // CRIT
 	}
 
+	// First real swing draws the weapon (L2J doAttack → clientStartAutoAttack). Fires on
+	// hit OR miss — the swing happens either way — and only once per stance. (l2go-7qv)
+	gl.enterCombatStance(e.AttackerCharID)
+
 	// Broadcast Attack packet (animation) immediately
 	attackPkt := outclient.BuildAttack(
 		player.CharID,
