@@ -405,20 +405,17 @@ func (h *Handler) calculateDistance(pos1, pos2 models.Position) float64 {
 // updateNPCVisibility sends NpcInfo for newly visible NPCs and DeleteObject
 // for NPCs that left the visibility range. Called during position updates.
 func (h *Handler) updateNPCVisibility(ctx context.Context, c *client.ClientConn, playerState *registry.PlayerWorldState) {
-	const NPC_VISIBILITY_RADIUS = 2500
-
-	// Get NPCs currently in range
-	nearbyNPCs := h.world.GetNPCsInRange(playerState.Position, NPC_VISIBILITY_RADIUS)
-
-	// Build a set of currently visible NPC objectIDs
-	currentVisible := make(map[int32]bool, len(nearbyNPCs))
-	for _, npc := range nearbyNPCs {
-		currentVisible[npc.ObjectID] = true
+	// Keep-set: NPCs within the forget radius stay spawned (hysteresis band). NpcInfo
+	// is only sent for NPCs within the smaller watch radius. Same watch/forget radii
+	// as player visibility (gameloop), so players and NPCs appear at the same distance.
+	keep := make(map[int32]bool)
+	for _, npc := range h.world.GetNPCsInRange(playerState.Position, registry.VisibilityForgetRadius) {
+		keep[npc.ObjectID] = true
 	}
 
-	// Send NpcInfo for NPCs entering visibility range
+	// Send NpcInfo for NPCs entering the watch radius
 	newCount := 0
-	for _, npc := range nearbyNPCs {
+	for _, npc := range h.world.GetNPCsInRange(playerState.Position, registry.VisibilityWatchRadius) {
 		if !playerState.KnownNPCs[npc.ObjectID] {
 			npcInfoData := outclient.BuildNpcInfo(npc)
 			if err := c.Send(npcInfoData); err != nil {
@@ -432,10 +429,10 @@ func (h *Handler) updateNPCVisibility(ctx context.Context, c *client.ClientConn,
 		}
 	}
 
-	// Send DeleteObject for NPCs leaving visibility range
+	// Send DeleteObject for NPCs beyond the forget radius
 	removedCount := 0
 	for objID := range playerState.KnownNPCs {
-		if !currentVisible[objID] {
+		if !keep[objID] {
 			deleteData := outclient.BuildDeleteObject(objID)
 			if err := c.Send(deleteData); err != nil {
 				log.Ctx(ctx).Warn().Err(err).

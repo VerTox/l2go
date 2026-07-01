@@ -636,7 +636,7 @@ func getItemType(itemID int32) int32 {
 // NPC set. Player-to-player visibility is owned by the game loop (it spawns players
 // on CmdPlayerEnteredWorld / movement), so it is intentionally not handled here. (l2go-23g)
 func (h *Handler) establishNpcVisibility(ctx context.Context, c *client.ClientConn, playerState *registry.PlayerWorldState) {
-	nearbyNPCs := h.world.GetNPCsInRange(playerState.Position, 2500)
+	nearbyNPCs := h.world.GetNPCsInRange(playerState.Position, registry.VisibilityWatchRadius)
 	for _, npc := range nearbyNPCs {
 		if err := c.Send(outclient.BuildNpcInfo(npc)); err != nil {
 			log.Ctx(ctx).Warn().Err(err).Int32("npc_obj_id", npc.ObjectID).Msg("failed to send NpcInfo")

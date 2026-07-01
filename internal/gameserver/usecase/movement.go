@@ -310,15 +310,14 @@ func (uc *movementUseCase) GetCurrentPosition(ctx context.Context, charID int32)
 
 // GetVisiblePlayers returns players visible to the specified character
 func (uc *movementUseCase) GetVisiblePlayers(ctx context.Context, charID int32) ([]*registry.PlayerWorldState, error) {
-	const VISIBILITY_RADIUS = 4000 // L2J standard visibility radius
-	
 	playerState, exists := uc.worldRegistry.GetPlayer(charID)
 	if !exists {
 		return nil, fmt.Errorf("player not found: %d", charID)
 	}
-	
-	// Get all players in visibility range
-	visiblePlayers := uc.worldRegistry.GetPlayersInRange(playerState.Position, VISIBILITY_RADIUS)
+
+	// Movement broadcasts go to everyone who has this player spawned — the forget
+	// radius, so they reach the whole visibility set.
+	visiblePlayers := uc.worldRegistry.GetPlayersInRange(playerState.Position, registry.VisibilityForgetRadius)
 	
 	// Filter out self
 	var result []*registry.PlayerWorldState

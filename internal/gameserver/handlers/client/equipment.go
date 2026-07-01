@@ -176,7 +176,7 @@ func (h *Handler) refreshCharacterPaperdoll(ctx context.Context, char *models.Ch
 
 // broadcastCharInfoToNearby sends CharInfo to all nearby players
 func (h *Handler) broadcastCharInfoToNearby(ctx context.Context, playerState *registry.PlayerWorldState) {
-	nearbyPlayers := h.world.GetPlayersInRange(playerState.Position, 1500)
+	nearbyPlayers := h.world.GetPlayersInRange(playerState.Position, registry.VisibilityWatchRadius)
 
 	for _, nearby := range nearbyPlayers {
 		if nearby.CharID == playerState.CharID {

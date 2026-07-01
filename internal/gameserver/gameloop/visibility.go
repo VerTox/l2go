@@ -5,10 +5,6 @@ import (
 	"github.com/VerTox/l2go/internal/gameserver/registry"
 )
 
-// playerVisibilityRadius is the range within which other players are spawned to a
-// client (CharInfo). Matches the previous world-entry establishment radius.
-const playerVisibilityRadius = 1500
-
 // buildPlayerCharInfo builds a CharInfo packet for a player from live world state,
 // using the cached paperdoll (no DB lookup) so it is safe to call every tick.
 func buildPlayerCharInfo(player *registry.PlayerWorldState) []byte {
@@ -52,16 +48,21 @@ func (gl *GameLoop) reconcilePlayerVisibility(charID int32) {
 		return
 	}
 
-	nearby := gl.world.GetPlayersInRange(mover.Position, playerVisibilityRadius)
-	inRange := make(map[int32]bool, len(nearby))
+	// Keep-set: everyone within the (larger) forget radius stays spawned. Spawning,
+	// though, only happens within the (smaller) watch radius — the gap between the two
+	// is L2J's hysteresis band that prevents spawn/despawn flicker at the boundary.
+	keep := make(map[int32]bool)
+	for _, other := range gl.world.GetPlayersInRange(mover.Position, registry.VisibilityForgetRadius) {
+		if other.CharID != charID {
+			keep[other.CharID] = true
+		}
+	}
 
-	// Entering range: spawn each side to the other exactly once.
-	for _, other := range nearby {
+	// Entering range (within watch): spawn each side to the other exactly once.
+	for _, other := range gl.world.GetPlayersInRange(mover.Position, registry.VisibilityWatchRadius) {
 		if other.CharID == charID {
 			continue
 		}
-		inRange[other.CharID] = true
-
 		if !mover.KnownPlayers[other.CharID] {
 			gl.spawnPlayerTo(mover, other)
 			mover.KnownPlayers[other.CharID] = true
@@ -72,9 +73,9 @@ func (gl *GameLoop) reconcilePlayerVisibility(charID int32) {
 		}
 	}
 
-	// Leaving range: despawn each side from the other.
+	// Leaving range (beyond forget): despawn each side from the other.
 	for id := range mover.KnownPlayers {
-		if inRange[id] {
+		if keep[id] {
 			continue
 		}
 		gl.sendToPlayer(mover, outclient.BuildDeleteObject(id))

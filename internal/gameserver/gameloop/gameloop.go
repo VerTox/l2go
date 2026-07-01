@@ -13,12 +13,16 @@ import (
 )
 
 const (
-	tickInterval          = 100 * time.Millisecond
-	commandChannelSize    = 1024
-	corpseDecayDelay      = 7 * time.Second
-	respawnDelay          = 60 * time.Second
-	combatStanceTimeout   = 15 * time.Second
-	broadcastRadius       = 2500
+	tickInterval        = 100 * time.Millisecond
+	commandChannelSize  = 1024
+	corpseDecayDelay    = 7 * time.Second
+	respawnDelay        = 60 * time.Second
+	combatStanceTimeout = 15 * time.Second
+
+	// broadcastRadius is how far movement/combat packets are sent. It equals the
+	// visibility forget radius so every client that has the object spawned receives them.
+	broadcastRadius = registry.VisibilityForgetRadius
+
 	regionCleanupInterval = 10 * time.Second
 	autosaveInterval      = 5 * time.Minute
 )
