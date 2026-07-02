@@ -397,17 +397,27 @@ func (e *CombatStanceTimeoutEvent) Execute(gl *GameLoop) {
 	// End combat stance
 	gl.world.SetPlayerCombatState(e.CharID, false)
 
-	// Send AutoAttackStop to the player
+	// Broadcast AutoAttackStop to the owner AND every nearby player so the weapon-drawn
+	// stance is sheathed on EVERYONE's client — symmetric to enterCombatStance, which
+	// broadcasts AutoAttackStart via broadcastToNearby. Without this, the set was broadcast
+	// but the clear reached only the owner, so neighbours kept seeing the stale combat
+	// stance until their own timeout. Matches L2J AttackStanceTaskManager, which does
+	// actor.broadcastPacket(new AutoAttackStop(objectId)). (l2go-k0f)
 	stopPkt := outclient.BuildAutoAttackStop(e.CharID)
-	if conn := gl.connections.GetConnection(cs.AccountName); conn != nil {
-		_ = conn.Send(stopPkt)
-	}
-
-	// Send updated UserInfo to the player (InCombat=0 for peaceful stance)
 	if player, exists := gl.world.GetPlayer(e.CharID); exists {
+		gl.broadcastToNearby(player.Position, stopPkt)
+
+		// Refresh the owner's own UserInfo (InCombat=0 for peaceful stance). This stays
+		// owner-only: UserInfo is a self-packet, not part of the knownlist broadcast.
 		userInfoData := gl.buildUserInfoForPlayer(player)
 		if conn := gl.connections.GetConnection(cs.AccountName); conn != nil {
 			_ = conn.Send(userInfoData)
+		}
+	} else {
+		// Player already left the world: no position to broadcast from, so fall back to a
+		// direct send to the owner if the connection is still around.
+		if conn := gl.connections.GetConnection(cs.AccountName); conn != nil {
+			_ = conn.Send(stopPkt)
 		}
 	}
 
