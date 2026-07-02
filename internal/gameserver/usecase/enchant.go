@@ -39,6 +39,7 @@ const (
 	sysMsgBlessedEnchantFailed int32 = 1517 // BLESSED_ENCHANT_FAILED
 	sysMsgSafeEnchantFailed    int32 = 6004  // SAFE_ENCHANT_FAILED
 	sysMsgEnchantInProgress    int32 = 2188  // ENCHANTMENT_ALREADY_IN_PROGRESS
+	sysMsgDoesNotFitScroll     int32 = 424   // DOES_NOT_FIT_SCROLL_CONDITIONS
 )
 
 // enchantScrollInfo is the static profile of an enchant scroll, combining the
@@ -80,9 +81,7 @@ type enchantDecision struct {
 // EnchantScroll.calculateSuccess + RequestEnchantItem.runImpl.
 func decideEnchant(s enchantScrollInfo, t enchantTarget, roll float64) enchantDecision {
 	// --- validation (matches AbstractEnchantItem.isValid); nothing is consumed ---
-	if !t.enchantable || !enchantTypeMatches(s.isWeapon, t.type2) ||
-		t.grade != s.targetGrade ||
-		(s.maxEnchant > 0 && t.enchantLevel > s.maxEnchant) {
+	if !validateEnchant(s, t) {
 		return enchantDecision{code: EnchantCodeError, newLevel: t.enchantLevel, systemMsg: sysMsgInappropriateEnchant}
 	}
 
@@ -106,6 +105,21 @@ func decideEnchant(s enchantScrollInfo, t enchantTarget, roll float64) enchantDe
 		// we report a plain destruction (code 4).
 		return enchantDecision{code: EnchantCodeFailDestroy, newLevel: 0, consumeScroll: true, destroyTarget: true}
 	}
+}
+
+// validateEnchant reports whether the scroll may be applied to the target,
+// mirroring AbstractEnchantItem.isValid: the item must be enchantable, its type2
+// must match the scroll's weapon/armor kind, its collapsed grade must equal the
+// scroll's target grade, and its enchant level must be within the scroll's cap
+// (a cap of 0 means "no explicit cap" in enchantItemData.xml).
+func validateEnchant(s enchantScrollInfo, t enchantTarget) bool {
+	if !t.enchantable || !enchantTypeMatches(s.isWeapon, t.type2) || t.grade != s.targetGrade {
+		return false
+	}
+	if s.maxEnchant > 0 && t.enchantLevel > s.maxEnchant {
+		return false
+	}
+	return true
 }
 
 // enchantTypeMatches reports whether a weapon/armor scroll can target the given
@@ -254,6 +268,98 @@ type EnchantOutcome struct {
 	ScrollRemoved   bool
 	NewEnchantLevel int
 	Success         bool
+}
+
+// PutEnchantResult classifies the outcome of a RequestExTryToPutEnchantTargetItem
+// (the High Five windowed flow, where the client drops a target into the open
+// enchant window). It mirrors the three exit paths of L2J's
+// RequestExTryToPutEnchantTargetItem.runImpl.
+type PutEnchantResult int
+
+const (
+	// PutEnchantIgnore: no armed scroll / bad ids / item not owned. L2J returns
+	// silently here — the caller must send nothing.
+	PutEnchantIgnore PutEnchantResult = iota
+	// PutEnchantInvalid: the target does not fit the scroll conditions. The caller
+	// must reply ExPutEnchantTargetItemResult(0) plus a system message; the active
+	// state has already been cleared.
+	PutEnchantInvalid
+	// PutEnchantAccepted: the target fits. The caller must reply
+	// ExPutEnchantTargetItemResult(targetObjectID); the scroll stays armed until
+	// RequestEnchantItem (or RequestExCancelEnchantItem) resolves it.
+	PutEnchantAccepted
+)
+
+// ValidateTarget checks whether the item the player dropped into the enchant
+// window fits the currently-armed scroll, without consuming or enchanting
+// anything. It mirrors L2J's RequestExTryToPutEnchantTargetItem: on an invalid
+// target it clears the player's active-enchant state (so the window must be
+// re-opened) and returns the DOES_NOT_FIT_SCROLL_CONDITIONS message id; on a
+// valid target it leaves the state armed for the subsequent RequestEnchantItem.
+func (uc *EnchantUseCase) ValidateTarget(ctx context.Context, charID int32, targetObjectID int32) (PutEnchantResult, int32, error) {
+	active, ok := uc.state.GetActive(charID)
+	if !ok || targetObjectID == 0 {
+		return PutEnchantIgnore, 0, nil
+	}
+
+	scroll, err := uc.repo.Item().GetByObjectID(ctx, active.ScrollObjectID)
+	if err != nil {
+		return PutEnchantIgnore, 0, fmt.Errorf("load scroll: %w", err)
+	}
+	target, err := uc.repo.Item().GetByObjectID(ctx, targetObjectID)
+	if err != nil {
+		return PutEnchantIgnore, 0, fmt.Errorf("load target: %w", err)
+	}
+	if scroll == nil || target == nil || scroll.OwnerID != charID || target.OwnerID != charID {
+		// Stale/hostile request: the scroll or target is gone. Silent (L2J returns).
+		return PutEnchantIgnore, 0, nil
+	}
+
+	scrollTmpl := uc.itemTemplate(scroll.ItemID)
+	targetTmpl := uc.itemTemplate(target.ItemID)
+	sd, found := uc.data.GetEnchantScroll(scroll.ItemID)
+	if scrollTmpl == nil || targetTmpl == nil || !found {
+		uc.state.Clear(charID)
+		return PutEnchantInvalid, sysMsgDoesNotFitScroll, nil
+	}
+	okScroll, isWeapon, isBlessed, isSafe := classifyEnchantScroll(scrollTmpl.EtcItemType)
+	if !okScroll {
+		uc.state.Clear(charID)
+		return PutEnchantInvalid, sysMsgDoesNotFitScroll, nil
+	}
+
+	sInfo := enchantScrollInfo{
+		isWeapon:    isWeapon,
+		isBlessed:   isBlessed,
+		isSafe:      isSafe,
+		targetGrade: sd.TargetGrade,
+		maxEnchant:  sd.MaxEnchant,
+		bonusRate:   sd.BonusRate,
+	}
+	tInfo := enchantTarget{
+		type2:        targetTmpl.Type2,
+		grade:        gradeSPlus(targetTmpl.CrystalType),
+		enchantLevel: target.EnchantLevel,
+		enchantable:  targetTmpl.Enchantable,
+	}
+	if !validateEnchant(sInfo, tInfo) {
+		uc.state.Clear(charID)
+		return PutEnchantInvalid, sysMsgDoesNotFitScroll, nil
+	}
+
+	log.Ctx(ctx).Debug().
+		Int32("char_id", charID).
+		Int32("target_object_id", targetObjectID).
+		Int32("scroll_item_id", scroll.ItemID).
+		Msg("enchant target accepted into window")
+	return PutEnchantAccepted, 0, nil
+}
+
+// CancelEnchant clears any active-enchant arming for a character, closing the
+// enchant window. Mirrors L2J's RequestExCancelEnchantItem (which also emits an
+// EnchantResult(2) handled by the caller).
+func (uc *EnchantUseCase) CancelEnchant(charID int32) {
+	uc.state.Clear(charID)
 }
 
 // EnchantItem performs the actual enchant when the client answers a prompt with

@@ -136,6 +136,15 @@ func (r *Registry) registerMultiStub(state ConnState, sub uint16, name string) {
 	r.multi[state][sub] = packetEntry{Name: name, Handle: warnStub(name)}
 }
 
+// registerMulti регистрирует РЕАЛЬНЫЙ обработчик sub-опкода мультипакета 0xD0
+// (в отличие от registerMultiStub — не заглушку). Паникует при коллизии.
+func (r *Registry) registerMulti(state ConnState, sub uint16, name string, h handlerFunc) {
+	if e, exists := r.multi[state][sub]; exists {
+		panic(fmt.Sprintf("duplicate handler: state=%d 0xD0:0x%x (%s vs %s)", state, sub, e.Name, name))
+	}
+	r.multi[state][sub] = packetEntry{Name: name, Handle: h}
+}
+
 // buildRegistry строит реестр входящих пакетов. На этапе фундамента (cb4.1)
 // сюда перенесены только уже реализованные обработчики; доменные стабы
 // добавляются отдельными задачами cb4.6..cb4.42.
