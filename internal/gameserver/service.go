@@ -423,6 +423,13 @@ func (g *GameServer) prepareUseCases() {
 	charged := registry.GetChargedShotRegistry()
 	g.usc.inventory.ItemHandlers().Register("SoulShots", usecase.NewSoulShotHandler(charged, shotNotifier))
 	g.usc.inventory.ItemHandlers().Register("SpiritShot", usecase.NewSpiritShotHandler(charged, shotNotifier))
+	// BlessedSpiritShot: full weapon shot (separate blessed charge). Beast/Fish
+	// shots are PARKED no-ops (l2go-82b): beast needs a pet/summon system, fish
+	// needs the fishing system — they never consume until those exist.
+	g.usc.inventory.ItemHandlers().Register("BlessedSpiritShot", usecase.NewBlessedSpiritShotHandler(charged, shotNotifier))
+	g.usc.inventory.ItemHandlers().Register("BeastSoulShot", usecase.NewBeastShotHandler(shotNotifier))
+	g.usc.inventory.ItemHandlers().Register("BeastSpiritShot", usecase.NewBeastShotHandler(shotNotifier))
+	g.usc.inventory.ItemHandlers().Register("FishShots", usecase.NewFishShotHandler())
 
 	// Initialize LoginServer communication use case with callbacks
 	g.usc.loginServerComm = usecase.NewLoginServerCommUseCaseWithCallbacks(
