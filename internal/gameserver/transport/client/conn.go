@@ -5,6 +5,7 @@ import (
     "errors"
     "fmt"
     "net"
+    "sync"
 
     "github.com/VerTox/l2go/internal/gameserver/transport/gamecrypt"
 )
@@ -14,6 +15,13 @@ type ClientConn struct {
     Conn   net.Conn
     crypt  *gamecrypt.Crypt
     enable bool
+
+    // sendMu serializes Send: the game loop and the client's own handler
+    // goroutine both write to the same connection (e.g. potion use restores
+    // stats from the loop while the handler sends InventoryUpdate). The XOR
+    // cipher is stateful (outKey advances per packet), so encryption and the
+    // wire write must happen as one atomic step or the stream desyncs.
+    sendMu sync.Mutex
 }
 
 func NewClientConn(c net.Conn) *ClientConn { return &ClientConn{Conn: c, crypt: gamecrypt.New()} }
@@ -59,6 +67,12 @@ func (cc *ClientConn) Send(data []byte) error {
     buf := make([]byte, 2+len(data))
     binary.LittleEndian.PutUint16(buf[:2], uint16(len(data)+2))
     copy(buf[2:], data)
+
+    // Encryption advances the stateful XOR key and must stay paired with the
+    // write in the exact same order, so lock across both. Buffer prep above is
+    // per-call local state and needs no lock.
+    cc.sendMu.Lock()
+    defer cc.sendMu.Unlock()
     if cc.enable {
         // Encrypt payload in place (excluding length header)
         cc.crypt.Encrypt(buf[2:])
