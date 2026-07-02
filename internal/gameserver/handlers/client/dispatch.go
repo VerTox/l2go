@@ -118,6 +118,16 @@ func (r *Registry) registerStub(state ConnState, opcode uint8, name string) {
 	r.simple[state][opcode] = packetEntry{Name: name, Handle: warnStub(name)}
 }
 
+// register регистрирует РЕАЛЬНЫЙ обработчик обычного опкода в заданном состоянии
+// (в отличие от registerStub — не заглушку). Паникует при коллизии, чтобы дубль
+// всплыл на тестах. Используется доменными файлами для «дозревших» пакетов.
+func (r *Registry) register(state ConnState, opcode uint8, name string, h handlerFunc) {
+	if e, exists := r.simple[state][opcode]; exists {
+		panic(fmt.Sprintf("duplicate handler: state=%d opcode=0x%x (%s vs %s)", state, opcode, e.Name, name))
+	}
+	r.simple[state][opcode] = packetEntry{Name: name, Handle: h}
+}
+
 // registerMultiStub регистрирует доменный стаб для sub-опкода мультипакета 0xD0.
 func (r *Registry) registerMultiStub(state ConnState, sub uint16, name string) {
 	if e, exists := r.multi[state][sub]; exists {

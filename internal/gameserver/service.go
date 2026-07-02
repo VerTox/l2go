@@ -461,6 +461,24 @@ func (g *GameServer) prepareHandlers() {
 	potionHandler := usecase.NewPotionHandler(skillEffects, g.gameLoop.StatRestorer())
 	g.usc.inventory.ItemHandlers().Register("ItemSkills", potionHandler)
 	g.usc.inventory.ItemHandlers().Register("ManaPotion", potionHandler)
+
+	// Enchant scrolls (l2go-f16): two-step flow. The "EnchantScrolls" item handler
+	// arms a scroll and prompts the client (ChooseInventoryItem); RequestEnchantItem
+	// then performs the enchant. Tuning (target grade/caps/bonus) loads from
+	// enchantItemData.xml; success chance uses the HF default scroll-group tables.
+	enchantData := registry.NewEnchantDataRegistry()
+	if err := enchantData.LoadFromFile(
+		"data/enchantItemData.xml",
+		"../../data/enchantItemData.xml",
+		"references/data/enchantItemData.xml",
+		"../../references/data/enchantItemData.xml",
+	); err != nil {
+		log.Warn().Err(err).Msg("failed to load enchant item data; enchant scrolls disabled")
+	}
+	enchantNotifier := newEnchantNotifier(g.world, g.connections)
+	enchantUC := usecase.NewEnchantUseCase(g.repo, enchantData, registry.GetEnchantStateRegistry(), enchantNotifier, nil)
+	g.usc.inventory.ItemHandlers().Register("EnchantScrolls", enchantUC.ScrollHandler())
+	g.handlers.client.SetEnchantUseCase(enchantUC)
 }
 
 // connectToLoginServerWithRetry connects to LoginServer with retry logic

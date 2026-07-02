@@ -35,6 +35,7 @@ type Handler struct {
 	movementUseCase    usecase.MovementUseCase
 	logoutUseCase      usecase.LogoutUseCase
 	inventoryUseCase   *usecase.InventoryUseCase
+	enchantUseCase     *usecase.EnchantUseCase
 	world              *registry.WorldRegistry
 	connections        *registry.ConnectionRegistry
 	loginServerHandler LoginServerInterface
@@ -64,6 +65,10 @@ func New(characterUseCase *usecase.CharacterUseCase, movementUseCase usecase.Mov
 		sessions:           make(map[*client.ClientConn]*ClientSession),
 	}
 }
+
+// SetEnchantUseCase wires the enchant flow (RequestEnchantItem). Kept out of the
+// New() signature so the enchant feature stays a self-contained add-on.
+func (h *Handler) SetEnchantUseCase(uc *usecase.EnchantUseCase) { h.enchantUseCase = uc }
 
 // Handle processes incoming client packets
 func (h *Handler) Handle(ctx context.Context, c *client.ClientConn) {
