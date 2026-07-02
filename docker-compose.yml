@@ -80,7 +80,7 @@ services:
       - GAME_HOST=0.0.0.0
       - GAME_PORT=7777
       - GAME_SERVER_PORT=7777
-      - EXTERNAL_HOST=127.0.0.1
+      - EXTERNAL_HOST=${EXTERNAL_HOST:-127.0.0.1}
       - LOG_LEVEL=info
     volumes:
       # Runtime data (not baked into the image). Item templates are read from
