@@ -94,6 +94,21 @@ type ItemSkill struct {
 	Level int `json:"level"`
 }
 
+// ExtractableProduct is one possible reward of an extractable ("capsuled") item.
+// Mirrors L2J's L2ExtractableProduct: on use, each product is rolled independently
+// and, if it hits, yields a random count in [Min,Max].
+//
+// Chance is stored pre-multiplied by 1000 to match L2J semantics: the source XML
+// chance is a percentage (0..100, may be fractional), and the roll is
+// Rnd.get(100000) <= Chance. So a 100% product stores Chance=100000 (always hits),
+// and a 0.5% product stores Chance=500.
+type ExtractableProduct struct {
+	ID     int32 `json:"id"`
+	Min    int   `json:"min"`
+	Max    int   `json:"max"`
+	Chance int   `json:"chance"` // percentage * 1000 (roll space is 0..99999)
+}
+
 // ItemTemplate represents complete item template data from L2J XML
 type ItemTemplate struct {
 	// Primary identification
@@ -157,6 +172,10 @@ type ItemTemplate struct {
 	ImmediateEffect  bool        `json:"immediate_effect"`   // Consumed/applied immediately
 	IsOlyRestricted  bool        `json:"is_oly_restricted"`  // Restricted in Olympiad
 	QuestItem        bool        `json:"quest_item"`         // is_questitem flag (drives Type2=QUEST)
+
+	// Extractable (lootbox) products, parsed from the capsuled_items field.
+	// Non-empty only for extractable items (handled by "ExtractableItems").
+	CapsuledItems []ExtractableProduct `json:"capsuled_items"`
 
 	// Computed fields
 	Type2 ItemType2 `json:"type2"` // Computed type for packets
@@ -325,6 +344,12 @@ func (r *ItemTemplateRegistry) convertXMLItem(xi xmlItem) *ItemTemplate {
 		}
 	}
 
+	// Extractable items must have a handler. L2J defaults it to "ExtractableItems"
+	// when capsuled_items is present but no handler was declared.
+	if len(t.CapsuledItems) > 0 && t.Handler == "" {
+		t.Handler = "ExtractableItems"
+	}
+
 	// Compute body part code
 	t.BodyPartCode = bodyPartToCode(t.BodyPart)
 
@@ -395,7 +420,62 @@ func (r *ItemTemplateRegistry) applySetAttribute(t *ItemTemplate, name, val stri
 		t.IsOlyRestricted = parseBool(val)
 	case "is_questitem":
 		t.QuestItem = parseBool(val)
+	case "capsuled_items":
+		t.CapsuledItems = parseCapsuledItems(val)
 	}
+}
+
+// parseCapsuledItems parses the L2J capsuled_items string.
+// Format: "itemId,min,max,chance[;itemId,min,max,chance...]" where chance is a
+// percentage (may be fractional). Each entry must have exactly 4 comma-separated
+// fields; entries that are malformed or have max<min are skipped (matches L2J
+// L2EtcItem parsing). Chance is stored *1000 (see ExtractableProduct.Chance).
+func parseCapsuledItems(val string) []ExtractableProduct {
+	val = strings.TrimSpace(val)
+	if val == "" {
+		return nil
+	}
+
+	var products []ExtractableProduct
+	for _, part := range strings.Split(val, ";") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		data := strings.Split(part, ",")
+		if len(data) != 4 {
+			continue
+		}
+		id, err := strconv.Atoi(strings.TrimSpace(data[0]))
+		if err != nil {
+			continue
+		}
+		min, err := strconv.Atoi(strings.TrimSpace(data[1]))
+		if err != nil {
+			continue
+		}
+		max, err := strconv.Atoi(strings.TrimSpace(data[2]))
+		if err != nil {
+			continue
+		}
+		chance, err := strconv.ParseFloat(strings.TrimSpace(data[3]), 64)
+		if err != nil {
+			continue
+		}
+		if max < min {
+			continue
+		}
+		products = append(products, ExtractableProduct{
+			ID:     int32(id),
+			Min:    min,
+			Max:    max,
+			Chance: int(chance * 1000),
+		})
+	}
+	if len(products) == 0 {
+		return nil
+	}
+	return products
 }
 
 // parseItemSkills parses the L2J item_skill string.

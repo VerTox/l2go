@@ -461,6 +461,11 @@ func (g *GameServer) prepareHandlers() {
 	potionHandler := usecase.NewPotionHandler(skillEffects, g.gameLoop.StatRestorer())
 	g.usc.inventory.ItemHandlers().Register("ItemSkills", potionHandler)
 	g.usc.inventory.ItemHandlers().Register("ManaPotion", potionHandler)
+
+	// Register extractable (lootbox/capsule) item handler (l2go-7j7). Rewards are
+	// rolled per-product and added to inventory; rewards ride the used item's
+	// InventoryUpdate via ItemUseContext.Emit.
+	g.usc.inventory.ItemHandlers().Register("ExtractableItems", usecase.NewExtractableItemsHandler())
 }
 
 // connectToLoginServerWithRetry connects to LoginServer with retry logic
