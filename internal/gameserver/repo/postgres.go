@@ -21,6 +21,7 @@ type PostgreSQLRepository struct {
 	item     *ItemRepositoryImpl
 	skill    *SkillRepositoryImpl
 	shortcut *ShortcutRepositoryImpl
+	recipe   *RecipeRepositoryImpl
 	spawn    *SpawnRepositoryImpl
 }
 
@@ -32,6 +33,7 @@ func NewPostgreSQLRepository(db *pgxpool.Pool) DatabaseRepository {
 		item:     NewItemRepository(db),
 		skill:    NewSkillRepository(db),
 		shortcut: NewShortcutRepository(db),
+		recipe:   NewRecipeRepository(db),
 		spawn:    NewSpawnRepository(db),
 	}
 }
@@ -41,6 +43,7 @@ func (r *PostgreSQLRepository) Character() CharacterRepository { return r.char }
 func (r *PostgreSQLRepository) Item() ItemRepository           { return r.item }
 func (r *PostgreSQLRepository) Skill() SkillRepository         { return r.skill }
 func (r *PostgreSQLRepository) Shortcut() ShortcutRepository   { return r.shortcut }
+func (r *PostgreSQLRepository) Recipe() RecipeRepository       { return r.recipe }
 func (r *PostgreSQLRepository) Spawn() SpawnRepository         { return r.spawn }
 
 // Transaction implementation
