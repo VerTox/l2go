@@ -121,7 +121,21 @@ func (uc *InventoryUseCase) useNonEquipItem(ctx context.Context, charID int32, i
 		Bool("consumed", consumed).
 		Msg("item handler invoked")
 
-	return &EquipResult{Success: consumed}, nil
+	if !consumed {
+		return &EquipResult{Success: false}, nil
+	}
+
+	// Reflect the post-use item state to the client. Handlers that consume stock
+	// (potions, soulshots) mutate item.Count in place; a fully-consumed stack
+	// (Count<=0) is reported as a removal, otherwise as a count modification.
+	updateType := int16(2) // MODIFY
+	if item.Count <= 0 {
+		updateType = 3 // REMOVE
+	}
+	return &EquipResult{
+		Success:      true,
+		ChangedItems: []ChangedItem{{Item: *item, UpdateType: updateType}},
+	}, nil
 }
 
 // UnequipBySlot handles dragging an item off a paperdoll slot (RequestUnEquipItem)

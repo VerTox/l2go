@@ -146,7 +146,7 @@ type gameServerStatus struct {
 	authenticatedLS bool
 	connectedToLS   bool
 	lastHeartbeat   time.Time
-	
+
 	// Reconnection tracking
 	reconnectAttempts int
 	lastReconnectTime time.Time
@@ -199,9 +199,9 @@ func (g *GameServer) initDatabase(ctx context.Context) error {
 	// Load item templates from XML data files
 	// Try multiple paths for flexibility in different environments
 	itemTemplatePaths := []string{
-		"data/stats/items",           // Relative from project root
-		"../../data/stats/items",     // Relative from cmd/gameserver
-		"./data/stats/items",         // Explicit current directory
+		"data/stats/items",       // Relative from project root
+		"../../data/stats/items", // Relative from cmd/gameserver
+		"./data/stats/items",     // Explicit current directory
 	}
 
 	templateLoaded := false
@@ -405,10 +405,10 @@ func (g *GameServer) prepareUseCases() {
 
 	// Initialize character use case with real repository
 	g.usc.character = usecase.NewCharacterUseCase(g.repo)
-	
+
 	// Initialize movement use case
 	g.usc.movement = usecase.NewMovementUseCase(g.world, log.Logger)
-	
+
 	// Initialize logout use case
 	g.usc.logout = usecase.NewLogoutUseCase(g.world, g.repo.Character(), log.Logger)
 
@@ -442,38 +442,51 @@ func (g *GameServer) prepareHandlers() {
 	// Initialize LoginServer handler
 	g.handlers.loginServer = loginserver.New(g.usc.loginServerComm)
 	g.loginServerHandler = g.handlers.loginServer
-	
+
 	// Set disconnection callback for LoginServer
 	g.handlers.loginServer.SetDisconnectionCallback(g)
 
 	// Initialize client handlers for game client connections with use cases
 	g.handlers.client = client.New(g.usc.character, g.usc.movement, g.usc.logout, g.usc.inventory, g.world, g.connections, g.handlers.loginServer, g.gameLoop.CommandChannel())
+
+	// Register consumable item handlers. INTERIM (l2go-diu): potions read their
+	// linked restore skill (HP/MP/CP + amount) from the skill data and restore
+	// immediately via the game loop, until a real skill engine replaces this.
+	skillEffects := registry.NewSkillEffectRegistry([]string{
+		"data/stats/skills",
+		"../../data/stats/skills",
+		"references/data/stats/skills",
+		"../../references/data/stats/skills",
+	})
+	potionHandler := usecase.NewPotionHandler(skillEffects, g.gameLoop.StatRestorer())
+	g.usc.inventory.ItemHandlers().Register("ItemSkills", potionHandler)
+	g.usc.inventory.ItemHandlers().Register("ManaPotion", potionHandler)
 }
 
 // connectToLoginServerWithRetry connects to LoginServer with retry logic
 func (g *GameServer) connectToLoginServerWithRetry(ctx context.Context) error {
 	const maxRetries = 5 // Try 5 times on startup, then switch to background reconnect
 	const retryDelay = 5 * time.Second
-	
+
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		log.Ctx(ctx).Info().
 			Int("attempt", attempt).
 			Int("max_attempts", maxRetries).
 			Str("address", g.config.loginServerAddress()).
 			Msg("Attempting to connect to LoginServer")
-		
+
 		err := g.connectToLoginServer(ctx)
 		if err == nil {
 			g.status.reconnectAttempts = 0
 			g.status.isReconnecting = false
 			return nil
 		}
-		
+
 		log.Ctx(ctx).Warn().
 			Err(err).
 			Int("attempt", attempt).
 			Msg("LoginServer connection failed, retrying...")
-		
+
 		if attempt < maxRetries {
 			select {
 			case <-ctx.Done():
@@ -483,12 +496,12 @@ func (g *GameServer) connectToLoginServerWithRetry(ctx context.Context) error {
 			}
 		}
 	}
-	
+
 	// Start background reconnection after initial attempts fail
 	log.Ctx(ctx).Warn().
 		Int("failed_attempts", maxRetries).
 		Msg("Initial LoginServer connection failed, starting background reconnection")
-	
+
 	g.startBackgroundReconnection(ctx)
 	return nil // Don't fail GameServer startup
 }
@@ -514,17 +527,17 @@ func (g *GameServer) connectToLoginServer(ctx context.Context) error {
 // startBackgroundReconnection starts background LoginServer reconnection
 func (g *GameServer) startBackgroundReconnection(ctx context.Context) {
 	const reconnectInterval = 30 * time.Second // Fixed 30 second interval
-	
+
 	g.status.isReconnecting = true
-	
+
 	go func() {
 		ticker := time.NewTicker(reconnectInterval)
 		defer ticker.Stop()
-		
+
 		log.Ctx(ctx).Info().
 			Dur("interval", reconnectInterval).
 			Msg("Started background LoginServer reconnection")
-		
+
 		for {
 			select {
 			case <-ctx.Done():
@@ -537,14 +550,14 @@ func (g *GameServer) startBackgroundReconnection(ctx context.Context) {
 					g.status.isReconnecting = false
 					return
 				}
-				
+
 				g.status.reconnectAttempts++
 				g.status.lastReconnectTime = time.Now()
-				
+
 				log.Ctx(ctx).Info().
 					Int("attempt", g.status.reconnectAttempts).
 					Msg("Attempting background LoginServer reconnection")
-				
+
 				if err := g.connectToLoginServer(ctx); err != nil {
 					log.Ctx(ctx).Warn().
 						Err(err).
@@ -567,10 +580,10 @@ func (g *GameServer) startBackgroundReconnection(ctx context.Context) {
 // OnLoginServerDisconnected handles LoginServer disconnection
 func (g *GameServer) OnLoginServerDisconnected() {
 	log.Info().Msg("LoginServer connection lost")
-	
+
 	g.status.connectedToLS = false
 	g.status.authenticatedLS = false
-	
+
 	// Start background reconnection if not already running
 	if !g.status.isReconnecting {
 		ctx := context.Background() // Use background context for reconnection
