@@ -6,6 +6,34 @@ import (
 	"github.com/VerTox/l2go/internal/loginserver/models"
 )
 
+// TestServerList_LastServerBytePosition verifies the byte layout of the
+// ServerList packet header against the L2J reference (ServerList.java write()):
+//   writeC(0x04)          -> opcode
+//   writeC(_servers.size) -> server count
+//   writeC(_lastServer)   -> last server id
+// The last server id must be the 3rd byte of the packet.
+func TestServerList_LastServerBytePosition(t *testing.T) {
+	server := &models.GameServerInfo{ID: 7, Name: "S", Port: 7777}
+	server.AddServerAddress("0.0.0.0/0", "127.0.0.1")
+	servers := []*models.GameServerInfo{server}
+
+	const lastServer = 7
+	data := NewServerList(servers, lastServer, "127.0.0.1", 0).GetData()
+
+	if len(data) < 3 {
+		t.Fatalf("packet too short: %d bytes", len(data))
+	}
+	if data[0] != 0x04 {
+		t.Errorf("opcode = 0x%02X, want 0x04", data[0])
+	}
+	if data[1] != byte(len(servers)) {
+		t.Errorf("server count = %d, want %d", data[1], len(servers))
+	}
+	if data[2] != byte(lastServer) {
+		t.Errorf("last server byte = %d, want %d", data[2], lastServer)
+	}
+}
+
 func TestServerList_GetServerIP(t *testing.T) {
 	// Create test GameServer with multiple addresses
 	server := &models.GameServerInfo{

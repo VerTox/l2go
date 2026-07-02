@@ -9,6 +9,7 @@ type Account struct {
 	Username    string    `json:"username" db:"username"`
 	Password    string    `json:"password" db:"password"`
 	AccessLevel int8      `json:"access_level" db:"access_level"`
+	LastServer  int       `json:"last_server" db:"last_server"`
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }

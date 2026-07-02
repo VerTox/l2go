@@ -10,6 +10,7 @@ type AccountRepository interface {
 	GetByUsername(ctx context.Context, username string) (*models.Account, error)
 	Create(ctx context.Context, account *models.Account) error
 	Update(ctx context.Context, account *models.Account) error
+	UpdateLastServer(ctx context.Context, accountID, serverID int) error
 	Delete(ctx context.Context, id int) error
 }
 

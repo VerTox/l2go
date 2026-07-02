@@ -136,6 +136,17 @@ func (uc *ClientUseCase) HandleRequestServerLogin(ctx context.Context, request *
 		}, err
 	}
 
+	// Persist the selected server so the client can pre-select it on the
+	// server selection screen on subsequent logins (ServerList._lastServer).
+	if err := uc.repo.Account.UpdateLastServer(ctx, account.ID, serverID); err != nil {
+		log.Ctx(ctx).Warn().Err(err).
+			Str("account", account.Username).
+			Int("server_id", serverID).
+			Msg("Failed to persist last server for account")
+	} else {
+		account.LastServer = serverID
+	}
+
 	log.Ctx(ctx).Info().
 		Str("account", account.Username).
 		Int("server_id", serverID).
