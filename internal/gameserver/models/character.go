@@ -354,6 +354,17 @@ type CharacterSkillEffect struct {
 	AppliedAt     time.Time `json:"applied_at" db:"applied_at"`
 }
 
+// CharacterRecipe represents a recipe registered in a character's recipe book.
+// Mirrors L2J's character_recipebook row: RecipeID is the internal recipe-list id
+// (recipes.xml <item id="..">), NOT the scroll item id or the crafted item id.
+type CharacterRecipe struct {
+	CharID       int32     `json:"char_id" db:"char_id"`
+	RecipeID     int32     `json:"recipe_id" db:"recipe_id"`
+	IsDwarven    bool      `json:"is_dwarven" db:"is_dwarven"` // true = dwarven creation, false = common
+	ClassIndex   int       `json:"class_index" db:"class_index"`
+	RegisteredAt time.Time `json:"registered_at" db:"registered_at"`
+}
+
 // CharacterShortcut represents a UI shortcut/macro
 type CharacterShortcut struct {
 	CharID     int32 `json:"char_id" db:"char_id"`

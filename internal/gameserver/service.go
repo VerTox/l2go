@@ -461,6 +461,20 @@ func (g *GameServer) prepareHandlers() {
 	potionHandler := usecase.NewPotionHandler(skillEffects, g.gameLoop.StatRestorer())
 	g.usc.inventory.ItemHandlers().Register("ItemSkills", potionHandler)
 	g.usc.inventory.ItemHandlers().Register("ManaPotion", potionHandler)
+
+	// Register the recipe-scroll item handler (l2go-9sw). Using a recipe scroll
+	// registers the recipe in the character's recipe book (character_recipes) and
+	// consumes one scroll. Recipes are resolved from recipes.xml by the scroll's
+	// item id; the notifier delivers SystemMessage feedback (reusing the shot
+	// notifier, which now also satisfies usecase.RecipeNotifier).
+	recipes := registry.NewRecipeRegistry([]string{
+		"data",
+		"../../data",
+		"references/data",
+		"../../references/data",
+	})
+	recipeNotifier := newShotEffectNotifier(g.world, g.connections)
+	g.usc.inventory.ItemHandlers().Register("Recipes", usecase.NewRecipeHandler(recipes, recipeNotifier))
 }
 
 // connectToLoginServerWithRetry connects to LoginServer with retry logic

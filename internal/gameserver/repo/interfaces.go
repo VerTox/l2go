@@ -99,6 +99,25 @@ type ShortcutRepository interface {
 	GetMaxPage(ctx context.Context, charID int32) (int, error)
 }
 
+// RecipeRepository defines the interface for character recipe-book data access.
+// recipeID is the internal recipe-list id (recipes.xml item id), matching L2J's
+// character_recipebook keying.
+type RecipeRepository interface {
+	// GetByCharacter returns all recipes registered by a character.
+	GetByCharacter(ctx context.Context, charID int32) ([]models.CharacterRecipe, error)
+	// HasRecipe reports whether the character already registered the recipe.
+	HasRecipe(ctx context.Context, charID int32, recipeID int32) (bool, error)
+	// CountByType returns how many recipes of a book (dwarven vs common) the
+	// character has registered, for the per-book limit check.
+	CountByType(ctx context.Context, charID int32, isDwarven bool) (int, error)
+	// AddRecipe registers a recipe in the character's book.
+	AddRecipe(ctx context.Context, charID int32, recipeID int32, isDwarven bool) error
+	// RemoveRecipe unregisters a recipe from the character's book.
+	RemoveRecipe(ctx context.Context, charID int32, recipeID int32) error
+	// DeleteByCharacter removes all recipes for a character (cleanup on delete).
+	DeleteByCharacter(ctx context.Context, charID int32) error
+}
+
 // SpawnRepository defines the interface for NPC spawnlist data access
 type SpawnRepository interface {
 	// GetAll returns all spawn entries from the database
@@ -115,6 +134,7 @@ type Repository struct {
 	Item      ItemRepository
 	Skill     SkillRepository
 	Shortcut  ShortcutRepository
+	Recipe    RecipeRepository
 	Spawn     SpawnRepository
 }
 
@@ -156,5 +176,6 @@ type DatabaseRepository interface {
 	Item() ItemRepository
 	Skill() SkillRepository
 	Shortcut() ShortcutRepository
+	Recipe() RecipeRepository
 	Spawn() SpawnRepository
 }

@@ -43,6 +43,13 @@ func (n *shotEffectNotifier) SystemMessage(charID int32, msgID int32) {
 	n.sendToOwner(charID, outclient.BuildSystemMessageNoParams(msgID))
 }
 
+// SystemMessageWithInt sends a system message carrying a single int parameter
+// (e.g. UP_TO_S1_RECIPES_CAN_REGISTER with the recipe limit). This lets the same
+// notifier satisfy usecase.RecipeNotifier alongside ShotEffectNotifier.
+func (n *shotEffectNotifier) SystemMessageWithInt(charID int32, msgID int32, value int32) {
+	n.sendToOwner(charID, outclient.NewSystemMessage(msgID).AddInt(value).Build())
+}
+
 // BroadcastShotVisual broadcasts a MagicSkillUse animation for the shot to the
 // owner and every player within visibility range.
 func (n *shotEffectNotifier) BroadcastShotVisual(charID int32, skillID int32, skillLevel int32) {
