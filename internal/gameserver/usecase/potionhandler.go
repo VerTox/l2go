@@ -17,7 +17,7 @@ type SkillEffectSource interface {
 // the game-loop side (the loop owns authoritative HP/MP/CP and broadcasts the
 // resulting StatusUpdate/UserInfo), so the handler stays free of packet/world deps.
 type StatRestorer interface {
-	RestoreStats(charID, hp, mp, cp int32)
+	RestoreStats(charID, hp, mp, cp, skillID, skillLevel int32)
 }
 
 // PotionHandler implements ItemHandler for consumable potions whose item_skill
@@ -76,7 +76,12 @@ func (p *PotionHandler) UseItem(ctx context.Context, use ItemUseContext) (bool, 
 		return false, err
 	}
 
-	p.restore.RestoreStats(use.CharID, hp, mp, cp)
+	// INTERIM cast visual: we don't run the real skill, but broadcasting the
+	// linked skill's MagicSkillUse gives the client the cast animation and starts
+	// the shortcut/reuse cooldown sweep on the item icon. Use the item's primary
+	// item_skill as the cast skill.
+	castID, castLvl := use.Template.ItemSkills[0].ID, use.Template.ItemSkills[0].Level
+	p.restore.RestoreStats(use.CharID, hp, mp, cp, int32(castID), int32(castLvl))
 	return true, nil
 }
 

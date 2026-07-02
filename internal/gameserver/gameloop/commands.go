@@ -101,6 +101,11 @@ type CmdRestoreStats struct {
 	HP     int32
 	MP     int32
 	CP     int32
+	// SkillID/SkillLevel: the item's linked skill, broadcast as a MagicSkillUse
+	// cast visual so the client plays the animation and starts the item icon
+	// reuse-cooldown sweep. 0 = no cast visual.
+	SkillID    int32
+	SkillLevel int32
 }
 
 func (CmdRestoreStats) commandMarker() {}

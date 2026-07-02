@@ -46,6 +46,19 @@ func (gl *GameLoop) handleRestoreStats(cmd CmdRestoreStats) {
 		_ = conn.Send(gl.buildUserInfoForPlayer(player))
 	}
 	gl.broadcastToTargeters(cmd.CharID, su)
+
+	// INTERIM cast visual (l2go-diu): broadcast the linked skill's MagicSkillUse so
+	// the client plays the potion animation and starts the item-icon reuse cooldown
+	// sweep (the client drives the sweep off the cast; a real skill engine will
+	// replace this with an actual doSimultaneousCast). Self-cast: caster == target;
+	// player object id == char id. broadcastToNearby includes the owner.
+	if cmd.SkillID > 0 {
+		msu := outclient.BuildMagicSkillUse(
+			cmd.CharID, cmd.CharID, cmd.SkillID, cmd.SkillLevel, 0, 0,
+			int32(player.Position.X), int32(player.Position.Y), int32(player.Position.Z),
+		)
+		gl.broadcastToNearby(player.Position, msu)
+	}
 }
 
 // statRestorer adapts the game loop's command channel to usecase.StatRestorer so
@@ -54,8 +67,8 @@ type statRestorer struct {
 	ch chan<- Command
 }
 
-func (s statRestorer) RestoreStats(charID, hp, mp, cp int32) {
-	s.ch <- CmdRestoreStats{CharID: charID, HP: hp, MP: mp, CP: cp}
+func (s statRestorer) RestoreStats(charID, hp, mp, cp, skillID, skillLevel int32) {
+	s.ch <- CmdRestoreStats{CharID: charID, HP: hp, MP: mp, CP: cp, SkillID: skillID, SkillLevel: skillLevel}
 }
 
 // StatRestorer returns a usecase.StatRestorer backed by this loop's command channel.

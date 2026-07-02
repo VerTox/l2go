@@ -23,15 +23,17 @@ func (f *fakeSkillSource) Lookup(id, level int) (registry.SkillEffect, bool) {
 
 // recordingRestorer captures RestoreStats calls.
 type recordingRestorer struct {
-	calls      int
-	charID     int32
-	hp, mp, cp int32
+	calls               int
+	charID              int32
+	hp, mp, cp          int32
+	skillID, skillLevel int32
 }
 
-func (r *recordingRestorer) RestoreStats(charID, hp, mp, cp int32) {
+func (r *recordingRestorer) RestoreStats(charID, hp, mp, cp, skillID, skillLevel int32) {
 	r.calls++
 	r.charID = charID
 	r.hp, r.mp, r.cp = hp, mp, cp
+	r.skillID, r.skillLevel = skillID, skillLevel
 }
 
 // fakeItemRepo implements repo.ItemRepository just enough for consumption.
@@ -90,6 +92,9 @@ func TestPotionHandler_RestoresHPAndConsumes(t *testing.T) {
 		t.Fatal("consumed = false, want true")
 	}
 	// Restore routed with HP=50, no MP/CP.
+	if restorer.skillID != 2037 || restorer.skillLevel != 1 {
+		t.Errorf("cast skill = (%d,%d), want (2037,1) forwarded for MagicSkillUse visual", restorer.skillID, restorer.skillLevel)
+	}
 	if restorer.calls != 1 || restorer.charID != 7 || restorer.hp != 50 || restorer.mp != 0 || restorer.cp != 0 {
 		t.Errorf("restorer = %+v, want 1 call charID=7 hp=50", restorer)
 	}
