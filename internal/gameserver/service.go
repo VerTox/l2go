@@ -487,6 +487,33 @@ func (g *GameServer) prepareHandlers() {
 	})
 	recipeNotifier := newShotEffectNotifier(g.world, g.connections)
 	g.usc.inventory.ItemHandlers().Register("Recipes", usecase.NewRecipeHandler(recipes, recipeNotifier))
+
+	// Enchant scrolls (l2go-f16): two-step flow. The "EnchantScrolls" item handler
+	// arms a scroll and prompts the client (ChooseInventoryItem); RequestEnchantItem
+	// then performs the enchant. Tuning (target grade/caps/bonus) loads from
+	// enchantItemData.xml; success chance is data-driven from enchantItemGroups.xml.
+	enchantData := registry.NewEnchantDataRegistry()
+	if err := enchantData.LoadFromFile(
+		"data/enchantItemData.xml",
+		"../../data/enchantItemData.xml",
+		"references/data/enchantItemData.xml",
+		"../../references/data/enchantItemData.xml",
+	); err != nil {
+		log.Warn().Err(err).Msg("failed to load enchant item data; enchant scrolls disabled")
+	}
+	enchantGroups := registry.NewEnchantGroupsRegistry()
+	if err := enchantGroups.LoadFromFile(
+		"data/enchantItemGroups.xml",
+		"../../data/enchantItemGroups.xml",
+		"references/data/enchantItemGroups.xml",
+		"../../references/data/enchantItemGroups.xml",
+	); err != nil {
+		log.Warn().Err(err).Msg("failed to load enchant item groups; enchant success chance unavailable")
+	}
+	enchantNotifier := newEnchantNotifier(g.world, g.connections)
+	enchantUC := usecase.NewEnchantUseCase(g.repo, enchantData, enchantGroups, registry.GetEnchantStateRegistry(), enchantNotifier, nil)
+	g.usc.inventory.ItemHandlers().Register("EnchantScrolls", enchantUC.ScrollHandler())
+	g.handlers.client.SetEnchantUseCase(enchantUC)
 }
 
 // connectToLoginServerWithRetry connects to LoginServer with retry logic
