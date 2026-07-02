@@ -415,6 +415,15 @@ func (g *GameServer) prepareUseCases() {
 	// Initialize inventory use case
 	g.usc.inventory = usecase.NewInventoryUseCase(g.repo)
 
+	// Register soulshot / spiritshot item handlers (l2go-sew). The notifier
+	// bridges the domain handlers to the world/connection registries for
+	// system messages and the activation visual; charged state lives in the
+	// global charged-shot registry so combat can later spend it.
+	shotNotifier := newShotEffectNotifier(g.world, g.connections)
+	charged := registry.GetChargedShotRegistry()
+	g.usc.inventory.ItemHandlers().Register("SoulShots", usecase.NewSoulShotHandler(charged, shotNotifier))
+	g.usc.inventory.ItemHandlers().Register("SpiritShot", usecase.NewSpiritShotHandler(charged, shotNotifier))
+
 	// Initialize LoginServer communication use case with callbacks
 	g.usc.loginServerComm = usecase.NewLoginServerCommUseCaseWithCallbacks(
 		g.usc.playerManager,

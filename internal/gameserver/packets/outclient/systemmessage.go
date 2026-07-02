@@ -11,6 +11,17 @@ const (
 	SysMsgCannotRestartInCombat  = 102  // CANT_RESTART_WHILE_FIGHTING "You cannot restart while in combat."
 	SysMsgTargetNotFound         = 145  // TARGET_IS_NOT_FOUND_IN_THE_GAME (TELL to offline player)
 	SysMsgDontSpam               = 1078 // DONT_SPAM "Please refrain from constant individual purchases."
+
+	// Soulshot / Spiritshot messages (L2J SystemMessageId).
+	SysMsgUseS1                  = 936 // USE_S1_ "You are using $s1." (item-name param)
+	SysMsgSoulshotsGradeMismatch = 337 // SOULSHOTS_GRADE_MISMATCH
+	SysMsgNotEnoughSoulshots     = 338 // NOT_ENOUGH_SOULSHOTS
+	SysMsgCannotUseSoulshots     = 339 // CANNOT_USE_SOULSHOTS
+	SysMsgEnabledSoulshot        = 342 // ENABLED_SOULSHOT
+	SysMsgSpiritshotsGradeMismatch = 530 // SPIRITSHOTS_GRADE_MISMATCH
+	SysMsgNotEnoughSpiritshots     = 531 // NOT_ENOUGH_SPIRITSHOTS
+	SysMsgCannotUseSpiritshots     = 532 // CANNOT_USE_SPIRITSHOTS
+	SysMsgEnabledSpiritshot        = 533 // ENABLED_SPIRITSHOT
 )
 
 // SystemMessage parameter types.
@@ -53,6 +64,13 @@ func (b *SystemMessageBuilder) AddInt(v int32) *SystemMessageBuilder {
 // AddLong adds an int64 parameter (TYPE_LONG_NUMBER).
 func (b *SystemMessageBuilder) AddLong(v int64) *SystemMessageBuilder {
 	b.params = append(b.params, smParam{ptype: smParamLong, lval: v})
+	return b
+}
+
+// AddItemName adds an item-name parameter (TYPE_ITEM_NAME). The client resolves
+// the localized item name from the item id.
+func (b *SystemMessageBuilder) AddItemName(itemID int32) *SystemMessageBuilder {
+	b.params = append(b.params, smParam{ptype: smParamItemName, ival: itemID})
 	return b
 }
 
