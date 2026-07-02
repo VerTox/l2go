@@ -224,6 +224,8 @@ func (gl *GameLoop) processCommand(cmd Command) {
 		gl.handleTeleport(c)
 	case CmdRevive:
 		gl.handleRevive(c)
+	case CmdRestoreStats:
+		gl.handleRestoreStats(c)
 	case CmdChatMessage:
 		gl.handleChatMessage(c)
 	}

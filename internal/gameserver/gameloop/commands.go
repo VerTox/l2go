@@ -92,6 +92,19 @@ type CmdChatMessage struct {
 
 func (CmdChatMessage) commandMarker() {}
 
+// CmdRestoreStats — restore a live player's vital stats (HP/MP/CP), clamped to
+// their maxima, and broadcast the resulting HP/MP/CP bars. Sent by the interim
+// potion item handler (l2go-diu); the amounts are pre-resolved from the item's
+// linked restore skill. A dead player (CurrentHP<=0) is left untouched.
+type CmdRestoreStats struct {
+	CharID int32
+	HP     int32
+	MP     int32
+	CP     int32
+}
+
+func (CmdRestoreStats) commandMarker() {}
+
 // CmdRevive — resurrect a dead player and teleport it to a respawn point (Dest).
 // Restores HP, broadcasts Revive, then teleports. Used by RequestRestartPoint.
 type CmdRevive struct {
