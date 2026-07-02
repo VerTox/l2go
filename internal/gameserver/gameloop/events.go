@@ -261,18 +261,26 @@ func (e *HitEvent) Execute(gl *GameLoop) {
 		npc.CurrentHP = 0
 	}
 
-	// Add hate
-	if hl, ok := gl.npcHateLists[e.TargetObjectID]; ok {
-		hl.AddHate(e.AttackerCharID, int64(e.Damage))
-	} else {
-		hl := NewHateList()
-		hl.AddHate(e.AttackerCharID, int64(e.Damage))
+	// Add hate. The hate list drives retaliation targeting (L2J getMostHated): an NPC
+	// fights the top-hate attacker, not merely whoever hit it last.
+	hl, ok := gl.npcHateLists[e.TargetObjectID]
+	if !ok {
+		hl = NewHateList()
 		gl.npcHateLists[e.TargetObjectID] = hl
 	}
+	hl.AddHate(e.AttackerCharID, int64(e.Damage))
 
-	// Trigger NPC auto-attack back (NPC retaliates when hit)
+	// Trigger NPC auto-attack back against the most-hated attacker (L2J getMostHated),
+	// not the last hitter. Fall back to the current attacker if the hate list yields no
+	// valid target: L2J returns null on an empty aggro list, but here hate was just added
+	// so this only guards against an all-zero/cleared list (GetTopAttacker returns 0) —
+	// the NPC still retaliates against whoever just hit it rather than an invalid id 0.
 	if npc.IsAttackable() {
-		gl.startNPCAttack(e.TargetObjectID, e.AttackerCharID)
+		target := hl.GetTopAttacker()
+		if target == 0 {
+			target = e.AttackerCharID
+		}
+		gl.startNPCAttack(e.TargetObjectID, target)
 	}
 
 	// Broadcast StatusUpdate with current HP
