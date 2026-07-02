@@ -64,10 +64,24 @@ func (n *recEnchantNotifier) SystemMessage(_ int32, msgID int32) {
 	n.sysMsgs = append(n.sysMsgs, msgID)
 }
 
+// fakeChanceSource returns a fixed chance (ok=true), or ok=false when notFound.
+type fakeChanceSource struct {
+	chance   float64
+	notFound bool
+}
+
+func (f fakeChanceSource) Chance(_ int, _ int32, _ bool, _ int32, _ int) (float64, bool) {
+	if f.notFound {
+		return 0, false
+	}
+	return f.chance, true
+}
+
 // --- pure decision -------------------------------------------------------
 
 func TestDecideEnchant(t *testing.T) {
-	weaponTarget := enchantTarget{type2: registry.ItemType2Weapon, grade: registry.GradeD, enchantLevel: 3, enchantable: true}
+	// baseChance 70 mirrors a fighter weapon at enchant level 3-14.
+	weaponTarget := enchantTarget{type2: registry.ItemType2Weapon, grade: registry.GradeD, enchantLevel: 3, enchantable: true, baseChance: 70}
 	normalScroll := enchantScrollInfo{isWeapon: true, targetGrade: registry.GradeD, maxEnchant: 65535}
 
 	tests := []struct {
@@ -130,26 +144,6 @@ func TestDecideEnchant(t *testing.T) {
 	}
 }
 
-func TestEnchantChanceGroups(t *testing.T) {
-	// Fighter weapon: 100% at lvl0-2, 70% at 3-14, 35% at 15+.
-	if c := enchantBaseChance(enchantTarget{type2: registry.ItemType2Weapon, enchantLevel: 1}); c != 100 {
-		t.Fatalf("fighter lvl1 chance = %v, want 100", c)
-	}
-	if c := enchantBaseChance(enchantTarget{type2: registry.ItemType2Weapon, enchantLevel: 5}); c != 70 {
-		t.Fatalf("fighter lvl5 chance = %v, want 70", c)
-	}
-	if c := enchantBaseChance(enchantTarget{type2: registry.ItemType2Weapon, isMagicWeapon: true, enchantLevel: 5}); c != 40 {
-		t.Fatalf("mage lvl5 chance = %v, want 40", c)
-	}
-	// Armor: 100% at lvl0-2, then decreasing; 0 at 20+.
-	if c := enchantBaseChance(enchantTarget{type2: registry.ItemType2Armor, enchantLevel: 4}); c != 33.34 {
-		t.Fatalf("armor lvl4 chance = %v, want 33.34", c)
-	}
-	if c := enchantBaseChance(enchantTarget{type2: registry.ItemType2Armor, enchantLevel: 25}); c != 0 {
-		t.Fatalf("armor lvl25 chance = %v, want 0", c)
-	}
-}
-
 // --- use case flow -------------------------------------------------------
 
 const (
@@ -173,7 +167,10 @@ func newEnchantUseCaseForTest(t *testing.T, scrollEtc string, roll float64) (*En
 	state := registry.NewEnchantStateRegistry()
 	notifier := &recEnchantNotifier{}
 
-	uc := NewEnchantUseCase(db, data, state, notifier, func() float64 { return roll })
+	// Fixed base chance 70 so roll=10 succeeds and roll=99 fails, matching a
+	// fighter weapon at enchant level 3.
+	chances := fakeChanceSource{chance: 70}
+	uc := NewEnchantUseCase(db, data, chances, state, notifier, func() float64 { return roll })
 	uc.itemTemplate = func(itemID int32) *registry.ItemTemplate {
 		switch itemID {
 		case enchScrollItem:

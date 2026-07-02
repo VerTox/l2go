@@ -54,13 +54,14 @@ type enchantScrollInfo struct {
 }
 
 // enchantTarget is the static+dynamic profile of the item being enchanted.
+// baseChance is the success chance resolved from the enchant-groups data for the
+// scroll group / target / current enchant level (before the scroll's bonus).
 type enchantTarget struct {
-	type2         registry.ItemType2
-	grade         registry.ItemGrade // already collapsed via gradeSPlus
-	isMagicWeapon bool
-	isFullArmor   bool
-	enchantLevel  int
-	enchantable   bool
+	type2        registry.ItemType2
+	grade        registry.ItemGrade // already collapsed via gradeSPlus
+	enchantLevel int
+	enchantable  bool
+	baseChance   float64
 }
 
 // enchantDecision is the pure outcome of an enchant attempt: what result code to
@@ -85,8 +86,9 @@ func decideEnchant(s enchantScrollInfo, t enchantTarget, roll float64) enchantDe
 		return enchantDecision{code: EnchantCodeError, newLevel: t.enchantLevel, systemMsg: sysMsgInappropriateEnchant}
 	}
 
-	// Valid target: the scroll is spent regardless of success/failure.
-	finalChance := math.Min(enchantBaseChance(t)+s.bonusRate, 100)
+	// Valid target: the scroll is spent regardless of success/failure. The base
+	// chance is resolved from the enchant-groups data by the caller.
+	finalChance := math.Min(t.baseChance+s.bonusRate, 100)
 	if roll < finalChance {
 		return enchantDecision{code: EnchantCodeSuccess, newLevel: t.enchantLevel + 1, consumeScroll: true}
 	}
@@ -115,56 +117,11 @@ func enchantTypeMatches(scrollIsWeapon bool, type2 registry.ItemType2) bool {
 	return type2 == registry.ItemType2Armor || type2 == registry.ItemType2Accessory
 }
 
-// rangeChance is one row of an enchant chance table: [min,max] enchant level ->
-// success chance in percent.
-type rangeChance struct {
-	min, max int
-	chance   float64
-}
-
-// Chance tables transcribed from data/enchantItemGroups.xml (HF default scroll
-// group id=0). Exact per-slot bindings and non-default scroll groups are parked;
-// this covers the four base groups the default scrolls bind to.
-var (
-	armorGroup = []rangeChance{
-		{0, 2, 100}, {3, 3, 66.67}, {4, 4, 33.34}, {5, 5, 25}, {6, 6, 20},
-		{7, 7, 16.67}, {8, 8, 14.29}, {9, 9, 12.5}, {10, 10, 11.12}, {11, 11, 10.0},
-		{12, 12, 9.10}, {13, 13, 8.34}, {14, 14, 7.70}, {15, 15, 7.15}, {16, 16, 6.67},
-		{17, 17, 6.25}, {18, 18, 5.89}, {19, 19, 5.56}, {20, 65535, 0},
-	}
-	fullArmorGroup = []rangeChance{
-		{0, 3, 100}, {4, 4, 66.67}, {5, 5, 33.34}, {6, 6, 25}, {7, 7, 20},
-		{8, 8, 16.67}, {9, 9, 14.29}, {10, 10, 12.5}, {11, 11, 11.12}, {12, 12, 10.0},
-		{13, 13, 9.10}, {14, 14, 8.34}, {15, 15, 7.70}, {16, 16, 7.15}, {17, 17, 6.67},
-		{18, 18, 6.25}, {19, 19, 5.89}, {20, 65535, 0},
-	}
-	fighterWeaponGroup = []rangeChance{{0, 2, 100}, {3, 14, 70}, {15, 65535, 35}}
-	mageWeaponGroup    = []rangeChance{{0, 2, 100}, {3, 14, 40}, {15, 65535, 20}}
-)
-
-// enchantBaseChance returns the base success chance for the target at its current
-// enchant level, selecting the chance group the way enchantScrollGroup id=0 binds.
-func enchantBaseChance(t enchantTarget) float64 {
-	if t.type2 == registry.ItemType2Weapon {
-		if t.isMagicWeapon {
-			return chanceFromGroup(mageWeaponGroup, t.enchantLevel)
-		}
-		return chanceFromGroup(fighterWeaponGroup, t.enchantLevel)
-	}
-	if t.isFullArmor {
-		return chanceFromGroup(fullArmorGroup, t.enchantLevel)
-	}
-	return chanceFromGroup(armorGroup, t.enchantLevel)
-}
-
-func chanceFromGroup(group []rangeChance, level int) float64 {
-	for _, r := range group {
-		if level >= r.min && level <= r.max {
-			return r.chance
-		}
-	}
-	// Above all ranges: no chance (mirrors the 20-65535 => 0 tail).
-	return 0
+// EnchantChanceSource resolves the retail success chance for a scroll group /
+// target / enchant level from the parsed enchantItemGroups.xml data. Implemented
+// by registry.EnchantGroupsRegistry; abstracted here for testability.
+type EnchantChanceSource interface {
+	Chance(scrollGroupID int, bodyPart int32, isMagicWeapon bool, itemID int32, enchantLevel int) (float64, bool)
 }
 
 // classifyEnchantScroll reports whether the etcitem_type denotes an enchant
@@ -207,6 +164,7 @@ type EnchantNotifier interface {
 type EnchantUseCase struct {
 	repo     repo.DatabaseRepository
 	data     EnchantDataSource
+	chances  EnchantChanceSource
 	state    *registry.EnchantStateRegistry
 	notifier EnchantNotifier
 	// itemTemplate resolves static templates; overridable in tests.
@@ -216,14 +174,16 @@ type EnchantUseCase struct {
 }
 
 // NewEnchantUseCase wires an enchant use case. rng may be nil (defaults to the
-// global math/rand source).
-func NewEnchantUseCase(db repo.DatabaseRepository, data EnchantDataSource, state *registry.EnchantStateRegistry, notifier EnchantNotifier, rng func() float64) *EnchantUseCase {
+// global math/rand source). chances supplies the retail success chances parsed
+// from enchantItemGroups.xml.
+func NewEnchantUseCase(db repo.DatabaseRepository, data EnchantDataSource, chances EnchantChanceSource, state *registry.EnchantStateRegistry, notifier EnchantNotifier, rng func() float64) *EnchantUseCase {
 	if rng == nil {
 		rng = rand.Float64
 	}
 	return &EnchantUseCase{
 		repo:         db,
 		data:         data,
+		chances:      chances,
 		state:        state,
 		notifier:     notifier,
 		itemTemplate: registry.GetItemTemplateRegistry().Get,
@@ -346,13 +306,23 @@ func (uc *EnchantUseCase) EnchantItem(ctx context.Context, charID int32, targetO
 		maxEnchant:  sd.MaxEnchant,
 		bonusRate:   sd.BonusRate,
 	}
+
+	// Retail success chance from the scroll's group and the target's slot / magic
+	// flag / current enchant level. A missing binding (L2J getChance == -1) is an
+	// invalid enchant condition -> nothing consumed.
+	baseChance, chanceOK := uc.chances.Chance(
+		sd.ScrollGroupID, targetTmpl.BodyPartCode, targetTmpl.IsMagicWeapon, target.ItemID, target.EnchantLevel,
+	)
+	if !chanceOK {
+		return &EnchantOutcome{Code: EnchantCodeError, SystemMsg: sysMsgInappropriateEnchant}, nil
+	}
+
 	tInfo := enchantTarget{
-		type2:         targetTmpl.Type2,
-		grade:         gradeSPlus(targetTmpl.CrystalType),
-		isMagicWeapon: targetTmpl.IsMagicWeapon,
-		isFullArmor:   models.IsFullArmor(targetTmpl.BodyPartCode),
-		enchantLevel:  target.EnchantLevel,
-		enchantable:   targetTmpl.Enchantable,
+		type2:        targetTmpl.Type2,
+		grade:        gradeSPlus(targetTmpl.CrystalType),
+		enchantLevel: target.EnchantLevel,
+		enchantable:  targetTmpl.Enchantable,
+		baseChance:   baseChance,
 	}
 
 	decision := decideEnchant(sInfo, tInfo, 100*uc.rng())

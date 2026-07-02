@@ -475,8 +475,17 @@ func (g *GameServer) prepareHandlers() {
 	); err != nil {
 		log.Warn().Err(err).Msg("failed to load enchant item data; enchant scrolls disabled")
 	}
+	enchantGroups := registry.NewEnchantGroupsRegistry()
+	if err := enchantGroups.LoadFromFile(
+		"data/enchantItemGroups.xml",
+		"../../data/enchantItemGroups.xml",
+		"references/data/enchantItemGroups.xml",
+		"../../references/data/enchantItemGroups.xml",
+	); err != nil {
+		log.Warn().Err(err).Msg("failed to load enchant item groups; enchant success chance unavailable")
+	}
 	enchantNotifier := newEnchantNotifier(g.world, g.connections)
-	enchantUC := usecase.NewEnchantUseCase(g.repo, enchantData, registry.GetEnchantStateRegistry(), enchantNotifier, nil)
+	enchantUC := usecase.NewEnchantUseCase(g.repo, enchantData, enchantGroups, registry.GetEnchantStateRegistry(), enchantNotifier, nil)
 	g.usc.inventory.ItemHandlers().Register("EnchantScrolls", enchantUC.ScrollHandler())
 	g.handlers.client.SetEnchantUseCase(enchantUC)
 }
