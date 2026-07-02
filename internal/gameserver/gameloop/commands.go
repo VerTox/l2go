@@ -77,6 +77,21 @@ type CmdTeleport struct {
 
 func (CmdTeleport) commandMarker() {}
 
+// CmdChatMessage — a player sent a chat line that requires world-aware routing
+// (nearby broadcast for ALL/SHOUT, name lookup for TELL). The client handler has
+// already validated the text/type and echo-safe delivery is done on the loop
+// goroutine so it never races the visibility/broadcast machinery.
+type CmdChatMessage struct {
+	SenderCharID  int32
+	SenderAccount string
+	ChatType      int32
+	SenderName    string
+	Text          string
+	Target        string // only for TELL
+}
+
+func (CmdChatMessage) commandMarker() {}
+
 // CmdRevive — resurrect a dead player and teleport it to a respawn point (Dest).
 // Restores HP, broadcasts Revive, then teleports. Used by RequestRestartPoint.
 type CmdRevive struct {

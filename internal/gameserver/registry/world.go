@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strings"
 	"sync"
 	"time"
 
@@ -192,6 +193,22 @@ func (wr *WorldRegistry) GetPlayerByAccount(accountName string) (*PlayerWorldSta
 		}
 	}
 	
+	return nil, false
+}
+
+// GetPlayerByName returns the online player with the given character name.
+// Matching is case-insensitive, mirroring L2J's name lookup (character names are
+// unique case-insensitively). Used for TELL chat routing.
+func (wr *WorldRegistry) GetPlayerByName(name string) (*PlayerWorldState, bool) {
+	wr.mu.RLock()
+	defer wr.mu.RUnlock()
+
+	for _, state := range wr.players {
+		if state.Character != nil && strings.EqualFold(state.Character.Name, name) {
+			return state, true
+		}
+	}
+
 	return nil, false
 }
 
