@@ -134,6 +134,11 @@ func TestExtractable_GuaranteedDrop_NewStack(t *testing.T) {
 	if itemRepo.created[0].Loc != string(models.LocInventory) {
 		t.Errorf("reward Loc = %q, want INVENTORY", itemRepo.created[0].Loc)
 	}
+	// INVENTORY items must carry loc_data = -1 (character_items_loc_data_check);
+	// loc_data = 0 is only valid for PAPERDOLL and is rejected by the DB.
+	if itemRepo.created[0].LocData != -1 {
+		t.Errorf("reward LocData = %d, want -1 (INVENTORY)", itemRepo.created[0].LocData)
+	}
 	if len(*emitted) != 1 || (*emitted)[0].UpdateType != 1 || (*emitted)[0].Item.ItemID != 13010 {
 		t.Errorf("emitted = %+v, want single ADD 13010", *emitted)
 	}

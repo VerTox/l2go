@@ -157,6 +157,6 @@ func (h *ExtractableItemsHandler) newInventoryItem(charID, itemID int32, count i
 		ItemID:  itemID,
 		Count:   count,
 		Loc:     string(models.LocInventory),
-		LocData: 0,
+		LocData: -1, // INVENTORY items must have loc_data = -1 (character_items_loc_data_check)
 	}
 }
