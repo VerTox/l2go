@@ -114,6 +114,79 @@ func TestParseItemSkills(t *testing.T) {
 	}
 }
 
+func TestConvertXMLItem_CapsuledItems(t *testing.T) {
+	// Multi-entry extractable box; no explicit handler -> defaults to ExtractableItems.
+	const doc = `<list>
+		<item id="13277" type="EtcItem" name="Extractable Box">
+			<set name="is_stackable" val="true" />
+			<set name="capsuled_items" val="13010,5,5,100;13011,2,6,30" />
+		</item>
+	</list>`
+
+	tmpl := parseSingleItem(t, doc)
+
+	if tmpl.Handler != "ExtractableItems" {
+		t.Errorf("Handler = %q, want ExtractableItems (defaulted)", tmpl.Handler)
+	}
+	if len(tmpl.CapsuledItems) != 2 {
+		t.Fatalf("CapsuledItems len = %d, want 2 (%+v)", len(tmpl.CapsuledItems), tmpl.CapsuledItems)
+	}
+	// chance is stored *1000 to match L2J Rnd.get(100000) <= chance semantics.
+	if got := tmpl.CapsuledItems[0]; got != (ExtractableProduct{ID: 13010, Min: 5, Max: 5, Chance: 100000}) {
+		t.Errorf("CapsuledItems[0] = %+v, want {13010 5 5 100000}", got)
+	}
+	if got := tmpl.CapsuledItems[1]; got != (ExtractableProduct{ID: 13011, Min: 2, Max: 6, Chance: 30000}) {
+		t.Errorf("CapsuledItems[1] = %+v, want {13011 2 6 30000}", got)
+	}
+}
+
+func TestConvertXMLItem_CapsuledItemsExplicitHandler(t *testing.T) {
+	const doc = `<list>
+		<item id="52" type="EtcItem" name="Gift Box">
+			<set name="handler" val="ExtractableItems" />
+			<set name="capsuled_items" val="13024,1,1,100" />
+		</item>
+	</list>`
+	tmpl := parseSingleItem(t, doc)
+	if tmpl.Handler != "ExtractableItems" {
+		t.Errorf("Handler = %q, want ExtractableItems", tmpl.Handler)
+	}
+	if len(tmpl.CapsuledItems) != 1 || tmpl.CapsuledItems[0].ID != 13024 {
+		t.Errorf("CapsuledItems = %+v, want single 13024", tmpl.CapsuledItems)
+	}
+}
+
+func TestParseCapsuledItems(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want []ExtractableProduct
+	}{
+		{"empty", "", nil},
+		{"single", "13010,5,5,100", []ExtractableProduct{{13010, 5, 5, 100000}}},
+		{"multiple", "13010,5,5,100;13011,2,6,30", []ExtractableProduct{{13010, 5, 5, 100000}, {13011, 2, 6, 30000}}},
+		{"fractional chance", "13010,1,1,0.5", []ExtractableProduct{{13010, 1, 1, 500}}},
+		{"wrong field count skipped", "13010,5,5;13011,2,6,30", []ExtractableProduct{{13011, 2, 6, 30000}}},
+		{"max<min skipped", "13010,6,2,100;13011,2,6,30", []ExtractableProduct{{13011, 2, 6, 30000}}},
+		{"malformed number skipped", "abc,5,5,100;13011,2,6,30", []ExtractableProduct{{13011, 2, 6, 30000}}},
+		{"trailing semicolon", "13010,5,5,100;", []ExtractableProduct{{13010, 5, 5, 100000}}},
+		{"all invalid", "bad;13010,5,5", nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := parseCapsuledItems(tt.in)
+			if len(got) != len(tt.want) {
+				t.Fatalf("parseCapsuledItems(%q) = %+v, want %+v", tt.in, got, tt.want)
+			}
+			for i := range got {
+				if got[i] != tt.want[i] {
+					t.Errorf("parseCapsuledItems(%q)[%d] = %+v, want %+v", tt.in, i, got[i], tt.want[i])
+				}
+			}
+		})
+	}
+}
+
 func TestComputeType2_QuestItem(t *testing.T) {
 	const questDoc = `<list>
 		<item id="1836" type="EtcItem" name="Order">

@@ -105,11 +105,16 @@ func (uc *InventoryUseCase) useNonEquipItem(ctx context.Context, charID int32, i
 		return &EquipResult{Success: false}, nil
 	}
 
+	// Collect inventory changes the handler produces for items other than the
+	// used one (e.g. extractable rewards), so they ride along the same
+	// InventoryUpdate as the used item's own change.
+	var extraChanges []ChangedItem
 	consumed, err := handler.UseItem(ctx, ItemUseContext{
 		CharID:   charID,
 		Item:     item,
 		Template: template,
 		Repo:     uc.repo,
+		Emit:     func(ci ChangedItem) { extraChanges = append(extraChanges, ci) },
 	})
 	if err != nil {
 		return nil, fmt.Errorf("item handler %q failed: %w", template.Handler, err)
@@ -132,9 +137,12 @@ func (uc *InventoryUseCase) useNonEquipItem(ctx context.Context, charID int32, i
 	if item.Count <= 0 {
 		updateType = 3 // REMOVE
 	}
+	changed := make([]ChangedItem, 0, 1+len(extraChanges))
+	changed = append(changed, ChangedItem{Item: *item, UpdateType: updateType})
+	changed = append(changed, extraChanges...)
 	return &EquipResult{
 		Success:      true,
-		ChangedItems: []ChangedItem{{Item: *item, UpdateType: updateType}},
+		ChangedItems: changed,
 	}, nil
 }
 

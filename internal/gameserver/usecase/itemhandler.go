@@ -16,6 +16,20 @@ type ItemUseContext struct {
 	Item     *models.CharacterItem   // the item instance being used
 	Template *registry.ItemTemplate  // static template for the item
 	Repo     repo.DatabaseRepository // repository access for handler side effects
+
+	// Emit reports an inventory change for an item OTHER than the used item
+	// itself — e.g. the rewards produced by an extractable/lootbox item. The
+	// used item's own change is derived by the dispatcher from Item's post-use
+	// state, so handlers must not emit it here. May be nil (then Emit is a no-op),
+	// which is how the unit tests exercise handlers without a dispatcher.
+	Emit func(ChangedItem)
+}
+
+// emit reports an extra inventory change if a collector is wired, otherwise a no-op.
+func (c ItemUseContext) emit(ci ChangedItem) {
+	if c.Emit != nil {
+		c.Emit(ci)
+	}
 }
 
 // ItemHandler handles the "use" (double-click) of a non-equipment item.
