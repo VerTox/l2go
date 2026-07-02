@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/rs/zerolog/log"
 
@@ -11,22 +12,79 @@ import (
 	"github.com/VerTox/l2go/internal/gameserver/repo"
 )
 
+// SystemMessage ids used by the UseItem pre-fork guards (mirror L2J
+// SystemMessageId.java, values verified against the HF reference).
+const (
+	sysMsgS1CannotBeUsed      = 113  // S1_CANNOT_BE_USED
+	sysMsgCannotUseQuestItems = 148  // CANNOT_USE_QUEST_ITEMS
+	sysMsgSecReuseS1          = 2303 // S2_SECONDS_REMAINING_FOR_REUSE_S1
+	sysMsgMinSecReuseS1       = 2304 // S2_MINUTES_S3_SECONDS_REMAINING_FOR_REUSE_S1
+	sysMsgHourMinSecReuseS1   = 2305 // S2_HOURS_S3_MINUTES_S4_SECONDS_REMAINING_FOR_REUSE_S1
+)
+
 // ChangedItem represents an item that was modified during equip/unequip operation
 type ChangedItem struct {
 	Item       models.CharacterItem
 	UpdateType int16 // 1=add, 2=modify, 3=remove
 }
 
-// EquipResult holds the result of an equip/unequip operation
+// SysMsgSpec is a system-message directive the transport layer must deliver to
+// the acting player. Keeping it a plain data struct lets UseItem stay free of
+// packet/transport dependencies while still driving the client feedback that L2J
+// sends inline (quest-item refusal, dead refusal, reuse-remaining).
+type SysMsgSpec struct {
+	ID       int32   // SystemMessageId
+	ItemName int32   // when >0, appended first as an item-name parameter (S1)
+	Ints     []int32 // appended after ItemName, in order
+}
+
+// ReuseSyncSpec drives an ExUseSharedGroupItem packet: it syncs a shared-reuse
+// group cooldown to the client's item icon. Emitted both when a use is refused
+// during cooldown and when a successful use arms one. Only produced for items
+// that declare a shared reuse group (GroupID>0), matching L2J sendSharedGroupUpdate.
+type ReuseSyncSpec struct {
+	ItemID    int32
+	GroupID   int32
+	Remaining time.Duration
+	Total     time.Duration
+}
+
+// PlayerCondition carries the volatile actor state UseItem must consult before
+// acting on an item, mirroring the L2J UseItem.runImpl guards. Only IsDead is
+// currently modelled; stun/sleep/afraid/alikeDead states do not yet exist in our
+// actor model (parked — see l2go-5i0).
+type PlayerCondition struct {
+	IsDead bool
+}
+
+// EquipResult holds the result of an equip/unequip/use operation.
 type EquipResult struct {
 	ChangedItems []ChangedItem
 	Success      bool
+
+	// Messages are system messages the caller must deliver to the acting player,
+	// regardless of Success (quest-item / dead / reuse-remaining refusals produce
+	// them with Success=false; a successful use produces none).
+	Messages []SysMsgSpec
+
+	// ReuseSync, when non-nil, is an ExUseSharedGroupItem the caller must send to
+	// sync the shared-group cooldown icon (on refusal during cooldown, and on a
+	// successful arm of a grouped consumable).
+	ReuseSync *ReuseSyncSpec
 }
 
 // InventoryUseCase handles equipment business logic
 type InventoryUseCase struct {
 	repo         repo.DatabaseRepository
 	itemHandlers *ItemHandlerRegistry
+
+	// reuse holds per-character item reuse cooldowns (l2go-6vj).
+	reuse *registry.ItemReuseRegistry
+	// now is the injectable clock used for cooldown math (defaults to time.Now).
+	now func() time.Time
+	// templateOf resolves an item's static template (defaults to the global item
+	// template registry; overridden in tests).
+	templateOf func(itemID int32) *registry.ItemTemplate
 }
 
 // NewInventoryUseCase creates a new inventory use case
@@ -34,6 +92,9 @@ func NewInventoryUseCase(repo repo.DatabaseRepository) *InventoryUseCase {
 	return &InventoryUseCase{
 		repo:         repo,
 		itemHandlers: NewItemHandlerRegistry(),
+		reuse:        registry.GetItemReuseRegistry(),
+		now:          time.Now,
+		templateOf:   registry.GetItemTemplateRegistry().Get,
 	}
 }
 
@@ -43,8 +104,11 @@ func (uc *InventoryUseCase) ItemHandlers() *ItemHandlerRegistry {
 	return uc.itemHandlers
 }
 
-// UseItem handles double-click on an item: equip if in inventory, unequip if equipped
-func (uc *InventoryUseCase) UseItem(ctx context.Context, charID int32, objectID int32) (*EquipResult, error) {
+// UseItem handles double-click on an item: equip if in inventory, unequip if
+// equipped, or dispatch a non-equipment item to its handler. Before the
+// equip-vs-etc fork it applies the shared L2J UseItem.runImpl guards
+// (quest-item, dead, reuse cooldown); cond supplies the caller-owned actor state.
+func (uc *InventoryUseCase) UseItem(ctx context.Context, charID int32, objectID int32, cond PlayerCondition) (*EquipResult, error) {
 	item, err := uc.repo.Item().GetByObjectID(ctx, objectID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get item: %w", err)
@@ -59,12 +123,45 @@ func (uc *InventoryUseCase) UseItem(ctx context.Context, charID int32, objectID 
 	}
 
 	// Get item template for body part info
-	template := registry.GetItemTemplateRegistry().Get(item.ItemID)
+	template := uc.templateOf(item.ItemID)
 	if template == nil {
 		log.Ctx(ctx).Warn().
 			Int32("item_id", item.ItemID).
 			Msg("no template found for item, cannot equip")
 		return &EquipResult{Success: false}, nil
+	}
+
+	// --- Shared pre-fork checks (mirror L2J UseItem.runImpl, applied before the
+	// equip-vs-etc fork so they cover both equipment and consumables) ---
+
+	// Quest items can never be "used" (L2J: type2 == QUEST -> CANNOT_USE_QUEST_ITEMS).
+	if template.Type2 == registry.ItemType2Quest {
+		return &EquipResult{
+			Success:  false,
+			Messages: []SysMsgSpec{{ID: sysMsgCannotUseQuestItems}},
+		}, nil
+	}
+
+	// Dead actor cannot use items (L2J: isDead -> S1_CANNOT_BE_USED). Stun/sleep/
+	// afraid/alikeDead are not modelled yet (parked).
+	if cond.IsDead {
+		return &EquipResult{
+			Success:  false,
+			Messages: []SysMsgSpec{{ID: sysMsgS1CannotBeUsed, ItemName: item.ItemID}},
+		}, nil
+	}
+
+	// Reuse cooldown: if the item (or its shared reuse group) is still on cooldown,
+	// refuse the use and tell the client the remaining time (L2J: getItemRemaining
+	// ReuseTime / getReuseDelayOnGroup -> reuseData + sendSharedGroupUpdate).
+	if reuse := time.Duration(template.ReuseDelay) * time.Millisecond; reuse > 0 {
+		now := uc.now()
+		if rem := uc.reuse.RemainingByItem(charID, objectID, now); rem > 0 {
+			return uc.reuseDenied(item.ItemID, template.SharedReuseGroup, rem, reuse), nil
+		}
+		if rem := uc.reuse.RemainingByGroup(charID, template.SharedReuseGroup, now); rem > 0 {
+			return uc.reuseDenied(item.ItemID, template.SharedReuseGroup, rem, reuse), nil
+		}
 	}
 
 	// Non-equipment item: dispatch to a registered item handler by name.
@@ -140,10 +237,64 @@ func (uc *InventoryUseCase) useNonEquipItem(ctx context.Context, charID int32, i
 	changed := make([]ChangedItem, 0, 1+len(extraChanges))
 	changed = append(changed, ChangedItem{Item: *item, UpdateType: updateType})
 	changed = append(changed, extraChanges...)
-	return &EquipResult{
+
+	result := &EquipResult{
 		Success:      true,
 		ChangedItems: changed,
-	}, nil
+	}
+
+	// Arm the per-character reuse cooldown (l2go-6vj) now that the item was
+	// actually used, mirroring L2J UseItem: addTimeStampItem(item, reuseDelay) +
+	// sendSharedGroupUpdate on success. Keyed by item objectID, group-aware.
+	if reuse := time.Duration(template.ReuseDelay) * time.Millisecond; reuse > 0 {
+		uc.reuse.Add(charID, item.ObjectID, template.SharedReuseGroup, reuse, uc.now())
+		if template.SharedReuseGroup > 0 {
+			result.ReuseSync = &ReuseSyncSpec{
+				ItemID:    item.ItemID,
+				GroupID:   int32(template.SharedReuseGroup),
+				Remaining: reuse,
+				Total:     reuse,
+			}
+		}
+	}
+
+	return result, nil
+}
+
+// reuseDenied builds the refusal result for a use blocked by an active reuse
+// cooldown: a reuse-remaining system message plus, for grouped items, an
+// ExUseSharedGroupItem to keep the client cooldown icon in sync.
+func (uc *InventoryUseCase) reuseDenied(itemID int32, group int, remaining, total time.Duration) *EquipResult {
+	res := &EquipResult{
+		Success:  false,
+		Messages: []SysMsgSpec{reuseSysMsg(itemID, remaining)},
+	}
+	if group > 0 {
+		res.ReuseSync = &ReuseSyncSpec{
+			ItemID:    itemID,
+			GroupID:   int32(group),
+			Remaining: remaining,
+			Total:     total,
+		}
+	}
+	return res
+}
+
+// reuseSysMsg selects the correct "remaining for reuse" system message and packs
+// its hours/minutes/seconds parameters, mirroring L2J UseItem.reuseData.
+func reuseSysMsg(itemID int32, remaining time.Duration) SysMsgSpec {
+	ms := remaining.Milliseconds()
+	hours := int32(ms / 3600000)
+	minutes := int32((ms % 3600000) / 60000)
+	seconds := int32((ms / 1000) % 60)
+	switch {
+	case hours > 0:
+		return SysMsgSpec{ID: sysMsgHourMinSecReuseS1, ItemName: itemID, Ints: []int32{hours, minutes, seconds}}
+	case minutes > 0:
+		return SysMsgSpec{ID: sysMsgMinSecReuseS1, ItemName: itemID, Ints: []int32{minutes, seconds}}
+	default:
+		return SysMsgSpec{ID: sysMsgSecReuseS1, ItemName: itemID, Ints: []int32{seconds}}
+	}
 }
 
 // UnequipBySlot handles dragging an item off a paperdoll slot (RequestUnEquipItem)

@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/rs/zerolog/log"
 
@@ -34,10 +35,27 @@ func (h *Handler) handleUseItem(ctx context.Context, c *client.ClientConn, paylo
 		Int32("char_id", playerState.CharID).
 		Msg("UseItem request")
 
-	result, err := h.inventoryUseCase.UseItem(ctx, playerState.CharID, pkt.ObjectID)
+	cond := usecase.PlayerCondition{IsDead: !playerState.Character.IsAlive()}
+
+	result, err := h.inventoryUseCase.UseItem(ctx, playerState.CharID, pkt.ObjectID, cond)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("UseItem failed")
 		return nil // Don't disconnect on inventory errors
+	}
+
+	// Deliver any pre-fork refusal / feedback messages (quest-item, dead,
+	// reuse-remaining) regardless of Success.
+	for _, m := range result.Messages {
+		if err := c.Send(buildUseItemSysMsg(m)); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("failed to send UseItem system message")
+		}
+	}
+	// Sync the shared-group cooldown icon on the client (refusal or successful arm).
+	if rs := result.ReuseSync; rs != nil {
+		pkt := outclient.BuildExUseSharedGroupItem(rs.ItemID, rs.GroupID, reuseSeconds(rs.Remaining), reuseSeconds(rs.Total))
+		if err := c.Send(pkt); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("failed to send ExUseSharedGroupItem")
+		}
 	}
 
 	if result.Success && len(result.ChangedItems) > 0 {
@@ -45,6 +63,24 @@ func (h *Handler) handleUseItem(ctx context.Context, c *client.ClientConn, paylo
 	}
 
 	return nil
+}
+
+// buildUseItemSysMsg turns a usecase.SysMsgSpec into a SystemMessage packet.
+func buildUseItemSysMsg(m usecase.SysMsgSpec) []byte {
+	b := outclient.NewSystemMessage(m.ID)
+	if m.ItemName > 0 {
+		b.AddItemName(m.ItemName)
+	}
+	for _, iv := range m.Ints {
+		b.AddInt(iv)
+	}
+	return b.Build()
+}
+
+// reuseSeconds converts a reuse duration to whole seconds for ExUseSharedGroupItem
+// (L2J divides the millisecond values by 1000 in the packet).
+func reuseSeconds(d time.Duration) int32 {
+	return int32(d / time.Second)
 }
 
 // handleRequestUnEquipItem processes RequestUnEquipItem packet (opcode 0x16)
