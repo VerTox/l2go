@@ -3,14 +3,19 @@ package registry
 import "sync"
 
 // ShotType identifies a charged-shot kind held on a weapon instance.
-// Mirrors L2J's ShotType enum (SOULSHOTS / SPIRITSHOTS / …). Only the two
-// physical/magic base shots are modelled here; blessed/beast/fish variants are
-// left for a follow-up (l2go-82b).
+// Mirrors L2J's ShotType enum (SOULSHOTS / SPIRITSHOTS / BLESSED_SPIRITSHOTS /
+// FISH_SOULSHOTS …). The weapon-facing shots are modelled here; the beast
+// (summon) and fish (fishing-rod) charge types are intentionally omitted until
+// the pet/fishing systems exist (l2go-82b parks them).
 type ShotType int
 
 const (
 	ShotSoulshot ShotType = iota
 	ShotSpiritshot
+	// ShotBlessedSpiritshot is a separate charge from ShotSpiritshot: a weapon
+	// can hold a blessed spiritshot charge independently, mirroring L2J's
+	// BLESSED_SPIRITSHOTS ("it can be charged over SpiritShot").
+	ShotBlessedSpiritshot
 )
 
 // ChargedShotRegistry tracks, per weapon item instance (its object id), which

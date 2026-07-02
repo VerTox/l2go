@@ -72,17 +72,39 @@ func NewSoulShotHandler(charged *registry.ChargedShotRegistry, notifier ShotEffe
 // NewSpiritShotHandler builds the ItemHandler for the "SpiritShot" item handler name.
 func NewSpiritShotHandler(charged *registry.ChargedShotRegistry, notifier ShotEffectNotifier) ItemHandler {
 	return &shotHandler{
-		shot:     registry.ShotSpiritshot,
-		charged:  charged,
-		notifier: notifier,
-		msgs: shotMessages{
-			cannotUse:     532, // CANNOT_USE_SPIRITSHOTS
-			gradeMismatch: 530, // SPIRITSHOTS_GRADE_MISMATCH
-			notEnough:     531, // NOT_ENOUGH_SPIRITSHOTS
-			enabled:       533, // ENABLED_SPIRITSHOT
-			useItem:       936, // USE_S1_
-		},
+		shot:           registry.ShotSpiritshot,
+		charged:        charged,
+		notifier:       notifier,
+		msgs:           spiritShotMessages(),
 		weaponTemplate: registry.GetItemTemplateRegistry().Get,
+	}
+}
+
+// NewBlessedSpiritShotHandler builds the ItemHandler for the "BlessedSpiritShot"
+// item handler name. Mechanically identical to a spiritshot (same weapon count,
+// grade check and system messages — the blessed shot items even declare
+// default_action="SPIRITSHOT"), but it holds a *separate* weapon charge
+// (ShotBlessedSpiritshot) so it can be charged over a regular spiritshot,
+// mirroring L2J's BlessedSpiritShot.java.
+func NewBlessedSpiritShotHandler(charged *registry.ChargedShotRegistry, notifier ShotEffectNotifier) ItemHandler {
+	return &shotHandler{
+		shot:           registry.ShotBlessedSpiritshot,
+		charged:        charged,
+		notifier:       notifier,
+		msgs:           spiritShotMessages(),
+		weaponTemplate: registry.GetItemTemplateRegistry().Get,
+	}
+}
+
+// spiritShotMessages returns the SystemMessage ids shared by the regular and
+// blessed spiritshot handlers (L2J uses the same SPIRITSHOT messages for both).
+func spiritShotMessages() shotMessages {
+	return shotMessages{
+		cannotUse:     532, // CANNOT_USE_SPIRITSHOTS
+		gradeMismatch: 530, // SPIRITSHOTS_GRADE_MISMATCH
+		notEnough:     531, // NOT_ENOUGH_SPIRITSHOTS
+		enabled:       533, // ENABLED_SPIRITSHOT
+		useItem:       936, // USE_S1_
 	}
 }
 
@@ -92,7 +114,9 @@ func (h *shotHandler) weaponShotCount(weapon *registry.ItemTemplate) int {
 	if weapon == nil {
 		return 0
 	}
-	if h.shot == registry.ShotSpiritshot {
+	// Spiritshots and blessed spiritshots both draw on the weapon's spiritshot
+	// count (L2J L2Weapon.getSpiritShotCount serves both).
+	if h.shot == registry.ShotSpiritshot || h.shot == registry.ShotBlessedSpiritshot {
 		return weapon.Spiritshots
 	}
 	return weapon.Soulshots
