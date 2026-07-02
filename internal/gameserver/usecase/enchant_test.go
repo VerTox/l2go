@@ -343,6 +343,118 @@ func TestEnchantItem_WrongTargetType_NoConsume(t *testing.T) {
 	}
 }
 
+// --- windowed flow: ValidateTarget / CancelEnchant ----------------------
+
+func TestValidateTarget_Accepted(t *testing.T) {
+	uc, _, state, _ := newEnchantUseCaseForTest(t, "SCRL_ENCHANT_WP", 0)
+	state.SetActive(enchCharID, registry.ActiveEnchant{ScrollObjectID: enchScrollObjID, ScrollItemID: enchScrollItem})
+
+	res, sysMsg, err := uc.ValidateTarget(context.Background(), enchCharID, enchTargetObjID)
+	if err != nil {
+		t.Fatalf("ValidateTarget error: %v", err)
+	}
+	if res != PutEnchantAccepted {
+		t.Fatalf("res = %d, want PutEnchantAccepted", res)
+	}
+	if sysMsg != 0 {
+		t.Fatalf("sysMsg = %d, want 0 on accept", sysMsg)
+	}
+	// A valid target keeps the scroll armed for the subsequent RequestEnchantItem.
+	if !state.HasActive(enchCharID) {
+		t.Fatalf("scroll must stay armed after accepted target")
+	}
+}
+
+func TestValidateTarget_InvalidWrongType_ClearsState(t *testing.T) {
+	uc, _, state, _ := newEnchantUseCaseForTest(t, "SCRL_ENCHANT_WP", 0)
+	// Weapon scroll but the target is armor -> does not fit.
+	uc.itemTemplate = func(itemID int32) *registry.ItemTemplate {
+		switch itemID {
+		case enchScrollItem:
+			return &registry.ItemTemplate{ID: enchScrollItem, EtcItemType: "SCRL_ENCHANT_WP"}
+		case enchTargetItem:
+			return &registry.ItemTemplate{ID: enchTargetItem, Type: "Armor", Type2: registry.ItemType2Armor, CrystalType: registry.GradeD, Enchantable: true}
+		}
+		return nil
+	}
+	state.SetActive(enchCharID, registry.ActiveEnchant{ScrollObjectID: enchScrollObjID, ScrollItemID: enchScrollItem})
+
+	res, sysMsg, err := uc.ValidateTarget(context.Background(), enchCharID, enchTargetObjID)
+	if err != nil {
+		t.Fatalf("ValidateTarget error: %v", err)
+	}
+	if res != PutEnchantInvalid {
+		t.Fatalf("res = %d, want PutEnchantInvalid", res)
+	}
+	if sysMsg != sysMsgDoesNotFitScroll {
+		t.Fatalf("sysMsg = %d, want DOES_NOT_FIT_SCROLL_CONDITIONS (%d)", sysMsg, sysMsgDoesNotFitScroll)
+	}
+	// Invalid target must clear the arming so the window has to be reopened.
+	if state.HasActive(enchCharID) {
+		t.Fatalf("active enchant state must be cleared on invalid target")
+	}
+}
+
+func TestValidateTarget_GradeMismatch_Invalid(t *testing.T) {
+	uc, _, state, _ := newEnchantUseCaseForTest(t, "SCRL_ENCHANT_WP", 0)
+	// Weapon target but C-grade while the scroll targets D-grade.
+	uc.itemTemplate = func(itemID int32) *registry.ItemTemplate {
+		switch itemID {
+		case enchScrollItem:
+			return &registry.ItemTemplate{ID: enchScrollItem, EtcItemType: "SCRL_ENCHANT_WP"}
+		case enchTargetItem:
+			return &registry.ItemTemplate{ID: enchTargetItem, Type: "Weapon", Type2: registry.ItemType2Weapon, CrystalType: registry.GradeC, Enchantable: true}
+		}
+		return nil
+	}
+	state.SetActive(enchCharID, registry.ActiveEnchant{ScrollObjectID: enchScrollObjID, ScrollItemID: enchScrollItem})
+
+	res, sysMsg, err := uc.ValidateTarget(context.Background(), enchCharID, enchTargetObjID)
+	if err != nil {
+		t.Fatalf("ValidateTarget error: %v", err)
+	}
+	if res != PutEnchantInvalid || sysMsg != sysMsgDoesNotFitScroll {
+		t.Fatalf("grade mismatch: res=%d sysMsg=%d, want Invalid + %d", res, sysMsg, sysMsgDoesNotFitScroll)
+	}
+}
+
+func TestValidateTarget_NoActiveScroll_Ignore(t *testing.T) {
+	uc, _, _, _ := newEnchantUseCaseForTest(t, "SCRL_ENCHANT_WP", 0)
+	res, sysMsg, err := uc.ValidateTarget(context.Background(), enchCharID, enchTargetObjID)
+	if err != nil {
+		t.Fatalf("ValidateTarget error: %v", err)
+	}
+	if res != PutEnchantIgnore || sysMsg != 0 {
+		t.Fatalf("no active scroll: res=%d sysMsg=%d, want Ignore + 0", res, sysMsg)
+	}
+}
+
+func TestValidateTarget_ZeroObjectID_Ignore(t *testing.T) {
+	uc, _, state, _ := newEnchantUseCaseForTest(t, "SCRL_ENCHANT_WP", 0)
+	state.SetActive(enchCharID, registry.ActiveEnchant{ScrollObjectID: enchScrollObjID, ScrollItemID: enchScrollItem})
+	res, _, err := uc.ValidateTarget(context.Background(), enchCharID, 0)
+	if err != nil {
+		t.Fatalf("ValidateTarget error: %v", err)
+	}
+	if res != PutEnchantIgnore {
+		t.Fatalf("objectID=0: res=%d, want Ignore", res)
+	}
+	// A zero object id is a no-op; the arming must remain intact.
+	if !state.HasActive(enchCharID) {
+		t.Fatalf("arming must survive a zero-objectID request")
+	}
+}
+
+func TestCancelEnchant_ClearsState(t *testing.T) {
+	uc, _, state, _ := newEnchantUseCaseForTest(t, "SCRL_ENCHANT_WP", 0)
+	state.SetActive(enchCharID, registry.ActiveEnchant{ScrollObjectID: enchScrollObjID, ScrollItemID: enchScrollItem})
+
+	uc.CancelEnchant(enchCharID)
+	if state.HasActive(enchCharID) {
+		t.Fatalf("CancelEnchant must clear the active enchant state")
+	}
+}
+
 func TestEnchantItem_NoActiveScroll(t *testing.T) {
 	uc, _, _, _ := newEnchantUseCaseForTest(t, "SCRL_ENCHANT_WP", 0)
 	out, err := uc.EnchantItem(context.Background(), enchCharID, enchTargetObjID)

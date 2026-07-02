@@ -11,6 +11,7 @@ import (
 	"github.com/VerTox/l2go/internal/gameserver/packets/outclient"
 	"github.com/VerTox/l2go/internal/gameserver/transport/client"
 	"github.com/VerTox/l2go/internal/gameserver/usecase"
+	"github.com/VerTox/l2go/pkg/l2pkt"
 )
 
 func init() { addStubRegistrator(registerItemEnchantStubs) }
@@ -36,12 +37,13 @@ func registerItemEnchantStubs(r *Registry) {
 	r.registerMultiStub(StateInGame, 0x42, "RequestConfirmCancelItem")
 	// RequestRefineCancel (0xD0:0x43): отменить рафинирование.
 	r.registerMultiStub(StateInGame, 0x43, "RequestRefineCancel")
-	// RequestExTryToPutEnchantTargetItem (0xD0:0x4c): поместить целевой предмет в окно прокачки.
-	r.registerMultiStub(StateInGame, 0x4c, "RequestExTryToPutEnchantTargetItem")
-	// RequestExTryToPutEnchantSupportItem (0xD0:0x4d): поместить вспомогательный предмет в прокачку.
-	r.registerMultiStub(StateInGame, 0x4d, "RequestExTryToPutEnchantSupportItem")
-	// RequestExCancelEnchantItem (0xD0:0x4e): отменить процесс зачарования.
-	r.registerMultiStub(StateInGame, 0x4e, "RequestExCancelEnchantItem")
+	// RequestExTryToPutEnchantTargetItem (0xD0:0x4c): поместить целевой предмет в окно заточки (HF-оконный флоу).
+	r.registerMulti(StateInGame, 0x4c, "RequestExTryToPutEnchantTargetItem", (*Handler).handleRequestExTryToPutEnchantTargetItem)
+	// RequestExTryToPutEnchantSupportItem (0xD0:0x4d): support-item в окне заточки. Support-бонус не реализован —
+	// тихий no-op (не шлём ExPutEnchantSupportItemResult), чтобы не спамить warn'ом. См. PARKED в отчёте.
+	r.registerMulti(StateInGame, 0x4d, "RequestExTryToPutEnchantSupportItem", noopStub("RequestExTryToPutEnchantSupportItem"))
+	// RequestExCancelEnchantItem (0xD0:0x4e): закрыть окно заточки — сброс активного свитка.
+	r.registerMulti(StateInGame, 0x4e, "RequestExCancelEnchantItem", (*Handler).handleRequestExCancelEnchantItem)
 }
 
 // handleRequestEnchantItem processes RequestEnchantItem (0x5f): the client's
@@ -123,6 +125,83 @@ func (h *Handler) handleRequestEnchantItem(ctx context.Context, c *client.Client
 		}
 	}
 
+	return nil
+}
+
+// handleRequestExTryToPutEnchantTargetItem processes RequestExTryToPutEnchantTargetItem
+// (0xD0:0x4c): the High Five windowed enchant flow. The client, having opened the
+// enchant window by double-clicking a scroll, drops a target item into it. We
+// validate the target against the armed scroll and reply so the item shows up in
+// the window (result=objectId) or is rejected (result=0 + system message).
+func (h *Handler) handleRequestExTryToPutEnchantTargetItem(ctx context.Context, c *client.ClientConn, payload []byte) error {
+	r := l2pkt.NewReader(payload)
+	objectID, _ := r.ReadD()
+
+	session := h.getSession(c)
+	if session == nil {
+		return fmt.Errorf("no session for RequestExTryToPutEnchantTargetItem")
+	}
+	playerState, exists := h.world.GetPlayerByAccount(session.AccountName)
+	if !exists {
+		log.Ctx(ctx).Warn().Str("account", session.AccountName).Msg("player not in world for RequestExTryToPutEnchantTargetItem")
+		return nil
+	}
+	if h.enchantUseCase == nil {
+		log.Ctx(ctx).Warn().Msg("enchant use case not wired; ignoring RequestExTryToPutEnchantTargetItem")
+		return nil
+	}
+
+	result, sysMsg, err := h.enchantUseCase.ValidateTarget(ctx, playerState.CharID, objectID)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("ValidateTarget failed")
+		return nil // never disconnect on enchant errors
+	}
+
+	switch result {
+	case usecase.PutEnchantIgnore:
+		// No armed scroll / stale request: L2J returns silently.
+		return nil
+	case usecase.PutEnchantAccepted:
+		// Target fits: it appears in the enchant window; scroll stays armed.
+		if err := c.Send(outclient.BuildExPutEnchantTargetItemResult(objectID)); err != nil {
+			return fmt.Errorf("send ExPutEnchantTargetItemResult: %w", err)
+		}
+		return nil
+	default: // usecase.PutEnchantInvalid
+		// Doesn't fit: notify, then reject (active state already cleared).
+		if sysMsg != 0 {
+			if err := c.Send(outclient.BuildSystemMessageNoParams(sysMsg)); err != nil {
+				return fmt.Errorf("send SystemMessage: %w", err)
+			}
+		}
+		if err := c.Send(outclient.BuildExPutEnchantTargetItemResult(0)); err != nil {
+			return fmt.Errorf("send ExPutEnchantTargetItemResult(0): %w", err)
+		}
+		return nil
+	}
+}
+
+// handleRequestExCancelEnchantItem processes RequestExCancelEnchantItem
+// (0xD0:0x4e): the client closed the enchant window. We clear the armed scroll and
+// echo EnchantResult(2) so the window dismisses, mirroring L2J.
+func (h *Handler) handleRequestExCancelEnchantItem(ctx context.Context, c *client.ClientConn, _ []byte) error {
+	session := h.getSession(c)
+	if session == nil {
+		return fmt.Errorf("no session for RequestExCancelEnchantItem")
+	}
+	playerState, exists := h.world.GetPlayerByAccount(session.AccountName)
+	if !exists {
+		log.Ctx(ctx).Warn().Str("account", session.AccountName).Msg("player not in world for RequestExCancelEnchantItem")
+		return nil
+	}
+	if h.enchantUseCase == nil {
+		return nil
+	}
+
+	h.enchantUseCase.CancelEnchant(playerState.CharID)
+	if err := c.Send(outclient.BuildEnchantResult(int32(usecase.EnchantCodeError), 0, 0)); err != nil {
+		return fmt.Errorf("send EnchantResult on cancel: %w", err)
+	}
 	return nil
 }
 
