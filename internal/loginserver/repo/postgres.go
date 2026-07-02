@@ -21,8 +21,8 @@ func NewPostgresAccountRepo(db *pgxpool.Pool) *PostgresAccountRepo {
 
 func (r *PostgresAccountRepo) GetByUsername(ctx context.Context, username string) (*models.Account, error) {
 	query := `
-		SELECT id, username, password, access_level, created_at, updated_at 
-		FROM accounts 
+		SELECT id, username, password, access_level, last_server, created_at, updated_at
+		FROM accounts
 		WHERE username = $1`
 
 	account := &models.Account{}
@@ -31,6 +31,7 @@ func (r *PostgresAccountRepo) GetByUsername(ctx context.Context, username string
 		&account.Username,
 		&account.Password,
 		&account.AccessLevel,
+		&account.LastServer,
 		&account.CreatedAt,
 		&account.UpdatedAt,
 	)
@@ -82,6 +83,16 @@ func (r *PostgresAccountRepo) Update(ctx context.Context, account *models.Accoun
 		account.UpdatedAt,
 	)
 
+	return err
+}
+
+func (r *PostgresAccountRepo) UpdateLastServer(ctx context.Context, accountID, serverID int) error {
+	query := `
+		UPDATE accounts
+		SET last_server = $2, updated_at = $3
+		WHERE id = $1`
+
+	_, err := r.db.Exec(ctx, query, accountID, serverID, time.Now())
 	return err
 }
 

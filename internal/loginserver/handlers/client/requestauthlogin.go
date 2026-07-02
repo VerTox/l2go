@@ -37,6 +37,7 @@ func (h *Handler) handleRequestAuthLogin(ctx context.Context, client *transport.
 	client.Account = account
 
 	client.AccessLevel = int(account.AccessLevel)
+	client.LastServer = account.LastServer
 	client.LoginOkID1 = binary.LittleEndian.Uint32(client.SessionID[:4])
 	client.LoginOkID2 = binary.LittleEndian.Uint32(client.SessionID[4:8])
 
