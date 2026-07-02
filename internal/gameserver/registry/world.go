@@ -164,12 +164,15 @@ func (wr *WorldRegistry) RemovePlayer(ctx context.Context, charID int32) error {
 	// Remove from maps
 	delete(wr.players, charID)
 	delete(wr.objects, charID)
-	
+
+	// Drop in-memory item reuse cooldowns so they reset on relog, like retail.
+	GetItemReuseRegistry().Clear(charID)
+
 	log.Ctx(ctx).Info().
 		Int32("char_id", charID).
 		Str("account", state.AccountName).
 		Msg("Player removed from world")
-	
+
 	return nil
 }
 
