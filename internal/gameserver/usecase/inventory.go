@@ -25,12 +25,22 @@ type EquipResult struct {
 
 // InventoryUseCase handles equipment business logic
 type InventoryUseCase struct {
-	repo repo.DatabaseRepository
+	repo         repo.DatabaseRepository
+	itemHandlers *ItemHandlerRegistry
 }
 
 // NewInventoryUseCase creates a new inventory use case
 func NewInventoryUseCase(repo repo.DatabaseRepository) *InventoryUseCase {
-	return &InventoryUseCase{repo: repo}
+	return &InventoryUseCase{
+		repo:         repo,
+		itemHandlers: NewItemHandlerRegistry(),
+	}
+}
+
+// ItemHandlers exposes the item handler registry so downstream wiring can
+// register concrete handlers (soulshots, potions, enchant scrolls, ...).
+func (uc *InventoryUseCase) ItemHandlers() *ItemHandlerRegistry {
+	return uc.itemHandlers
 }
 
 // UseItem handles double-click on an item: equip if in inventory, unequip if equipped
@@ -57,13 +67,10 @@ func (uc *InventoryUseCase) UseItem(ctx context.Context, charID int32, objectID 
 		return &EquipResult{Success: false}, nil
 	}
 
-	// Check if item is equippable
+	// Non-equipment item: dispatch to a registered item handler by name.
+	// Mirrors L2J's ItemHandler lookup on L2EtcItem.getHandlerName().
 	if template.BodyPartCode == 0 {
-		log.Ctx(ctx).Debug().
-			Int32("item_id", item.ItemID).
-			Str("name", template.Name).
-			Msg("item is not equippable (bodyPartCode=0)")
-		return &EquipResult{Success: false}, nil
+		return uc.useNonEquipItem(ctx, charID, item, template)
 	}
 
 	if item.IsEquipped() {
@@ -81,6 +88,40 @@ func (uc *InventoryUseCase) UseItem(ctx context.Context, charID int32, objectID 
 		return nil, fmt.Errorf("failed to equip item: %w", err)
 	}
 	return &EquipResult{ChangedItems: changed, Success: true}, nil
+}
+
+// useNonEquipItem dispatches the use of a non-equipment item to a registered
+// ItemHandler keyed by template.Handler. If no handler is registered (or the
+// item declares no handler), this is a no-op and NOT an error — exactly like
+// L2J, where a missing handler simply means the item does nothing on use.
+func (uc *InventoryUseCase) useNonEquipItem(ctx context.Context, charID int32, item *models.CharacterItem, template *registry.ItemTemplate) (*EquipResult, error) {
+	handler, ok := uc.itemHandlers.Get(template.Handler)
+	if !ok {
+		log.Ctx(ctx).Debug().
+			Int32("item_id", item.ItemID).
+			Str("name", template.Name).
+			Str("handler", template.Handler).
+			Msg("no item handler registered, ignoring use (no-op)")
+		return &EquipResult{Success: false}, nil
+	}
+
+	consumed, err := handler.UseItem(ctx, ItemUseContext{
+		CharID:   charID,
+		Item:     item,
+		Template: template,
+		Repo:     uc.repo,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("item handler %q failed: %w", template.Handler, err)
+	}
+
+	log.Ctx(ctx).Debug().
+		Int32("item_id", item.ItemID).
+		Str("handler", template.Handler).
+		Bool("consumed", consumed).
+		Msg("item handler invoked")
+
+	return &EquipResult{Success: consumed}, nil
 }
 
 // UnequipBySlot handles dragging an item off a paperdoll slot (RequestUnEquipItem)

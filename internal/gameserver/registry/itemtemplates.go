@@ -87,6 +87,13 @@ const (
 	EtcOther     EtcItemType = "OTHER"
 )
 
+// ItemSkill represents a skill linked to an item (from the item_skill field).
+// Mirrors L2J's SkillHolder (skill id + level).
+type ItemSkill struct {
+	ID    int `json:"id"`
+	Level int `json:"level"`
+}
+
 // ItemTemplate represents complete item template data from L2J XML
 type ItemTemplate struct {
 	// Primary identification
@@ -140,6 +147,16 @@ type ItemTemplate struct {
 
 	// Icon
 	Icon string `json:"icon"`
+
+	// UseItem / handler dispatch fields (mirror L2J L2Item/L2EtcItem)
+	Handler          string      `json:"handler"`            // Dispatch key, e.g. "SoulShots", "ItemSkills" (empty = no handler)
+	DefaultAction    string      `json:"default_action"`     // e.g. "EQUIP", "SOULSHOT", "CAPSULE" (empty = NONE)
+	ItemSkills       []ItemSkill `json:"item_skills"`        // Skills linked to the item (item_skill field)
+	ReuseDelay       int         `json:"reuse_delay"`        // Per-item reuse delay
+	SharedReuseGroup int         `json:"shared_reuse_group"` // Shared reuse group id
+	ImmediateEffect  bool        `json:"immediate_effect"`   // Consumed/applied immediately
+	IsOlyRestricted  bool        `json:"is_oly_restricted"`  // Restricted in Olympiad
+	QuestItem        bool        `json:"quest_item"`         // is_questitem flag (drives Type2=QUEST)
 
 	// Computed fields
 	Type2 ItemType2 `json:"type2"` // Computed type for packets
@@ -362,7 +379,61 @@ func (r *ItemTemplateRegistry) applySetAttribute(t *ItemTemplate, name, val stri
 		t.Premium = parseBool(val)
 	case "is_magic_weapon":
 		t.IsMagicWeapon = parseBool(val)
+	case "handler":
+		t.Handler = val
+	case "default_action":
+		t.DefaultAction = val
+	case "item_skill":
+		t.ItemSkills = parseItemSkills(val)
+	case "reuse_delay":
+		t.ReuseDelay = parseInt(val)
+	case "shared_reuse_group":
+		t.SharedReuseGroup = parseInt(val)
+	case "immediate_effect":
+		t.ImmediateEffect = parseBool(val)
+	case "is_oly_restricted":
+		t.IsOlyRestricted = parseBool(val)
+	case "is_questitem":
+		t.QuestItem = parseBool(val)
 	}
+}
+
+// parseItemSkills parses the L2J item_skill string.
+// Format: "SkillId0-SkillLevel0[;SkillIdN-SkillLevelN]".
+// Entries with a zero id/level or malformed syntax are skipped (matches L2J).
+func parseItemSkills(val string) []ItemSkill {
+	val = strings.TrimSpace(val)
+	if val == "" {
+		return nil
+	}
+
+	var skills []ItemSkill
+	for _, element := range strings.Split(val, ";") {
+		element = strings.TrimSpace(element)
+		if element == "" {
+			continue
+		}
+		parts := strings.Split(element, "-")
+		if len(parts) != 2 {
+			continue
+		}
+		id, err := strconv.Atoi(strings.TrimSpace(parts[0]))
+		if err != nil {
+			continue
+		}
+		level, err := strconv.Atoi(strings.TrimSpace(parts[1]))
+		if err != nil {
+			continue
+		}
+		if id == 0 || level == 0 {
+			continue
+		}
+		skills = append(skills, ItemSkill{ID: id, Level: level})
+	}
+	if len(skills) == 0 {
+		return nil
+	}
+	return skills
 }
 
 // applyStatAttribute applies a stat attribute from <for> section
@@ -400,11 +471,14 @@ func (r *ItemTemplateRegistry) computeType2(t *ItemTemplate) ItemType2 {
 			return ItemType2Armor
 		}
 	case "EtcItem":
-		// Special case for Adena
-		if t.ID == 57 {
+		// Mirror L2J L2EtcItem: quest items take priority, then currency, else other.
+		if t.QuestItem {
+			return ItemType2Quest
+		}
+		// Special case for Adena / Ancient Adena
+		if t.ID == 57 || t.ID == 5575 {
 			return ItemType2Money
 		}
-		// Check if it's a quest item (we'd need more data, for now use Other)
 		return ItemType2Other
 	default:
 		return ItemType2Other
