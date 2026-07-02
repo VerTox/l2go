@@ -55,7 +55,7 @@ type loginServerConnection struct {
 type networkCfg struct {
 	GameHost string `envconfig:"GAME_HOST" default:"0.0.0.0"`
 	GamePort string `envconfig:"GAME_PORT" default:"7777"`
-	External string `envconfig:"EXTERNAL_HOST" default:"192.168.88.26"`
+	External string `envconfig:"EXTERNAL_HOST" default:"127.0.0.1"`
 }
 
 type databaseCfg struct {
