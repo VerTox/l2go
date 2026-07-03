@@ -227,6 +227,24 @@ func (e *NextAttackEvent) Execute(gl *GameLoop) {
 		registry.GetChargedShotRegistry().SetCharged(weaponObjID, registry.ShotSoulshot, false)
 	}
 
+	// Combat system messages to the attacker (L2J L2PcInstance.sendDamageMessage):
+	// miss aborts with C1_ATTACK_WENT_ASTRAY; a hit reports the optional crit line
+	// then C1_DONE_S3_DAMAGE_TO_C2 with the mob name and damage. (l2go-jau)
+	if player.Character != nil {
+		name := player.Character.Name
+		if miss {
+			gl.sendToPlayer(player, outclient.NewSystemMessage(outclient.SysMsgC1AttackWentAstray).
+				AddPlayerName(name).Build())
+		} else {
+			if crit {
+				gl.sendToPlayer(player, outclient.NewSystemMessage(outclient.SysMsgC1HadCriticalHit).
+					AddPlayerName(name).Build())
+			}
+			gl.sendToPlayer(player, outclient.NewSystemMessage(outclient.SysMsgC1DoneS3DamageToC2).
+				AddPlayerName(name).AddNpcName(npc.TemplateID).AddInt(damage).Build())
+		}
+	}
+
 	// First real swing draws the weapon (L2J doAttack → clientStartAutoAttack). Fires on
 	// hit OR miss — the swing happens either way — and only once per stance. (l2go-7qv)
 	gl.enterCombatStance(e.AttackerCharID)

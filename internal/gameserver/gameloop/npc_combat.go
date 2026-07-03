@@ -191,6 +191,15 @@ func (e *NPCHitEvent) Execute(gl *GameLoop) {
 
 	gl.broadcastToTargeters(e.TargetCharID, su)
 
+	// Damage-received message to the victim (L2J PcStatus.reduceHp): the victim name
+	// is written as plain TEXT, then the attacker NPC name and the damage. (l2go-jau)
+	if e.Damage > 0 {
+		if npc, ok := gl.world.GetNPC(e.NPCObjectID); ok {
+			gl.sendToPlayer(player, outclient.NewSystemMessage(outclient.SysMsgC1ReceivedDamageS3FromC2).
+				AddString(player.Character.Name).AddNpcName(npc.TemplateID).AddInt(e.Damage).Build())
+		}
+	}
+
 	if player.Character.CurrentHP <= 0 {
 		gl.handlePlayerDeath(e.TargetCharID, player)
 	}

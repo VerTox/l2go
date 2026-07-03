@@ -25,6 +25,13 @@ const (
 
 	SysMsgUseOfS1WillBeAuto    = 1433 // USE_OF_S1_WILL_BE_AUTO ($s1 auto-use enabled)
 	SysMsgAutoUseOfS1Cancelled = 1434 // AUTO_USE_OF_S1_CANCELLED ($s1 auto-use disabled)
+
+	// Combat damage messages (L2J HF). Player->mob goes to the attacker; mob->player
+	// goes to the victim. Verified against L2PcInstance.sendDamageMessage / PcStatus.
+	SysMsgC1DoneS3DamageToC2        = 2261 // C1_DONE_S3_DAMAGE_TO_C2 [PLAYER_NAME, NPC_NAME, INT]
+	SysMsgC1ReceivedDamageS3FromC2  = 2262 // C1_RECEIVED_DAMAGE_OF_S3_FROM_C2 [TEXT, NPC_NAME, INT]
+	SysMsgC1AttackWentAstray        = 2265 // C1_ATTACK_WENT_ASTRAY (miss) [PLAYER_NAME]
+	SysMsgC1HadCriticalHit          = 2266 // C1_HAD_CRITICAL_HIT (crit) [PLAYER_NAME]
 )
 
 // SystemMessage parameter types.
@@ -74,6 +81,19 @@ func (b *SystemMessageBuilder) AddLong(v int64) *SystemMessageBuilder {
 // the localized item name from the item id.
 func (b *SystemMessageBuilder) AddItemName(itemID int32) *SystemMessageBuilder {
 	b.params = append(b.params, smParam{ptype: smParamItemName, ival: itemID})
+	return b
+}
+
+// AddNpcName adds an NPC-name parameter (TYPE_NPC_NAME). L2J encodes it as the
+// template id offset by 1000000; the client maps that to the localized NPC name.
+func (b *SystemMessageBuilder) AddNpcName(templateID int32) *SystemMessageBuilder {
+	b.params = append(b.params, smParam{ptype: smParamNpcName, ival: 1000000 + templateID})
+	return b
+}
+
+// AddPlayerName adds a player-name parameter (TYPE_PLAYER_NAME, sent as text).
+func (b *SystemMessageBuilder) AddPlayerName(name string) *SystemMessageBuilder {
+	b.params = append(b.params, smParam{ptype: smParamPlayerName, sval: name})
 	return b
 }
 
