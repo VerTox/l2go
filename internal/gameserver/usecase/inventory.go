@@ -297,6 +297,80 @@ func reuseSysMsg(itemID int32, remaining time.Duration) SysMsgSpec {
 	}
 }
 
+// autoSoulShotHandler is the template.Handler name of the physical soulshot item
+// handler — the only shot type an auto-recharge arms on a physical swing
+// (spiritshots are for magic/skills, mirroring L2J rechargeShots(physical=true)).
+const autoSoulShotHandler = "SoulShots"
+
+// RechargeAutoShots charges the equipped weapon from the character's active
+// auto-shots (physical soulshots only). It mirrors L2J rechargeShots(physical):
+// resolve each active shot in inventory, run its handler in Auto mode (consume +
+// charge + visual, no chat spam). Returns the shot stacks it actually consumed (so
+// the caller can push an InventoryUpdate to refresh the count) and the item ids it
+// auto-disabled because the player ran out (so the caller can echo
+// ExAutoSoulShot(off)). Runs off the game loop, never on the tick. (l2go-btb)
+func (uc *InventoryUseCase) RechargeAutoShots(ctx context.Context, charID int32) (consumed []ChangedItem, disabled []int32, err error) {
+	active := registry.GetAutoShotRegistry().List(charID)
+	if len(active) == 0 {
+		return nil, nil, nil
+	}
+
+	items, err := uc.repo.Item().GetByCharacter(ctx, charID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for _, itemID := range active {
+		tmpl := registry.GetItemTemplateRegistry().Get(itemID)
+		if tmpl == nil || tmpl.Handler != autoSoulShotHandler {
+			continue // not a physical soulshot — skip on a physical swing
+		}
+
+		stack := findItemStack(items, itemID)
+		if stack == nil {
+			// Out of this shot entirely: drop the auto-shot (L2J rechargeShots does
+			// the same via removeAutoSoulShot on a missing item).
+			registry.GetAutoShotRegistry().Disable(charID, itemID)
+			disabled = append(disabled, itemID)
+			continue
+		}
+
+		handler, ok := uc.ItemHandlers().Get(tmpl.Handler)
+		if !ok {
+			continue
+		}
+		did, uerr := handler.UseItem(ctx, ItemUseContext{
+			CharID: charID, Item: stack, Template: tmpl, Repo: uc.repo, Auto: true,
+		})
+		if uerr != nil {
+			log.Ctx(ctx).Error().Err(uerr).
+				Int32("char_id", charID).Int32("item_id", itemID).
+				Msg("auto-shot recharge failed")
+			continue
+		}
+		if did {
+			// The handler mutates stack.Count in place (0 when the last shot emptied
+			// and deleted the stack). Report MODIFY, or REMOVE when the stack is gone.
+			updateType := int16(2) // MODIFY
+			if stack.Count <= 0 {
+				updateType = 3 // REMOVE
+			}
+			consumed = append(consumed, ChangedItem{Item: *stack, UpdateType: updateType})
+		}
+	}
+	return consumed, disabled, nil
+}
+
+// findItemStack returns the first owned stack of itemID with a positive count.
+func findItemStack(items []models.CharacterItem, itemID int32) *models.CharacterItem {
+	for i := range items {
+		if items[i].ItemID == itemID && items[i].Count > 0 {
+			return &items[i]
+		}
+	}
+	return nil
+}
+
 // UnequipBySlot handles dragging an item off a paperdoll slot (RequestUnEquipItem)
 func (uc *InventoryUseCase) UnequipBySlot(ctx context.Context, charID int32, slotBitmask int32) (*EquipResult, error) {
 	slot, ok := models.BodyPartToPaperdollSlot(slotBitmask)

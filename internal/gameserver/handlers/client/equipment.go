@@ -116,11 +116,9 @@ func (h *Handler) handleRequestUnEquipItem(ctx context.Context, c *client.Client
 	return nil
 }
 
-// sendEquipmentUpdatePackets sends InventoryUpdate, UserInfo, and CharInfo after equipment change
-func (h *Handler) sendEquipmentUpdatePackets(ctx context.Context, c *client.ClientConn, playerState *registry.PlayerWorldState, changedItems []usecase.ChangedItem) error {
-	char := playerState.Character
-
-	// 1. Build and send InventoryUpdate with changed items
+// buildInventoryItems converts changed items into InventoryUpdate entries. Shared
+// by the equipment flow and the standalone SendInventoryUpdate (auto-shot consume).
+func buildInventoryItems(changedItems []usecase.ChangedItem) []outclient.InventoryItem {
 	invItems := make([]outclient.InventoryItem, 0, len(changedItems))
 	for _, ci := range changedItems {
 		item := ci.Item
@@ -161,8 +159,34 @@ func (h *Handler) sendEquipmentUpdatePackets(ctx context.Context, c *client.Clie
 			DefenseElementDark:  int32(item.AttributeDark),
 		})
 	}
+	return invItems
+}
 
-	invUpdate := outclient.InventoryUpdate{Items: invItems}
+// SendInventoryUpdate pushes an InventoryUpdate for the given changed items to the
+// character's connection. Used by the auto-shot recharge (which consumes ammo off
+// the client-request path) so the shot count refreshes without reopening the bag.
+// Count changes on non-equipped consumables need no UserInfo/CharInfo refresh.
+func (h *Handler) SendInventoryUpdate(charID int32, changed []usecase.ChangedItem) {
+	if len(changed) == 0 {
+		return
+	}
+	player, ok := h.world.GetPlayer(charID)
+	if !ok {
+		return
+	}
+	conn := h.connections.GetConnection(player.AccountName)
+	if conn == nil {
+		return
+	}
+	_ = conn.Send(outclient.BuildInventoryUpdate(outclient.InventoryUpdate{Items: buildInventoryItems(changed)}))
+}
+
+// sendEquipmentUpdatePackets sends InventoryUpdate, UserInfo, and CharInfo after equipment change
+func (h *Handler) sendEquipmentUpdatePackets(ctx context.Context, c *client.ClientConn, playerState *registry.PlayerWorldState, changedItems []usecase.ChangedItem) error {
+	char := playerState.Character
+
+	// 1. Build and send InventoryUpdate with changed items
+	invUpdate := outclient.InventoryUpdate{Items: buildInventoryItems(changedItems)}
 	if err := c.Send(outclient.BuildInventoryUpdate(invUpdate)); err != nil {
 		return fmt.Errorf("failed to send InventoryUpdate: %w", err)
 	}

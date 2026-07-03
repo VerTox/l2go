@@ -259,6 +259,42 @@ func TestShotHandler_LastShotDeletesStack(t *testing.T) {
 	}
 }
 
+// In auto mode (rechargeShots), the shot charges the weapon and consumes ammo but
+// must NOT spam the per-swing "enabled/using" system messages — only the visual
+// plays. (l2go-btb)
+func TestShotHandler_AutoMode_ChargesSilently(t *testing.T) {
+	charged := registry.NewChargedShotRegistry()
+	notifier := &recordingNotifier{}
+	repoFake := &shotFakeItemRepo{weapon: &models.CharacterItem{ObjectID: weaponObjID, ItemID: weaponItemID}}
+	h := newShotTestHandler(charged, notifier, noGradeWeapon())
+
+	shot := &models.CharacterItem{ObjectID: shotObjID, ItemID: 1835, Count: 100}
+	consumed, err := h.UseItem(context.Background(), ItemUseContext{
+		CharID: 7, Item: shot, Template: noGradeShot(), Repo: &shotFakeDB{item: repoFake}, Auto: true,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !consumed {
+		t.Fatal("consumed = false, want true on auto recharge")
+	}
+	if !charged.IsCharged(weaponObjID, registry.ShotSoulshot) {
+		t.Error("weapon not charged after auto recharge")
+	}
+	if repoFake.updateCalls != 1 || repoFake.updated.Count != 99 {
+		t.Errorf("ammo not consumed correctly (updates=%d)", repoFake.updateCalls)
+	}
+	if len(notifier.sysMsgs) != 0 {
+		t.Errorf("auto mode must send no system messages, got %v", notifier.sysMsgs)
+	}
+	if len(notifier.itemMsgs) != 0 {
+		t.Errorf("auto mode must send no item messages, got %v", notifier.itemMsgs)
+	}
+	if notifier.visualCall != 1 {
+		t.Errorf("shot visual should still play in auto mode, calls=%d", notifier.visualCall)
+	}
+}
+
 func TestGradeSPlus_CollapsesTopGrades(t *testing.T) {
 	cases := []struct {
 		in   registry.ItemGrade

@@ -22,6 +22,9 @@ const (
 	SysMsgNotEnoughSpiritshots     = 531 // NOT_ENOUGH_SPIRITSHOTS
 	SysMsgCannotUseSpiritshots     = 532 // CANNOT_USE_SPIRITSHOTS
 	SysMsgEnabledSpiritshot        = 533 // ENABLED_SPIRITSHOT
+
+	SysMsgUseOfS1WillBeAuto    = 1433 // USE_OF_S1_WILL_BE_AUTO ($s1 auto-use enabled)
+	SysMsgAutoUseOfS1Cancelled = 1434 // AUTO_USE_OF_S1_CANCELLED ($s1 auto-use disabled)
 )
 
 // SystemMessage parameter types.

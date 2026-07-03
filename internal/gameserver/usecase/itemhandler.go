@@ -23,6 +23,12 @@ type ItemUseContext struct {
 	// state, so handlers must not emit it here. May be nil (then Emit is a no-op),
 	// which is how the unit tests exercise handlers without a dispatcher.
 	Emit func(ChangedItem)
+
+	// Auto marks a use triggered by the auto-shot recharge loop (rechargeShots)
+	// rather than a manual double-click. Handlers suppress the per-use chat
+	// messages in auto mode — they would spam on every swing — while keeping the
+	// side effects (consume, charge) and the shot visual. (l2go-btb)
+	Auto bool
 }
 
 // emit reports an extra inventory change if a collector is wired, otherwise a no-op.

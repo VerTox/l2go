@@ -136,16 +136,21 @@ func (h *shotHandler) UseItem(ctx context.Context, use ItemUseContext) (bool, er
 	}
 	shotCount := h.weaponShotCount(weaponTmpl)
 
-	// No weapon, or a weapon that cannot use this shot type.
+	// No weapon, or a weapon that cannot use this shot type. Auto recharges stay
+	// silent — a failure message every swing would spam the owner.
 	if weapon == nil || shotCount == 0 {
-		h.notify(func(n ShotEffectNotifier) { n.SystemMessage(use.CharID, h.msgs.cannotUse) })
+		if !use.Auto {
+			h.notify(func(n ShotEffectNotifier) { n.SystemMessage(use.CharID, h.msgs.cannotUse) })
+		}
 		return false, nil
 	}
 
 	// 2. Grade check: weapon crystal grade must match the shot grade (S/S80/S84
 	//    collapse to a single "S+" grade, exactly like L2J getItemGradeSPlus).
 	if gradeSPlus(weaponTmpl.CrystalType) != gradeSPlus(use.Template.CrystalType) {
-		h.notify(func(n ShotEffectNotifier) { n.SystemMessage(use.CharID, h.msgs.gradeMismatch) })
+		if !use.Auto {
+			h.notify(func(n ShotEffectNotifier) { n.SystemMessage(use.CharID, h.msgs.gradeMismatch) })
+		}
 		return false, nil
 	}
 
@@ -156,7 +161,9 @@ func (h *shotHandler) UseItem(ctx context.Context, use ItemUseContext) (bool, er
 
 	// 4. Consume the shots from the used stack.
 	if use.Item.Count < int64(shotCount) {
-		h.notify(func(n ShotEffectNotifier) { n.SystemMessage(use.CharID, h.msgs.notEnough) })
+		if !use.Auto {
+			h.notify(func(n ShotEffectNotifier) { n.SystemMessage(use.CharID, h.msgs.notEnough) })
+		}
 		return false, nil
 	}
 
@@ -176,11 +183,14 @@ func (h *shotHandler) UseItem(ctx context.Context, use ItemUseContext) (bool, er
 	// 5. Charge the weapon instance, recording the weapon grade for the hit visual.
 	h.charged.Charge(weapon.ObjectID, h.shot, int(gradeSPlus(weaponTmpl.CrystalType)))
 
-	// 6. Client feedback + activation visual.
+	// 6. Client feedback + activation visual. An auto recharge skips the chat
+	//    messages (they would spam every swing) but keeps the shot visual.
 	skillID, skillLevel := shotVisualSkill(use.Template)
 	h.notify(func(n ShotEffectNotifier) {
-		n.ItemSystemMessage(use.CharID, h.msgs.useItem, use.Template.ID)
-		n.SystemMessage(use.CharID, h.msgs.enabled)
+		if !use.Auto {
+			n.ItemSystemMessage(use.CharID, h.msgs.useItem, use.Template.ID)
+			n.SystemMessage(use.CharID, h.msgs.enabled)
+		}
 		if skillID > 0 {
 			n.BroadcastShotVisual(use.CharID, skillID, skillLevel)
 		}

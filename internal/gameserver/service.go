@@ -14,6 +14,7 @@ import (
 	"github.com/VerTox/l2go/internal/gameserver/handlers/client"
 	"github.com/VerTox/l2go/internal/gameserver/handlers/loginserver"
 	"github.com/VerTox/l2go/internal/gameserver/models"
+	"github.com/VerTox/l2go/internal/gameserver/packets/outclient"
 	"github.com/VerTox/l2go/internal/gameserver/registry"
 	"github.com/VerTox/l2go/internal/gameserver/repo"
 	"github.com/VerTox/l2go/internal/gameserver/schema"
@@ -826,6 +827,42 @@ func (g *GameServer) run(ctx context.Context) error {
 	}()
 	g.gameLoop.SetPersistSink(saveCh)
 
+	// Async auto-soulshot recharge: the game loop enqueues charIDs whose active
+	// auto-shots must be recharged to arm the next swing. The DB consume + charge
+	// run here so the tick never blocks on the database. When a shot runs out it is
+	// auto-disabled; echo ExAutoSoulShot(off) + the cancel message to un-highlight
+	// the client icon. Closed after the loop stops (below) so no send races the close.
+	rechargeCh := make(chan int32, 256)
+	rechargeDone := make(chan struct{})
+	go func() {
+		defer close(rechargeDone)
+		for charID := range rechargeCh {
+			consumed, disabled, err := g.usc.inventory.RechargeAutoShots(context.Background(), charID)
+			if err != nil {
+				log.Ctx(ctx).Error().Err(err).Int32("char_id", charID).Msg("auto-shot recharge failed")
+				continue
+			}
+			// Refresh the shot count in the client bag after auto-consume.
+			g.handlers.client.SendInventoryUpdate(charID, consumed)
+			if len(disabled) == 0 {
+				continue
+			}
+			player, ok := g.world.GetPlayer(charID)
+			if !ok {
+				continue
+			}
+			conn := g.connections.GetConnection(player.AccountName)
+			if conn == nil {
+				continue
+			}
+			for _, itemID := range disabled {
+				_ = conn.Send(outclient.BuildExAutoSoulShot(itemID, 0))
+				_ = conn.Send(outclient.NewSystemMessage(outclient.SysMsgAutoUseOfS1Cancelled).AddItemName(itemID).Build())
+			}
+		}
+	}()
+	g.gameLoop.SetAutoShotSink(rechargeCh)
+
 	eg, egctx := errgroup.WithContext(ctx)
 
 	// Start heartbeat routine
@@ -861,6 +898,11 @@ func (g *GameServer) run(ctx context.Context) error {
 	// the authoritative shutdown save below wins over any stale queued copy.
 	close(saveCh)
 	<-saverDone
+
+	// The loop has stopped, so no more recharge requests can be enqueued — safe to
+	// close the recharge sink and let its goroutine drain and exit.
+	close(rechargeCh)
+	<-rechargeDone
 
 	// Save-on-shutdown: persist the freshest snapshot of every online player before
 	// the DB closes, so a graceful stop never loses session progress.

@@ -168,6 +168,10 @@ func (wr *WorldRegistry) RemovePlayer(ctx context.Context, charID int32) error {
 	// Drop in-memory item reuse cooldowns so they reset on relog, like retail.
 	GetItemReuseRegistry().Clear(charID)
 
+	// Drop active auto-soulshots so they reset on relog (L2J does not persist the
+	// _activeSoulShots set).
+	GetAutoShotRegistry().Clear(charID)
+
 	log.Ctx(ctx).Info().
 		Int32("char_id", charID).
 		Str("account", state.AccountName).

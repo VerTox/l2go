@@ -65,6 +65,11 @@ type GameLoop struct {
 	// persistSink receives value-copy character snapshots for async persistence
 	// (autosave + level-up). nil until SetPersistSink is called.
 	persistSink chan<- models.Character
+
+	// autoShotSink receives charIDs whose active auto-soulshots should be recharged
+	// off the loop (the DB consume runs on the draining goroutine). nil until
+	// SetAutoShotSink is called.
+	autoShotSink chan<- int32
 }
 
 // New creates a new GameLoop. expRate and spRate control experience/SP multipliers (default 1.0).

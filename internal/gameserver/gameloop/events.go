@@ -316,6 +316,10 @@ func (e *HitEvent) Execute(gl *GameLoop) {
 	})
 	gl.broadcastToTargeters(e.TargetObjectID, su)
 
+	// Auto-soulshot: arm the next swing off-loop (recharge the weapon from the
+	// player's active auto-shots). Mirrors L2J recharging at the end of onHitTimer.
+	gl.maybeRechargeAutoShots(e.AttackerCharID)
+
 	// Check death
 	if npc.CurrentHP <= 0 {
 		gl.handleNPCDeath(npc)
