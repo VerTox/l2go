@@ -49,11 +49,11 @@ func (h *Handler) handleEnterWorld(ctx context.Context, c *client.ClientConn, pa
 		log.Ctx(ctx).Error().Err(err).Int32("char_id", playerState.CharID).Msg("failed to reconcile auto-get skills")
 	}
 
-	// Resolve passive-skill stat modifiers before building UserInfo/CharInfo so the
-	// client sees the buffed numbers. Safe to write char.StatMods here: the game
-	// loop only starts reading this player's stats after CmdPlayerEnteredWorld
-	// (dispatched below, after the packet sequence).
-	h.applyPassiveModifiers(ctx, playerState.Character)
+	// Load learned skills once: passive stat modifiers (StatMods) and the known-skill
+	// map (KnownSkills) for cast validation. Before building UserInfo/CharInfo so the
+	// client sees buffed numbers, and safe to write here: the game loop only starts
+	// reading this player's state after CmdPlayerEnteredWorld (dispatched below).
+	h.loadPlayerSkills(ctx, playerState)
 
 	// Send world entry packet sequence
 	if err := h.sendWorldEntryPackets(ctx, c, playerState.Character); err != nil {
@@ -514,19 +514,22 @@ func (h *Handler) buildHennaInfoPacket(ctx context.Context, char *models.Charact
 	return l2pkt.BuildPacket(hennaInfo)
 }
 
-// applyPassiveModifiers loads the character's learned skills and stores the stat
-// modifiers of its passive skills on char.StatMods, so ComputeStats reflects them
-// in combat and packets (epic l2go-z36, l2go-9ep). Best-effort: a missing skill
-// registry, DB error, or unknown template simply yields no modifiers.
-func (h *Handler) applyPassiveModifiers(ctx context.Context, char *models.Character) {
-	if h.skillData == nil {
-		return
-	}
+// loadPlayerSkills loads the character's learned skills once at world entry and
+// derives two things from them: the passive stat modifiers (char.StatMods, l2go-9ep)
+// and the known-skill id→level map (playerState.KnownSkills) the game loop uses to
+// validate casts (l2go-lu8). Best-effort: a DB error leaves both empty.
+func (h *Handler) loadPlayerSkills(ctx context.Context, player *registry.PlayerWorldState) {
+	char := player.Character
 	skills, err := h.characterUseCase.GetCharacterSkills(ctx, char.ID)
 	if err != nil {
-		log.Error().Err(err).Int32("char_id", char.ID).Msg("failed to load skills for passive modifiers")
+		log.Error().Err(err).Int32("char_id", char.ID).Msg("failed to load skills at world entry")
 		return
 	}
+	known := make(map[int32]int32, len(skills))
+	for _, cs := range skills {
+		known[cs.SkillID] = int32(cs.SkillLevel)
+	}
+	player.KnownSkills = known
 	char.StatMods = collectPassiveModifiers(skills, h.skillData)
 }
 

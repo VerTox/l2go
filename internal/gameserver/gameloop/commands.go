@@ -17,6 +17,17 @@ type CmdAttackRequest struct {
 
 func (CmdAttackRequest) commandMarker() {}
 
+// CmdCastRequest — player wants to cast a skill (RequestMagicSkillUse). The loop
+// resolves the level from the caster's KnownSkills and the template from SkillData.
+type CmdCastRequest struct {
+	CasterCharID int32
+	SkillID      int32
+	CtrlPressed  bool
+	ShiftPressed bool
+}
+
+func (CmdCastRequest) commandMarker() {}
+
 // CmdInteractRequest — player clicked a non-attackable NPC out of interaction
 // range; approach it and open the dialogue on arrival (L2J AI_INTENTION_INTERACT).
 type CmdInteractRequest struct {

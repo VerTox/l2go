@@ -59,6 +59,15 @@ type PlayerWorldState struct {
 	// World interaction
 	TargetID    int32           `json:"target_id,omitempty"`
 
+	// KnownSkills maps a learned skill id to its level (populated at world entry).
+	// Read by the game loop to validate/resolve casts. Set once before the player
+	// goes live; treated as read-only afterward for this phase.
+	KnownSkills map[int32]int32 `json:"-"`
+
+	// Casting holds the in-progress cast, or nil when the player is not casting.
+	// Owned by the game loop goroutine.
+	Casting *CastState `json:"-"`
+
 	// Known objects (sent to client, used for visibility tracking)
 	KnownNPCs map[int32]bool `json:"-"` // NPC objectIDs already sent to this client
 	// KnownPlayers tracks other players already spawned to this client (CharInfo sent).
@@ -68,6 +77,16 @@ type PlayerWorldState struct {
 
 	// Session info
 	SessionData map[string]interface{} `json:"session_data,omitempty"`
+}
+
+// CastState is an in-progress skill cast, owned by the game loop. The unique ID
+// lets a scheduled hit event detect that the cast was aborted or superseded (the
+// player's current Casting.ID no longer matches) and do nothing.
+type CastState struct {
+	ID         int64
+	SkillID    int32
+	SkillLevel int32
+	TargetID   int32
 }
 
 // WorldRegistry manages all world objects and player states

@@ -493,6 +493,7 @@ func (g *GameServer) prepareHandlers() {
 	// SkillList packet can flag passive skills correctly.
 	g.skillData = registry.NewSkillData(skillRoots)
 	g.handlers.client.SetSkillData(g.skillData)
+	g.gameLoop.SetSkillData(g.skillData) // casting (l2go-lu8)
 	g.usc.inventory.ItemHandlers().Register("ItemSkills", potionHandler)
 	g.usc.inventory.ItemHandlers().Register("ManaPotion", potionHandler)
 

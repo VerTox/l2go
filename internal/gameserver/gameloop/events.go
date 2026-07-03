@@ -299,46 +299,46 @@ func (e *HitEvent) Execute(gl *GameLoop) {
 		return
 	}
 
-	// Apply damage (game loop is sole writer of NPC HP)
-	npc.CurrentHP -= float64(e.Damage)
+	gl.dealDamageToNPC(npc, e.AttackerCharID, int(e.Damage))
+
+	// Auto-soulshot: arm the next swing off-loop (recharge the weapon from the
+	// player's active auto-shots). Mirrors L2J recharging at the end of onHitTimer.
+	gl.maybeRechargeAutoShots(e.AttackerCharID)
+}
+
+// dealDamageToNPC applies damage from a player to an NPC: reduces HP, adds hate,
+// triggers retaliation against the most-hated attacker, broadcasts the HP bar, and
+// handles death. Shared by melee hits and skill casts (game loop is sole writer of
+// NPC HP).
+func (gl *GameLoop) dealDamageToNPC(npc *models.NpcInstance, attackerCharID int32, damage int) {
+	npc.CurrentHP -= float64(damage)
 	if npc.CurrentHP < 0 {
 		npc.CurrentHP = 0
 	}
 
 	// Add hate. The hate list drives retaliation targeting (L2J getMostHated): an NPC
 	// fights the top-hate attacker, not merely whoever hit it last.
-	hl, ok := gl.npcHateLists[e.TargetObjectID]
+	hl, ok := gl.npcHateLists[npc.ObjectID]
 	if !ok {
 		hl = NewHateList()
-		gl.npcHateLists[e.TargetObjectID] = hl
+		gl.npcHateLists[npc.ObjectID] = hl
 	}
-	hl.AddHate(e.AttackerCharID, int64(e.Damage))
+	hl.AddHate(attackerCharID, int64(damage))
 
-	// Trigger NPC auto-attack back against the most-hated attacker (L2J getMostHated),
-	// not the last hitter. Fall back to the current attacker if the hate list yields no
-	// valid target: L2J returns null on an empty aggro list, but here hate was just added
-	// so this only guards against an all-zero/cleared list (GetTopAttacker returns 0) —
-	// the NPC still retaliates against whoever just hit it rather than an invalid id 0.
 	if npc.IsAttackable() {
 		target := hl.GetTopAttacker()
 		if target == 0 {
-			target = e.AttackerCharID
+			target = attackerCharID
 		}
-		gl.startNPCAttack(e.TargetObjectID, target)
+		gl.startNPCAttack(npc.ObjectID, target)
 	}
 
-	// Broadcast StatusUpdate with current HP
-	su := outclient.BuildStatusUpdate(e.TargetObjectID, []outclient.StatusAttribute{
+	su := outclient.BuildStatusUpdate(npc.ObjectID, []outclient.StatusAttribute{
 		{ID: outclient.StatusMaxHP, Value: int32(npc.Template.HP)},
 		{ID: outclient.StatusCurHP, Value: int32(npc.CurrentHP)},
 	})
-	gl.broadcastToTargeters(e.TargetObjectID, su)
+	gl.broadcastToTargeters(npc.ObjectID, su)
 
-	// Auto-soulshot: arm the next swing off-loop (recharge the weapon from the
-	// player's active auto-shots). Mirrors L2J recharging at the end of onHitTimer.
-	gl.maybeRechargeAutoShots(e.AttackerCharID)
-
-	// Check death
 	if npc.CurrentHP <= 0 {
 		gl.handleNPCDeath(npc)
 	}

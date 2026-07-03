@@ -123,6 +123,19 @@ internal/gameserver/
 ### Attack packet hit flags (HF, 77a)
 `packets/outclient/attack.go` uses L2J HF `Hit.java` bits: USESS `0x10` (OR'd with weapon grade id), CRIT `0x20`, SHLD `0x40`, MISS `0x80`. (Earlier values `0x01/0x02/0x04` were wrong; only CRIT matched.)
 
+## Skill casting (lu8, MILESTONE)
+
+- **Flow**: `RequestMagicSkillUse` (0x39, `handlers/client/cast.go`, replaces the stub) → `CmdCastRequest` → gameloop `handleCastRequest` (validate) → beginCast → `CastHitEvent` (effects + cooldown). The loop owns everything; the handler just relays.
+- **Validation** (`gameloop/cast.go`): alive, not already casting (`PlayerWorldState.Casting`), skill known (`PlayerWorldState.KnownSkills`, populated at world entry), active operate type, not on cooldown, target resolvable, enough MP (`mpConsume1`). Level is resolved from KnownSkills; template from `gl.skillData` (`registry.SkillData`, wired via `SetSkillData`).
+- **beginCast**: spend `mpConsume1`, set `Casting` (unique id), broadcast `MagicSkillUse` (0x48) + send `SetupGauge` (0x6b, blue bar), schedule `CastHitEvent` at `castTime` (skill `hitTime`, min 500ms).
+- **CastHitEvent**: ignored if `Casting.ID` no longer matches (aborted/superseded). Spend `mpConsume2`, broadcast `MagicSkillLaunched` (0x54), apply instant effects, arm reuse + send `SkillCoolTime` (0xC7).
+- **Effects** (`applySkillEffects`, GENERAL/SELF scope): restore effects (`Heal`/`Hp`/`Mp`/`Cp`) route through `handleRestoreStats` (SkillID 0 → no double visual); offensive effects (`MagicalAttack`/`MagicalAttackRange`/…) deal magic damage to an NPC via `calcMagicDamage` (`(91·√mAtk/mDef)·power`, L2J High Five) → `dealDamageToNPC` (shared with melee: HP, hate, retaliation, StatusUpdate, death). Duration buffs/abnormals are a later phase (c8t).
+- **Target**: `SELF` → caster; else the caster's `TargetID`; beneficial skills with no target fall back to self.
+- **Interruption**: movement (`handleMoveToLocation` → `abortCast`) clears `Casting` + broadcasts `MagicSkillCanceled` (0x49); the pending hit event self-cancels on the id mismatch.
+- **Skill reuse** (`gl.skillReuse[charID][skillID] = readyAt`): separate from item reuse, cleared on disconnect.
+- **New packets** (`packets/outclient/magicpackets.go`): `MagicSkillLaunched` (0x54), `SetupGauge` (0x6b), `MagicSkillCanceled` (0x49), `SkillCoolTime` (0xC7).
+- **Deferred**: spiritshot ×2/×4 magic-damage multiplier + crit/resist (l2go-v7w); potions still restore via the interim `CmdRestoreStats` path rather than a real skill cast (l2go-849).
+
 ## Regeneration (nty)
 
 - **Tick**: the game loop restores HP/MP/CP to every living player every `regenInterval` (3s, L2J REGEN period) via `gameloop/regen.go` `regenPlayers`. Runs on the loop goroutine (sole writer of vitals), clamps to maxima, skips dead (HP≤0) and already-full players, and sends `StatusUpdate` (Cur HP/MP/CP) to the player + `broadcastToTargeters`.

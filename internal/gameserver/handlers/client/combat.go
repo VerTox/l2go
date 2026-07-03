@@ -9,8 +9,7 @@ func registerCombatStubs(r *Registry) {
 	r.registerStub(StateInGame, 0x01, "Attack")
 	// AttackRequest (0x32): запрос атаки через интерфейс.
 	r.registerStub(StateInGame, 0x32, "AttackRequest")
-	// RequestMagicSkillUse (0x39): использование скилла.
-	r.registerStub(StateInGame, 0x39, "RequestMagicSkillUse")
+	// RequestMagicSkillUse (0x39) — реальный обработчик в cast.go (l2go-lu8).
 	// StartRotating (0x5b): начало поворота персонажа.
 	r.registerStub(StateInGame, 0x5b, "StartRotating")
 	// FinishRotating (0x5c): конец поворота персонажа.

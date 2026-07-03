@@ -71,6 +71,18 @@ type GameLoop struct {
 	// off the loop (the DB consume runs on the draining goroutine). nil until
 	// SetAutoShotSink is called.
 	autoShotSink chan<- int32
+
+	// skillData resolves skill templates for casting (l2go-lu8). nil until
+	// SetSkillData is called; casting is a no-op without it.
+	skillData *registry.SkillData
+
+	// skillReuse tracks per-player skill cooldowns (charID -> skillID -> ready-at).
+	// Separate from item reuse. Owned by the loop; cleared on disconnect.
+	skillReuse map[int32]map[int32]time.Time
+
+	// castSeq is a monotonic counter assigning each cast a unique id so a scheduled
+	// hit event can detect it was aborted/superseded.
+	castSeq int64
 }
 
 // New creates a new GameLoop. expRate and spRate control experience/SP multipliers (default 1.0).
@@ -92,10 +104,15 @@ func New(world *registry.WorldRegistry, connections *registry.ConnectionRegistry
 		npcSpawnInfo:    make(map[int32]SpawnInfo),
 		activeRegions:   make(map[string]*ActiveRegion),
 		interactPending: make(map[int32]int32),
+		skillReuse:      make(map[int32]map[int32]time.Time),
 		expRate:         expRate,
 		spRate:          spRate,
 	}
 }
+
+// SetSkillData wires the skill template registry used for casting. Kept out of
+// New() like the other optional sinks.
+func (gl *GameLoop) SetSkillData(sd *registry.SkillData) { gl.skillData = sd }
 
 // CommandChannel returns a send-only channel for handlers to submit commands.
 func (gl *GameLoop) CommandChannel() chan<- Command {
@@ -239,6 +256,8 @@ func (gl *GameLoop) processCommand(cmd Command) {
 		gl.handleRevive(c)
 	case CmdRestoreStats:
 		gl.handleRestoreStats(c)
+	case CmdCastRequest:
+		gl.handleCastRequest(c)
 	case CmdChatMessage:
 		gl.handleChatMessage(c)
 	}
@@ -349,12 +368,19 @@ func (gl *GameLoop) handleMoveToLocation(cmd CmdMoveToLocation) {
 	}
 	// Drop any pending interact approach.
 	delete(gl.interactPending, cmd.CharID)
+	// Moving interrupts an in-progress cast (L2J abortCast on move).
+	if player, ok := gl.world.GetPlayer(cmd.CharID); ok {
+		gl.abortCast(player)
+	}
 	gl.setIntention(cmd.CharID, IntentionMoveTo, 0)
 }
 
 // handlePlayerDisconnected cleans up combat state for a disconnected player.
 func (gl *GameLoop) handlePlayerDisconnected(cmd CmdPlayerDisconnected) {
 	gl.stopAttacker(cmd.CharID)
+
+	// Drop skill cooldowns for the disconnected player (mirrors item-reuse cleanup).
+	delete(gl.skillReuse, cmd.CharID)
 
 	// Stop all NPCs attacking this player
 	gl.stopAllNPCAttacksOnPlayer(cmd.CharID)
