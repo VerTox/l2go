@@ -76,11 +76,15 @@ func (gl *GameLoop) handleCastRequest(cmd CmdCastRequest) {
 		TargetID:   target,
 	}
 
-	// Cast animation + progress gauge to everyone nearby.
+	// Cast animation + progress gauge to everyone nearby. The target location must be
+	// the target's real position (not the caster's), or the client snaps the mob to
+	// the caster on a ranged cast.
 	reuse := int32(skill.ReuseDelay)
+	tpos := gl.objectPosition(target, caster.Position)
 	msu := outclient.BuildMagicSkillUse(cmd.CasterCharID, target, cmd.SkillID, int32(level),
 		int32(hitTime.Milliseconds()), reuse,
-		int32(caster.Position.X), int32(caster.Position.Y), int32(caster.Position.Z))
+		int32(caster.Position.X), int32(caster.Position.Y), int32(caster.Position.Z),
+		int32(tpos.X), int32(tpos.Y), int32(tpos.Z))
 	gl.broadcastToNearby(caster.Position, msu)
 	if conn := gl.connections.GetConnection(caster.AccountName); conn != nil {
 		_ = conn.Send(outclient.BuildSetupGauge(cmd.CasterCharID, outclient.GaugeColorBlue, int32(hitTime.Milliseconds())))
@@ -91,6 +95,18 @@ func (gl *GameLoop) handleCastRequest(cmd CmdCastRequest) {
 		CharID: cmd.CasterCharID,
 		CastID: caster.Casting.ID,
 	})
+}
+
+// objectPosition returns the world position of a target object id (player or NPC),
+// falling back to def when the object isn't found.
+func (gl *GameLoop) objectPosition(objectID int32, def models.Position) models.Position {
+	if p, ok := gl.world.GetPlayer(objectID); ok {
+		return p.Position
+	}
+	if npc, ok := gl.world.GetNPC(objectID); ok {
+		return npc.Position
+	}
+	return def
 }
 
 // castTime returns the cast duration, clamped to a small minimum so instant skills

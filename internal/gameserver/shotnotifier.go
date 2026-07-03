@@ -62,6 +62,7 @@ func (n *shotEffectNotifier) BroadcastShotVisual(charID int32, skillID int32, sk
 	pkt := outclient.BuildMagicSkillUse(
 		charID, charID, skillID, skillLevel, 0, 0,
 		int32(player.Position.X), int32(player.Position.Y), int32(player.Position.Z),
+		int32(player.Position.X), int32(player.Position.Y), int32(player.Position.Z),
 	)
 
 	for _, nearby := range n.world.GetPlayersInRange(player.Position, registry.VisibilityWatchRadius) {

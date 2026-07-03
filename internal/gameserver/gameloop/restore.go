@@ -56,6 +56,7 @@ func (gl *GameLoop) handleRestoreStats(cmd CmdRestoreStats) {
 		msu := outclient.BuildMagicSkillUse(
 			cmd.CharID, cmd.CharID, cmd.SkillID, cmd.SkillLevel, 0, 0,
 			int32(player.Position.X), int32(player.Position.Y), int32(player.Position.Z),
+			int32(player.Position.X), int32(player.Position.Y), int32(player.Position.Z),
 		)
 		gl.broadcastToNearby(player.Position, msu)
 	}
