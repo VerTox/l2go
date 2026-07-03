@@ -214,32 +214,8 @@ func (h *Handler) buildUserInfoPacket(char *models.Character) []byte {
 	}
 	combat := usecase.GetCombatBaseStatsByClass(char.ClassID)
 	computed := models.ComputeStats(baseStats, char.Level, combat)
-	computed = models.ApplyStatModifiers(computed, char.StatMods) // passive/buff skill mods
-
-	// Add equipment bonuses from paperdoll items
-	reg := registry.GetItemTemplateRegistry()
-	items, err := h.characterUseCase.GetCharacterAllItems(context.Background(), char.ID)
-	if err == nil {
-		for _, item := range items {
-			if item.Loc != string(models.LocPaperdoll) {
-				continue
-			}
-			tpl := reg.Get(item.ItemID)
-			if tpl == nil {
-				continue
-			}
-			computed.PAtk += tpl.PAtk
-			computed.MAtk += tpl.MAtk
-			computed.PDef += tpl.PDef
-			computed.MDef += tpl.MDef
-			if tpl.PAtkSpd > 0 {
-				computed.PAtkSpd += tpl.PAtkSpd
-			}
-			if tpl.MAtkSpd > 0 {
-				computed.MAtkSpd += tpl.MAtkSpd
-			}
-		}
-	}
+	// StatMods carries passive + equipment + buff modifiers (single source of truth).
+	computed = models.ApplyStatModifiers(computed, char.StatMods)
 
 	userInfo := outclient.UserInfo{
 		X:        int32(char.Position.X),
@@ -530,10 +506,47 @@ func (h *Handler) loadPlayerSkills(ctx context.Context, player *registry.PlayerW
 		known[cs.SkillID] = int32(cs.SkillLevel)
 	}
 	player.KnownSkills = known
-	// Passive mods form the base of StatMods; active buffs (l2go-c8t) are layered on
-	// top by the game loop. At entry there are no buffs yet, so StatMods == passives.
+	// StatMods = passive + equipment + buffs. At entry there are no buffs yet.
 	player.PassiveMods = collectPassiveModifiers(skills, h.skillData)
-	char.StatMods = player.PassiveMods
+	player.EquipMods = h.computeEquipMods(ctx, char.ID)
+	player.RebuildStatMods()
+}
+
+// computeEquipMods returns the stat modifiers from a character's equipped items —
+// the additive PAtk/MAtk/PDef/MDef/PAtkSpd/MAtkSpd bonuses of paperdoll item
+// templates. Feeding these through Character.StatMods (rather than adding them
+// inline to one UserInfo path) makes combat and every packet see equipment
+// consistently, and lets buffs multiply the equipped total. (l2go-… equip-in-pipeline)
+func (h *Handler) computeEquipMods(ctx context.Context, charID int32) []models.StatModifier {
+	items, err := h.characterUseCase.GetCharacterAllItems(ctx, charID)
+	if err != nil {
+		log.Error().Err(err).Int32("char_id", charID).Msg("failed to load items for equip mods")
+		return nil
+	}
+	reg := registry.GetItemTemplateRegistry()
+	add := func(mods []models.StatModifier, stat models.StatName, v int) []models.StatModifier {
+		if v == 0 {
+			return mods
+		}
+		return append(mods, models.StatModifier{Stat: stat, Op: "add", Val: float64(v)})
+	}
+	var mods []models.StatModifier
+	for _, item := range items {
+		if item.Loc != string(models.LocPaperdoll) {
+			continue
+		}
+		tpl := reg.Get(item.ItemID)
+		if tpl == nil {
+			continue
+		}
+		mods = add(mods, models.StatPAtk, tpl.PAtk)
+		mods = add(mods, models.StatMAtk, tpl.MAtk)
+		mods = add(mods, models.StatPDef, tpl.PDef)
+		mods = add(mods, models.StatMDef, tpl.MDef)
+		mods = add(mods, models.StatPAtkSpd, tpl.PAtkSpd)
+		mods = add(mods, models.StatMAtkSpd, tpl.MAtkSpd)
+	}
+	return mods
 }
 
 // collectPassiveModifiers resolves each learned skill against its template and

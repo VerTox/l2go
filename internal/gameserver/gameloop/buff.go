@@ -104,13 +104,10 @@ func (gl *GameLoop) toggleOff(player *registry.PlayerWorldState, skillID int32) 
 	return true
 }
 
-// rebuildStatMods recomputes Character.StatMods from the player's passive mods plus
-// every active buff's mods. Called whenever the buff set changes.
+// rebuildStatMods recomputes Character.StatMods (passive + equipment + buff mods).
+// Called whenever the buff set changes.
 func (gl *GameLoop) rebuildStatMods(player *registry.PlayerWorldState) {
-	mods := make([]models.StatModifier, 0, len(player.PassiveMods))
-	mods = append(mods, player.PassiveMods...)
-	mods = append(mods, player.Effects.Mods()...)
-	player.Character.StatMods = mods
+	player.RebuildStatMods()
 }
 
 // sendAbnormalStatus pushes the active-buff bar (icons + timers) to the player.

@@ -69,8 +69,10 @@ type PlayerWorldState struct {
 	Casting *CastState `json:"-"`
 
 	// PassiveMods are the character's passive-skill stat modifiers (l2go-9ep),
-	// set at world entry. Combined with active-buff mods into Character.StatMods.
+	// set at world entry. EquipMods are the equipped items' stat bonuses, refreshed
+	// on equip/unequip. Both are combined with active-buff mods into Character.StatMods.
 	PassiveMods []models.StatModifier `json:"-"`
+	EquipMods   []models.StatModifier `json:"-"`
 
 	// Effects holds the active continuous effects (buffs/debuffs/toggles, l2go-c8t).
 	// Owned by the game loop goroutine.
@@ -85,6 +87,21 @@ type PlayerWorldState struct {
 
 	// Session info
 	SessionData map[string]interface{} `json:"session_data,omitempty"`
+}
+
+// RebuildStatMods recomputes Character.StatMods as the union of the character's
+// passive-skill mods, equipped-item mods, and active-buff mods. It is the single
+// source of truth for the stat-modifier layer, so every stat consumer (combat,
+// UserInfo, CharInfo — whether built by the loop or a handler) sees the same value.
+func (p *PlayerWorldState) RebuildStatMods() {
+	if p.Character == nil {
+		return
+	}
+	mods := make([]models.StatModifier, 0, len(p.PassiveMods)+len(p.EquipMods))
+	mods = append(mods, p.PassiveMods...)
+	mods = append(mods, p.EquipMods...)
+	mods = append(mods, p.Effects.Mods()...)
+	p.Character.StatMods = mods
 }
 
 // CastState is an in-progress skill cast, owned by the game loop. The unique ID

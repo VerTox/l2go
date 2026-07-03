@@ -194,6 +194,11 @@ func (h *Handler) sendEquipmentUpdatePackets(ctx context.Context, c *client.Clie
 	// 2. Update paperdoll in character model from DB (so UserInfo/CharInfo reflect new state)
 	h.refreshCharacterPaperdoll(ctx, char)
 
+	// 2b. Recompute equipment stat mods and fold them back into StatMods (with
+	// passives + buffs) so UserInfo/CharInfo/combat all reflect the new gear.
+	playerState.EquipMods = h.computeEquipMods(ctx, char.ID)
+	playerState.RebuildStatMods()
+
 	// 3. Send UserInfo to the player (updated stats + paperdoll)
 	userInfoData := h.buildUserInfoPacket(char)
 	if err := c.Send(userInfoData); err != nil {

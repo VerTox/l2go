@@ -71,6 +71,22 @@ func (gl *GameLoop) handleCastRequest(cmd CmdCastRequest) {
 		char.CurrentMP -= float64(skill.MpConsume1)
 	}
 
+	reuse := int32(skill.ReuseDelay)
+	tpos := gl.objectPosition(target, caster.Position)
+
+	// Toggles apply instantly — no cast bar (SetupGauge). Send the animation with
+	// zero hit time, apply the effect immediately, and arm the reuse.
+	if skill.IsToggle() {
+		msu := outclient.BuildMagicSkillUse(cmd.CasterCharID, target, cmd.SkillID, int32(level), 0, reuse,
+			int32(caster.Position.X), int32(caster.Position.Y), int32(caster.Position.Z),
+			int32(tpos.X), int32(tpos.Y), int32(tpos.Z))
+		gl.broadcastToNearby(caster.Position, msu)
+		gl.broadcastToNearby(caster.Position, outclient.BuildMagicSkillLaunched(cmd.CasterCharID, cmd.SkillID, int32(level), []int32{target}))
+		gl.applySkillEffects(caster, target, skill)
+		gl.armSkillReuse(cmd.CasterCharID, cmd.SkillID, int32(level), skill.ReuseDelay)
+		return
+	}
+
 	hitTime := castTime(skill)
 
 	// Assign a unique id so a stale hit event (aborted/superseded) is ignored.
@@ -85,8 +101,6 @@ func (gl *GameLoop) handleCastRequest(cmd CmdCastRequest) {
 	// Cast animation + progress gauge to everyone nearby. The target location must be
 	// the target's real position (not the caster's), or the client snaps the mob to
 	// the caster on a ranged cast.
-	reuse := int32(skill.ReuseDelay)
-	tpos := gl.objectPosition(target, caster.Position)
 	msu := outclient.BuildMagicSkillUse(cmd.CasterCharID, target, cmd.SkillID, int32(level),
 		int32(hitTime.Milliseconds()), reuse,
 		int32(caster.Position.X), int32(caster.Position.Y), int32(caster.Position.Z),
