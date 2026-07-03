@@ -499,15 +499,40 @@ func (h *Handler) buildHennaInfoPacket(ctx context.Context, char *models.Charact
 	return l2pkt.BuildPacket(hennaInfo)
 }
 
-// buildSkillListPacket creates SkillList packet from character data
+// buildSkillListPacket loads the character's learned skills, resolves the
+// passive/enchanted flags against the skill templates, and builds the SkillList
+// packet. On DB error it falls back to an empty list rather than blocking entry.
 func (h *Handler) buildSkillListPacket(ctx context.Context, char *models.Character) []byte {
-	// TODO: Load real skills from database
-	// For now, send an empty skill list
-	skillList := outclient.SkillList{
-		Skills: []outclient.SkillInfo{}, // Empty for now
+	skills, err := h.characterUseCase.GetCharacterSkills(ctx, char.ID)
+	if err != nil {
+		log.Error().Err(err).Int32("char_id", char.ID).Msg("failed to load character skills; sending empty SkillList")
+		return outclient.NewEmptySkillList()
 	}
 
-	return outclient.BuildSkillList(skillList)
+	return outclient.NewSkillList(buildSkillInfos(skills, h.skillData))
+}
+
+// buildSkillInfos maps learned skills to SkillList entries, resolving the passive
+// flag from the skill template (nil source → all active) and the enchanted flag
+// from the level (enchant routes use level > 100). Pure: no I/O, unit-testable.
+func buildSkillInfos(skills []models.CharacterSkill, sd SkillTemplateSource) []outclient.SkillInfo {
+	infos := make([]outclient.SkillInfo, 0, len(skills))
+	for _, cs := range skills {
+		passive := false
+		if sd != nil {
+			if tmpl := sd.GetSkill(int(cs.SkillID), cs.SkillLevel); tmpl != nil {
+				passive = tmpl.IsPassive()
+			}
+		}
+		infos = append(infos, outclient.SkillInfo{
+			SkillID:     cs.SkillID,
+			SkillLevel:  int32(cs.SkillLevel),
+			IsPassive:   passive,
+			IsDisabled:  false,
+			IsEnchanted: cs.SkillLevel > 100,
+		})
+	}
+	return infos
 }
 
 // generateSessionID generates a random session ID

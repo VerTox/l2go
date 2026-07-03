@@ -467,6 +467,13 @@ func (uc *CharacterUseCase) GetCharacterAllItems(ctx context.Context, charID int
 	return items, nil
 }
 
+// GetCharacterSkills loads all learned skills for a character (world entry →
+// SkillList). Returns the raw character_skills rows; the caller resolves each
+// against SkillData for the passive/enchanted flags.
+func (uc *CharacterUseCase) GetCharacterSkills(ctx context.Context, charID int32) ([]models.CharacterSkill, error) {
+	return uc.repo.Skill().GetByCharacter(ctx, charID)
+}
+
 // GetShortcuts loads all persisted quick-bar shortcuts for a character (world entry).
 func (uc *CharacterUseCase) GetShortcuts(ctx context.Context, charID int32) ([]models.CharacterShortcut, error) {
 	return uc.repo.Shortcut().GetByCharacter(ctx, charID)

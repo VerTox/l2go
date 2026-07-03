@@ -52,6 +52,12 @@ internal/gameserver/
 - StatusUpdate uses WriteD (32-bit) for values — EXP (int64) gets truncated. Use UserInfo (WriteQ) for EXP updates
 - MoveBackwardToLocation must NOT cancel auto-attack — client sends movement to approach target for melee
 - CharInfo `InCombat` field must be read from PlayerWorldState, not hardcoded to 0
+- SkillList (0x5F) HF per-skill layout is `D(passive) D(level) D(id) C(disabled) C(enchanted)` — passive FIRST, id AFTER level, and the last two flags are bytes (C), not D. (Earlier code wrote `D(id) D(level) D(passive) D(disabled) D(enchantable)` — wrong order + sizes; latent because the list was always empty.)
+
+## Skill Engine (epic l2go-z36)
+
+- **Templates**: `registry.SkillData` (`registry/skilldata.go`) lazily parses the skill datapack (`data/stats/skills/NNNNN-NNNNN.xml`) into one `models.Skill` per (id, level). L2J hash `id*1021+level`; `GetSkill` clamps a too-high level down to the skill's max. Parser expands `<table>`/`<set>`/`<effects>`-scope wrappers, resolving `#table` refs per level. Effects are **collected** (`SkillEffect{Name,Scope,Params,Funcs}`), **not executed** — casting/effects are later phases (lu8/c8t). Built in `service.go` (`g.skillData`), shared roots with the interim `skillEffects`.
+- **SkillList read path (afx)**: skills are granted at creation (`learnStartingSkills` → `character_skills`) and loaded at world entry. `world.go` `buildSkillListPacket` → `CharacterUseCase.GetCharacterSkills` → `buildSkillInfos` maps each to `outclient.SkillInfo`, resolving the **passive** flag from `SkillData.GetSkill(...).IsPassive()` (handler holds a `SkillTemplateSource`, wired via `SetSkillData`) and **enchanted** from `level > 100`. DB error → empty list, never blocks entry.
 
 ## NPC System
 

@@ -34,6 +34,9 @@ type GameServer struct {
 	world       *registry.WorldRegistry
 	connections *registry.ConnectionRegistry
 
+	// skillData is the skill-engine template registry (epic l2go-z36).
+	skillData *registry.SkillData
+
 	// Game loop
 	gameLoop *gameloop.GameLoop
 
@@ -460,13 +463,20 @@ func (g *GameServer) prepareHandlers() {
 	// Register consumable item handlers. INTERIM (l2go-diu): potions read their
 	// linked restore skill (HP/MP/CP + amount) from the skill data and restore
 	// immediately via the game loop, until a real skill engine replaces this.
-	skillEffects := registry.NewSkillEffectRegistry([]string{
+	skillRoots := []string{
 		"data/stats/skills",
 		"../../data/stats/skills",
 		"references/data/stats/skills",
 		"../../references/data/stats/skills",
-	})
+	}
+	skillEffects := registry.NewSkillEffectRegistry(skillRoots)
 	potionHandler := usecase.NewPotionHandler(skillEffects, g.gameLoop.StatRestorer())
+
+	// Skill engine template registry (epic l2go-z36). Lazily parses the skill
+	// datapack into per-(id,level) templates. Wired into the client handler so the
+	// SkillList packet can flag passive skills correctly.
+	g.skillData = registry.NewSkillData(skillRoots)
+	g.handlers.client.SetSkillData(g.skillData)
 	g.usc.inventory.ItemHandlers().Register("ItemSkills", potionHandler)
 	g.usc.inventory.ItemHandlers().Register("ManaPotion", potionHandler)
 

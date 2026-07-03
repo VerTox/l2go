@@ -61,8 +61,8 @@ func TestSkillList(t *testing.T) {
 	checkGolden(t, "skilllist_empty", NewEmptySkillList())
 	checkGolden(t, "skilllist_basic", NewBasicSkillList())
 	checkGolden(t, "skilllist_flags", NewSkillList([]SkillInfo{
-		{SkillID: 100, SkillLevel: 5, IsPassive: true, IsDisabled: false, IsEnchantable: true},
-		{SkillID: 200, SkillLevel: 1, IsPassive: false, IsDisabled: true, IsEnchantable: false},
+		{SkillID: 100, SkillLevel: 5, IsPassive: true, IsDisabled: false, IsEnchanted: true},
+		{SkillID: 200, SkillLevel: 1, IsPassive: false, IsDisabled: true, IsEnchanted: false},
 	}))
 }
 

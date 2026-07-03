@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/VerTox/l2go/internal/gameserver/gameloop"
+	"github.com/VerTox/l2go/internal/gameserver/models"
 	"github.com/VerTox/l2go/internal/gameserver/packets/inclient"
 	"github.com/VerTox/l2go/internal/gameserver/packets/outclient"
 	"github.com/VerTox/l2go/internal/gameserver/packets/outls"
@@ -42,8 +43,16 @@ type Handler struct {
 	gameLoopCmd        chan<- gameloop.Command
 	// registry — state-aware таблица опкод→обработчик входящих пакетов.
 	registry *Registry
+	// skillData resolves skill templates for the SkillList passive/enchant flags.
+	skillData SkillTemplateSource
 	// Simple in-memory session storage (TODO: use proper session management)
 	sessions map[*client.ClientConn]*ClientSession
+}
+
+// SkillTemplateSource looks up a skill template by (id, level). Implemented by
+// registry.SkillData; abstracted here to keep the handler transport-focused.
+type SkillTemplateSource interface {
+	GetSkill(skillID, level int) *models.Skill
 }
 
 // LoginServerInterface provides methods to communicate with LoginServer
@@ -69,6 +78,10 @@ func New(characterUseCase *usecase.CharacterUseCase, movementUseCase usecase.Mov
 // SetEnchantUseCase wires the enchant flow (RequestEnchantItem). Kept out of the
 // New() signature so the enchant feature stays a self-contained add-on.
 func (h *Handler) SetEnchantUseCase(uc *usecase.EnchantUseCase) { h.enchantUseCase = uc }
+
+// SetSkillData wires the skill template registry used to resolve the SkillList
+// passive/enchanted flags. Kept out of New() like the other add-on setters.
+func (h *Handler) SetSkillData(sd SkillTemplateSource) { h.skillData = sd }
 
 // Handle processes incoming client packets
 func (h *Handler) Handle(ctx context.Context, c *client.ClientConn) {
