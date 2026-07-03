@@ -58,6 +58,7 @@ internal/gameserver/
 
 - **Templates**: `registry.SkillData` (`registry/skilldata.go`) lazily parses the skill datapack (`data/stats/skills/NNNNN-NNNNN.xml`) into one `models.Skill` per (id, level). L2J hash `id*1021+level`; `GetSkill` clamps a too-high level down to the skill's max. Parser expands `<table>`/`<set>`/`<effects>`-scope wrappers, resolving `#table` refs per level. Effects are **collected** (`SkillEffect{Name,Scope,Params,Funcs}`), **not executed** — casting/effects are later phases (lu8/c8t). Built in `service.go` (`g.skillData`), shared roots with the interim `skillEffects`.
 - **SkillList read path (afx)**: skills are granted at creation (`learnStartingSkills` → `character_skills`) and loaded at world entry. `world.go` `buildSkillListPacket` → `CharacterUseCase.GetCharacterSkills` → `buildSkillInfos` maps each to `outclient.SkillInfo`, resolving the **passive** flag from `SkillData.GetSkill(...).IsPassive()` (handler holds a `SkillTemplateSource`, wired via `SetSkillData`) and **enchanted** from `level > 100`. DB error → empty list, never blocks entry.
+- **Stat modifier pipeline + passives (9ep)**: `models/statmods.go` — `StatModifier{Stat,Op,Val}` + `ApplyStatModifiers(ComputedStats, mods)` layer over the flat `ComputeStats`. Formula per stat: `(base + Σadd − Σsub) × Πmul ÷ Πdiv` (order-independent within a stat; the standard emu approximation, exact for %/flat buffs). Stat names match the datapack (`pAtk`/`pDef`/`runSpd`/`accCombat`/`rEvas`/`critRate`/…); names absent from `ComputedStats` (resistances, regen, pvp) are ignored. Modifiers live on `Character.StatMods` (runtime-only, `json:"-"`), populated at world entry by `applyPassiveModifiers` (`collectPassiveModifiers` → `models.PassiveModifiers` pulls PASSIVE-scope stat funcs from each learned passive skill's template). `ApplyStatModifiers` is applied in the two central compute helpers (`usecase.ComputeCharacterStats` → combat, `computeCharInfoStats` → CharInfo) plus the UserInfo and level-up paths, so all stat consumers reflect passives. **`nil` mods → stats unchanged** (no behavior change until passives are actually granted). **Currently inert in-game**: the hardcoded starter sets grant zero passives; real auto-get from `classSkillTree.xml` is deferred (hv9). Writer discipline for `StatMods` mirrors Character progress: set on the connection goroutine before `CmdPlayerEnteredWorld`; once live, the game loop is sole writer and packets snapshot.
 
 ## NPC System
 
@@ -144,7 +145,7 @@ internal/gameserver/
 
 ## Known Limitations
 
-- Movement speed computed per-character (base×DEX from race/class); item/buff modifiers are a no-op hook (`applyMoveSpeedBonus`) pending item-stats/skill systems
+- Movement speed computed per-character (base×DEX from race/class). Skill/passive `runSpd`/`walkSpd` modifiers now flow through `ComputedStats` (9ep stat pipeline); the legacy `applyMoveSpeedBonus` hook is a redundant identity. Item move-speed bonuses still pending item-stats.
 - Item type classification approximate (no full item template DB yet)
 - Multi-packet handler covers only a few sub-opcodes of 50+
 - No collision detection

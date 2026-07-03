@@ -41,6 +41,12 @@ func (h *Handler) handleEnterWorld(ctx context.Context, c *client.ClientConn, pa
 		return nil
 	}
 
+	// Resolve passive-skill stat modifiers before building UserInfo/CharInfo so the
+	// client sees the buffed numbers. Safe to write char.StatMods here: the game
+	// loop only starts reading this player's stats after CmdPlayerEnteredWorld
+	// (dispatched below, after the packet sequence).
+	h.applyPassiveModifiers(ctx, playerState.Character)
+
 	// Send world entry packet sequence
 	if err := h.sendWorldEntryPackets(ctx, c, playerState.Character); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to send world entry packets")
@@ -200,6 +206,7 @@ func (h *Handler) buildUserInfoPacket(char *models.Character) []byte {
 	}
 	combat := usecase.GetCombatBaseStatsByClass(char.ClassID)
 	computed := models.ComputeStats(baseStats, char.Level, combat)
+	computed = models.ApplyStatModifiers(computed, char.StatMods) // passive/buff skill mods
 
 	// Add equipment bonuses from paperdoll items
 	reg := registry.GetItemTemplateRegistry()
@@ -497,6 +504,36 @@ func (h *Handler) buildHennaInfoPacket(ctx context.Context, char *models.Charact
 		Slots: [3]int32{},
 	}
 	return l2pkt.BuildPacket(hennaInfo)
+}
+
+// applyPassiveModifiers loads the character's learned skills and stores the stat
+// modifiers of its passive skills on char.StatMods, so ComputeStats reflects them
+// in combat and packets (epic l2go-z36, l2go-9ep). Best-effort: a missing skill
+// registry, DB error, or unknown template simply yields no modifiers.
+func (h *Handler) applyPassiveModifiers(ctx context.Context, char *models.Character) {
+	if h.skillData == nil {
+		return
+	}
+	skills, err := h.characterUseCase.GetCharacterSkills(ctx, char.ID)
+	if err != nil {
+		log.Error().Err(err).Int32("char_id", char.ID).Msg("failed to load skills for passive modifiers")
+		return
+	}
+	char.StatMods = collectPassiveModifiers(skills, h.skillData)
+}
+
+// collectPassiveModifiers resolves each learned skill against its template and
+// gathers the stat modifiers of the passive ones. Pure: no I/O, unit-testable.
+func collectPassiveModifiers(skills []models.CharacterSkill, sd SkillTemplateSource) []models.StatModifier {
+	if sd == nil {
+		return nil
+	}
+	var mods []models.StatModifier
+	for _, cs := range skills {
+		tmpl := sd.GetSkill(int(cs.SkillID), cs.SkillLevel)
+		mods = append(mods, models.PassiveModifiers(tmpl)...)
+	}
+	return mods
 }
 
 // buildSkillListPacket loads the character's learned skills, resolves the

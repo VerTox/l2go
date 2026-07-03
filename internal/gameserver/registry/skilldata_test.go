@@ -191,6 +191,42 @@ func TestParseBuffFuncs(t *testing.T) {
 	}
 }
 
+// TestPassiveModifiersFromRealShape parses a Weapon Mastery-shaped passive (the
+// real datapack skill 141: mul pAtk 1.085 + tabled add pAtk) and runs it through
+// the 9ep modifier pipeline, bridging the parser (oe1) and stat mods (9ep).
+func TestPassiveModifiersFromRealShape(t *testing.T) {
+	root := t.TempDir()
+	writeSkillFile(t, root, "00100-00199.xml", `<list>
+		<skill id="141" levels="3" name="Weapon Mastery">
+			<table name="#pAtk"> 2 3 4 </table>
+			<set name="operateType" val="P" />
+			<effects>
+				<effect name="Buff">
+					<mul stat="pAtk" val="1.085" />
+					<add stat="pAtk" val="#pAtk" />
+				</effect>
+			</effects>
+		</skill>
+	</list>`)
+	reg := NewSkillData([]string{root})
+
+	sk := reg.GetSkill(141, 1)
+	if sk == nil || !sk.IsPassive() {
+		t.Fatalf("GetSkill(141,1) = %+v, want passive", sk)
+	}
+	mods := models.PassiveModifiers(sk)
+	// level 1: add pAtk = #pAtk[0] = 2, plus mul 1.085.
+	cs := models.ApplyStatModifiers(models.ComputedStats{PAtk: 100}, mods)
+	if cs.PAtk != 111 { // (100 + 2) * 1.085 = 110.67 -> 111
+		t.Errorf("PAtk with Weapon Mastery lvl1 = %d, want 111", cs.PAtk)
+	}
+	// level 3: add pAtk = 4.
+	cs3 := models.ApplyStatModifiers(models.ComputedStats{PAtk: 100}, models.PassiveModifiers(reg.GetSkill(141, 3)))
+	if cs3.PAtk != 113 { // (100 + 4) * 1.085 = 112.84 -> 113
+		t.Errorf("PAtk with Weapon Mastery lvl3 = %d, want 113", cs3.PAtk)
+	}
+}
+
 func TestPassiveSkillScopeIsPassive(t *testing.T) {
 	root := t.TempDir()
 	writeSkillFile(t, root, "00200-00299.xml", `<list>

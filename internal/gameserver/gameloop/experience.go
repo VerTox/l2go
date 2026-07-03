@@ -118,6 +118,7 @@ func (gl *GameLoop) applyLevelUp(player *registry.PlayerWorldState, oldLevel, ne
 	}
 	combat := usecase.GetCombatBaseStatsByClass(char.ClassID)
 	computed := models.ComputeStats(baseStats, newLevel, combat)
+	computed = models.ApplyStatModifiers(computed, char.StatMods) // passive/buff skill mods
 
 	// Update max HP/MP (use computed values scaled by CON/MEN bonuses)
 	// Use template-based scaling: maxHP grows ~10% per level as rough approximation

@@ -460,7 +460,8 @@ func ComputeCharacterStats(char *models.Character) models.ComputedStats {
 		MEN: char.BaseMEN,
 	}
 	combat := GetCombatBaseStatsByClass(char.ClassID)
-	return models.ComputeStats(baseStats, char.Level, combat)
+	computed := models.ComputeStats(baseStats, char.Level, combat)
+	return models.ApplyStatModifiers(computed, char.StatMods)
 }
 
 // GetCombatBaseStatsByClass returns combat base stats for a given class ID.

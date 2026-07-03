@@ -10,6 +10,7 @@ import (
 type fakeSkillSource struct {
 	passive map[int]bool
 	known   map[int]bool
+	funcs   map[int][]models.SkillFunc
 }
 
 func (f fakeSkillSource) GetSkill(skillID, level int) *models.Skill {
@@ -20,7 +21,15 @@ func (f fakeSkillSource) GetSkill(skillID, level int) *models.Skill {
 	if f.passive[skillID] {
 		op = models.OpP
 	}
-	return &models.Skill{ID: skillID, Level: level, OperateType: op}
+	sk := &models.Skill{ID: skillID, Level: level, OperateType: op}
+	if funcs, ok := f.funcs[skillID]; ok {
+		scope := models.ScopeGeneral
+		if op == models.OpP {
+			scope = models.ScopePassive
+		}
+		sk.Effects = []models.SkillEffect{{Name: "Buff", Scope: scope, Funcs: funcs}}
+	}
+	return sk
 }
 
 func TestBuildSkillInfos(t *testing.T) {
@@ -65,5 +74,34 @@ func TestBuildSkillInfos_NilSource(t *testing.T) {
 	got := buildSkillInfos([]models.CharacterSkill{{SkillID: 1001, SkillLevel: 1}}, nil)
 	if len(got) != 1 || got[0].IsPassive {
 		t.Fatalf("nil source = %+v, want single active skill", got)
+	}
+}
+
+func TestCollectPassiveModifiers(t *testing.T) {
+	src := fakeSkillSource{
+		passive: map[int]bool{300: true},
+		known:   map[int]bool{300: true, 1177: true},
+		funcs: map[int][]models.SkillFunc{
+			300:  {{Op: "mul", Stat: "pAtk", Val: 1.08}}, // passive -> collected
+			1177: {{Op: "mul", Stat: "pAtk", Val: 5}},    // active -> ignored
+		},
+	}
+	skills := []models.CharacterSkill{
+		{SkillID: 1177, SkillLevel: 1}, // active, funcs not passive-scoped
+		{SkillID: 300, SkillLevel: 1},  // passive
+		{SkillID: 9999, SkillLevel: 1}, // unknown -> nil template
+	}
+
+	mods := collectPassiveModifiers(skills, src)
+	if len(mods) != 1 {
+		t.Fatalf("len(mods) = %d, want 1 (only the passive skill), got %+v", len(mods), mods)
+	}
+	if mods[0].Stat != models.StatPAtk || mods[0].Op != "mul" || mods[0].Val != 1.08 {
+		t.Errorf("mod = %+v, want mul pAtk 1.08", mods[0])
+	}
+
+	// nil source yields no mods, no panic.
+	if got := collectPassiveModifiers(skills, nil); got != nil {
+		t.Errorf("nil source = %+v, want nil", got)
 	}
 }

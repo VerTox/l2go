@@ -19,7 +19,8 @@ func computeCharInfoStats(char *models.Character) models.ComputedStats {
 	// Look up combat base stats by class — avoid importing usecase to prevent circular dependency
 	// Use a simple fighter/mystic heuristic based on class ID
 	combat := defaultCombatBaseStats(char.ClassID)
-	return models.ComputeStats(baseStats, char.Level, combat)
+	computed := models.ComputeStats(baseStats, char.Level, combat)
+	return models.ApplyStatModifiers(computed, char.StatMods)
 }
 
 // defaultCombatBaseStats returns combat base stats for a class ID without importing usecase.

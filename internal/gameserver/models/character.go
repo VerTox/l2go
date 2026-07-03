@@ -95,6 +95,13 @@ type Character struct {
 	BaseINT int `json:"base_int" db:"base_int"`
 	BaseWIT int `json:"base_wit" db:"base_wit"`
 	BaseMEN int `json:"base_men" db:"base_men"`
+
+	// StatMods are the active stat modifiers layered on top of ComputeStats —
+	// populated at world entry from passive skills (epic l2go-z36, l2go-9ep) and,
+	// later, timed buffs. Runtime-only, never persisted. Mutation follows the same
+	// discipline as other Character progress: the game loop is the sole writer once
+	// the player is live; packet builders read snapshots.
+	StatMods []StatModifier `json:"-" db:"-"`
 }
 
 // Position represents a character's location in the world
