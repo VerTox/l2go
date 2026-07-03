@@ -98,17 +98,22 @@ internal/gameserver/
 - **Template fields** (parsed by `registry/itemtemplates.go`, epic xv8): `Handler`, `ItemSkills []{ID,Level}` (from `item_skill` `id-lvl;...`), `ReuseDelay`, `SharedReuseGroup`, `ImmediateEffect`, `QuestItem` (type2==QUEST), `CapsuledItems` (extractable), `Soulshots`/`Spiritshots` counts.
 - **UseItem pre-checks** (5i0, before the fork): quest-item → `CANNOT_USE_QUEST_ITEMS`; dead → `S1_CANNOT_BE_USED`; reuse-cooldown → remaining-time SystemMessage. usecase is transport-free (returns `Messages`/`ReuseSync` specs; handler translates to packets).
 - **Reuse timers** (6vj): `registry.ItemReuseRegistry` (in-memory per-char `map[charID]map[objectID]stamp`, shared-group aware, injectable clock, cleared on `WorldRegistry.RemovePlayer`). Armed in `useNonEquipItem` after `consumed==true`. `ExUseSharedGroupItem` (0xFE:0x4A) sent **only for `shared_reuse_group > 0`** — matches L2J + lineage2ts (both gate `group<=0 → return`). charID == player objectID.
-- **Charged shots** (sew): `registry.ChargedShotRegistry` (per-weapon-objectID in-memory flag). Grade-check via `gradeSPlus` (S/S80/S84→S+). Visual = `MagicSkillUse` (0x48).
+- **Charged shots** (sew): `registry.ChargedShotRegistry` (per-weapon-objectID in-memory flag; stores the weapon grade id alongside the charge for the hit visual). Grade-check via `gradeSPlus` (S/S80/S84→S+). Activation visual = `MagicSkillUse` (0x48). **Soulshot damage integration (77a):** the swing (`gameloop` `NextAttackEvent.Execute`) snapshots the RHand weapon's charge, doubles pAtk before defence/crit/variance (L2J `ssboost`), sets the Attack `USESS|grade` hit flag, and spends the charge **once, only on a landed hit** (a miss keeps it). Charge is cleared on weapon unequip. Spiritshot stays a parked hook (no magic damage until the skill engine).
 - **Enchant** (f16 + 629): two-step HF window flow. `EnchantScrolls` handler arms scroll in `registry.EnchantStateRegistry` + sends legacy `ChooseInventoryItem`; client opens window itself and sends `RequestExTryToPutEnchantTargetItem` (0xD0:0x4c) → server `ValidateTarget` → `ExPutEnchantTargetItemResult` (0xFE:0x81); `RequestEnchantItem` (0x5f) does the enchant; `RequestExCancelEnchantItem` (0xD0:0x4e) closes. Chances are **retail-exact** from `enchantItemGroups.xml`+`enchantItemData.xml` (`registry/enchantgroups.go`, per-enchant-level tables, scrollGroupId binding).
 
 ### INTERIM boundaries (replaced by the skill engine — l2go-2w8)
 - **Potions don't cast a real skill.** `diu` reads the linked `item_skill`'s effect+power from `registry/skilleffects.go` (lazy loader) and restores HP/MP/CP directly via the game loop (`CmdRestoreStats` → `handleRestoreStats`). It broadcasts a **stop-gap `MagicSkillUse`** (the item's skill id/level) for the cast animation only — no HoT/duration/land-rate/conditions.
-- **Soulshot charge is not applied to damage** (charge set/consumed + visual only; damage integration parked in l2go-77a).
 
-### Known item gaps (open bugs)
-- **l2go-28l**: reuse-cooldown sweep not drawn on the item icon even for a grouped item (10152) that DOES send `ExUseSharedGroupItem`. Top hypothesis: the sweep is on the **shortcut bar** slot, not the inventory-window icon, and shortcut registration (`RequestShortCutReg`, l2go-znj) isn't implemented — so there's nowhere to show it. Verify by seeding `character_shortcuts` or doing znj first.
+### Quick bar / shortcuts (znj, DONE)
+- `RequestShortCutReg` (0x3d) persists a shortcut + echoes `ShortCutRegister` (0x44); `RequestShortCutDel` (0x3f) deletes (no client ack, L2J parity); `ShortCutInit` (0x45) loads from `character_shortcuts` on world entry (`world.go` `BuildShortCutPacket`). usecase in `character.go` (`GetShortcuts`/`SaveShortcut`/`DeleteShortcut`). `BuildShortCutInit` ITEM trailer is `H,H` (24 bytes) — not `D,D`. Repo `ON CONFLICT` matches the full PK incl. `class_index`; migration 009 relaxed the `level` CHECK to `>=0` (client sends level 0 for item shortcuts).
+- **l2go-28l resolved by znj**: grouped-item reuse sweep now draws on the shortcut slot. Non-grouped items (reuse but no shared group, e.g. 1060) draw **no** sweep — L2J parity (`UseItem.sendSharedGroupUpdate` gates on `group>0`); reuse still enforced server-side + remaining-time SystemMessage.
+
+### Known item gaps (open)
+- **l2go-btb**: auto-soulshot not implemented — `handlers/client/multipacket.go` `handleRequestAutoSoulShot` (0xD0:0x0d) only logs; no `ExAutoSoulShot` (0xFE:0x0c), no active-shot list, no auto-charge before the swing. Builds on the 77a charge mechanics.
 - **l2go-1in**: `InventoryUpdate` writes 3 fixed enchant-options; HF/our `ItemList` write a variable count (0 for normal items). Latent for multi-item InventoryUpdate.
-- **l2go-znj**: items can't be placed on the quick bar (RequestShortCutReg + ExAutoSoulShot not implemented).
+
+### Attack packet hit flags (HF, 77a)
+`packets/outclient/attack.go` uses L2J HF `Hit.java` bits: USESS `0x10` (OR'd with weapon grade id), CRIT `0x20`, SHLD `0x40`, MISS `0x80`. (Earlier values `0x01/0x02/0x04` were wrong; only CRIT matched.)
 
 ## Character Persistence
 

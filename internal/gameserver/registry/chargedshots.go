@@ -25,14 +25,18 @@ const (
 // and is NOT persisted to the database — charges are lost on relog, exactly
 // like retail.
 type ChargedShotRegistry struct {
-	mu      sync.RWMutex
-	charged map[int32]map[ShotType]bool // weaponObjectID -> shot -> charged
+	mu sync.RWMutex
+	// weaponObjectID -> shot -> grade id. Presence of the (weapon,shot) key means
+	// charged; the value is the weapon's grade id (getItemGradeSPlus) used only to
+	// tint the soulshot hit visual. Grade 0 (no-grade weapon) is a valid charged
+	// state, so charged-ness is presence, never the value.
+	charged map[int32]map[ShotType]int
 }
 
 // NewChargedShotRegistry creates an empty charged-shot registry.
 func NewChargedShotRegistry() *ChargedShotRegistry {
 	return &ChargedShotRegistry{
-		charged: make(map[int32]map[ShotType]bool),
+		charged: make(map[int32]map[ShotType]int),
 	}
 }
 
@@ -48,25 +52,45 @@ func GetChargedShotRegistry() *ChargedShotRegistry { return chargedShots }
 func (r *ChargedShotRegistry) IsCharged(weaponObjectID int32, shot ShotType) bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	return r.charged[weaponObjectID][shot]
+	m := r.charged[weaponObjectID]
+	if m == nil {
+		return false
+	}
+	_, ok := m[shot]
+	return ok
 }
 
-// SetCharged sets (or clears) the charge of a shot type on a weapon instance.
-// Clearing the last charge removes the weapon's entry to keep the map compact.
-func (r *ChargedShotRegistry) SetCharged(weaponObjectID int32, shot ShotType, charged bool) {
+// ChargedGrade returns the weapon grade id stored with the charge (for the
+// soulshot hit visual), or 0 when the weapon holds no charge of that shot type.
+func (r *ChargedShotRegistry) ChargedGrade(weaponObjectID int32, shot ShotType) int {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.charged[weaponObjectID][shot] // 0 when absent
+}
+
+// Charge marks a shot type charged on a weapon instance and records its grade id.
+func (r *ChargedShotRegistry) Charge(weaponObjectID int32, shot ShotType, grade int) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	m := r.charged[weaponObjectID]
+	if m == nil {
+		m = make(map[ShotType]int)
+		r.charged[weaponObjectID] = m
+	}
+	m[shot] = grade
+}
 
+// SetCharged charges (grade 0) or spends the charge of a shot type on a weapon
+// instance. Clearing the last charge removes the weapon's entry to keep the map
+// compact. Use Charge to record a grade.
+func (r *ChargedShotRegistry) SetCharged(weaponObjectID int32, shot ShotType, charged bool) {
 	if charged {
-		m := r.charged[weaponObjectID]
-		if m == nil {
-			m = make(map[ShotType]bool)
-			r.charged[weaponObjectID] = m
-		}
-		m[shot] = true
+		r.Charge(weaponObjectID, shot, 0)
 		return
 	}
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	m := r.charged[weaponObjectID]
 	if m == nil {
 		return

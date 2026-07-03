@@ -2,12 +2,13 @@ package outclient
 
 import "github.com/VerTox/l2go/pkg/l2pkt"
 
-// Attack packet flags.
+// Attack hit flags, byte-for-byte from L2J HF Hit.java. The soulshot flag is
+// OR'd with the weapon grade id (getItemGradeSPlus) in the same byte.
 const (
-	AttackFlagMiss   = 0x01
-	AttackFlagCrit   = 0x20
-	AttackFlagShield = 0x02
-	AttackFlagSS     = 0x04
+	AttackFlagSS     = 0x10 // HITFLAG_USESS (| grade id)
+	AttackFlagCrit   = 0x20 // HITFLAG_CRIT
+	AttackFlagShield = 0x40 // HITFLAG_SHLD
+	AttackFlagMiss   = 0x80 // HITFLAG_MISS
 )
 
 // BuildAttack builds the Attack packet (0x33).

@@ -28,6 +28,15 @@ func calcHitChance(accuracy, evasion int) bool {
 	return rand.Intn(100) < chance
 }
 
+// soulshotPAtk doubles pAtk when the weapon holds a soulshot charge, mirroring
+// L2J Formulas.calcPhysDam ssboost (applied to pAtk before defence/crit/variance).
+func soulshotPAtk(pAtk int, charged bool) int {
+	if charged {
+		return pAtk * 2
+	}
+	return pAtk
+}
+
 // calcPhysDamage computes physical damage.
 // Formula: (76 * PAtk) / PDef, minimum 1
 func calcPhysDamage(pAtk, pDef int) int32 {

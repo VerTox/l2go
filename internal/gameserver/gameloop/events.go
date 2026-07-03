@@ -5,6 +5,7 @@ import (
 
 	"github.com/VerTox/l2go/internal/gameserver/models"
 	"github.com/VerTox/l2go/internal/gameserver/packets/outclient"
+	"github.com/VerTox/l2go/internal/gameserver/registry"
 	"github.com/rs/zerolog/log"
 )
 
@@ -177,11 +178,26 @@ func (e *NextAttackEvent) Execute(gl *GameLoop) {
 		}
 	}
 
+	// Snapshot the soulshot charge on the equipped weapon once per swing, exactly
+	// like L2J doAttack reads isChargedShot into the Attack packet up front. The
+	// charge is spent below only on a landed hit (never on a miss). (l2go-77a)
+	var weaponObjID, ssGrade int32
+	ss := false
+	if player.Character != nil {
+		weaponObjID = player.Character.PaperdollObjectIDs[models.SlotRHand]
+		if weaponObjID != 0 {
+			shots := registry.GetChargedShotRegistry()
+			ss = shots.IsCharged(weaponObjID, registry.ShotSoulshot)
+			ssGrade = int32(shots.ChargedGrade(weaponObjID, registry.ShotSoulshot))
+		}
+	}
+
 	if !calcHitChance(accuracy, evasion) {
 		miss = true
 		damage = 0
 	} else {
-		damage = calcPhysDamage(pAtk, pDef)
+		// Soulshot doubles pAtk before defence/crit/variance (L2J ssboost).
+		damage = calcPhysDamage(soulshotPAtk(pAtk, ss), pDef)
 		crit = calcCrit(critRate)
 		if crit {
 			damage *= 2
@@ -192,13 +208,23 @@ func (e *NextAttackEvent) Execute(gl *GameLoop) {
 		}
 	}
 
-	// Build flags
+	// Build hit flags (L2J HF Hit.java bits).
 	var flags int32
 	if miss {
-		flags |= 0x01 // MISS
+		flags |= outclient.AttackFlagMiss
 	}
 	if crit {
-		flags |= 0x20 // CRIT
+		flags |= outclient.AttackFlagCrit
+	}
+	if ss {
+		// USESS bit OR'd with the weapon grade id, as L2J bakes into each Hit.
+		flags |= outclient.AttackFlagSS | ssGrade
+	}
+
+	// Spend the soulshot charge once, only when the swing lands (L2J spends after
+	// doAttack iff hitted; a full miss keeps the charge for the next swing).
+	if ss && !miss {
+		registry.GetChargedShotRegistry().SetCharged(weaponObjID, registry.ShotSoulshot, false)
 	}
 
 	// First real swing draws the weapon (L2J doAttack → clientStartAutoAttack). Fires on

@@ -118,10 +118,10 @@ func (e *NPCNextAttackEvent) Execute(gl *GameLoop) {
 
 	var flags int32
 	if miss {
-		flags |= 0x01
+		flags |= outclient.AttackFlagMiss
 	}
 	if crit {
-		flags |= 0x20
+		flags |= outclient.AttackFlagCrit
 	}
 
 	attackPkt := outclient.BuildAttack(

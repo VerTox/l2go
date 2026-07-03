@@ -173,8 +173,8 @@ func (h *shotHandler) UseItem(ctx context.Context, use ItemUseContext) (bool, er
 		}
 	}
 
-	// 5. Charge the weapon instance.
-	h.charged.SetCharged(weapon.ObjectID, h.shot, true)
+	// 5. Charge the weapon instance, recording the weapon grade for the hit visual.
+	h.charged.Charge(weapon.ObjectID, h.shot, int(gradeSPlus(weaponTmpl.CrystalType)))
 
 	// 6. Client feedback + activation visual.
 	skillID, skillLevel := shotVisualSkill(use.Template)

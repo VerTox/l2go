@@ -347,6 +347,14 @@ func (uc *InventoryUseCase) unequipItem(ctx context.Context, charID int32, item 
 	// Update in-memory item state
 	item.Unequip()
 
+	// A soulshot/spiritshot charge belongs to the equipped weapon instance and
+	// must not survive an unequip (L2J clears it on weapon change). Only weapons
+	// (right hand, two-handed included) ever hold charges; clearing any other
+	// object id is a harmless no-op. (l2go-77a)
+	if slot == models.SlotRHand {
+		registry.GetChargedShotRegistry().Clear(item.ObjectID)
+	}
+
 	return []ChangedItem{
 		{Item: *item, UpdateType: 2}, // MODIFY
 	}, nil
