@@ -16,6 +16,8 @@ func init() { addStubRegistrator(registerCastHandlers) }
 func registerCastHandlers(r *Registry) {
 	// RequestMagicSkillUse (0x39): cast a skill. Replaces the stub (l2go-lu8).
 	r.register(StateInGame, 0x39, "RequestMagicSkillUse", (*Handler).handleRequestMagicSkillUse)
+	// RequestDispel (0xD0:0x4b): cancel an active buff (click a buff icon off).
+	r.registerMulti(StateInGame, 0x4b, "RequestDispel", (*Handler).handleRequestDispel)
 }
 
 // handleRequestMagicSkillUse forwards a cast request to the game loop, which owns
@@ -43,5 +45,28 @@ func (h *Handler) handleRequestMagicSkillUse(ctx context.Context, c *client.Clie
 		CtrlPressed:  pkt.CtrlPressed,
 		ShiftPressed: pkt.ShiftPressed,
 	}
+	return nil
+}
+
+// handleRequestDispel forwards a buff-cancel request (clicking a buff icon off) to
+// the game loop, which owns the character's effect list.
+func (h *Handler) handleRequestDispel(ctx context.Context, c *client.ClientConn, payload []byte) error {
+	pkt, err := inclient.ParseRequestDispel(payload)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to parse RequestDispel")
+		return nil
+	}
+	if pkt.SkillID <= 0 {
+		return nil
+	}
+	session := h.getSession(c)
+	if session == nil {
+		return nil
+	}
+	playerState, exists := h.world.GetPlayerByAccount(session.AccountName)
+	if !exists {
+		return nil
+	}
+	h.gameLoopCmd <- gameloop.CmdDispel{CasterCharID: playerState.CharID, SkillID: pkt.SkillID}
 	return nil
 }

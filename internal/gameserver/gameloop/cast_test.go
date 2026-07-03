@@ -206,3 +206,82 @@ func TestCast_MovementAbortsCast(t *testing.T) {
 		t.Errorf("aborted cast still healed: HP=%v, want 100", c.CurrentHP)
 	}
 }
+
+func TestCast_MPCheckedUpfront(t *testing.T) {
+	// heal 1011: mpConsume1=2, mpConsume2=8 (total 10). MP=5 covers the initial part
+	// but not the full cost — the cast must be rejected up front (not fizzle at hit).
+	gl, player := loopWithHealSkill(t)
+	player.Character.MaxMP, player.Character.CurrentMP = 200, 5
+
+	gl.handleCastRequest(CmdCastRequest{CasterCharID: 7, SkillID: 1011})
+	if player.Casting != nil {
+		t.Error("cast should be rejected when MP < mpConsume1+mpConsume2")
+	}
+	if player.Character.CurrentMP != 5 {
+		t.Errorf("MP = %v, want unchanged 5 (no partial consume)", player.Character.CurrentMP)
+	}
+}
+
+func TestCast_OutOfRangeRejected(t *testing.T) {
+	gl, player := newTestLoopWithPlayer(t)
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "09900-09999.xml"), []byte(nuke9999XML), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gl.SetSkillData(registry.NewSkillData([]string{dir}))
+	player.KnownSkills = map[int32]int32{9999: 1}
+	player.Character.CurrentMP = 200
+
+	// NPC well beyond castRange (600).
+	npc := addAttackableNPC(gl, 1000, models.Position{X: 5000, Y: 0, Z: 0})
+	player.TargetID = npc.ObjectID
+
+	gl.handleCastRequest(CmdCastRequest{CasterCharID: 7, SkillID: 9999})
+	if player.Casting != nil {
+		t.Error("cast should be rejected when target is out of range")
+	}
+}
+
+func TestCalcPhysSkillDamage(t *testing.T) {
+	// (76 * (pAtk + power)) / pDef = (76 * (100+50)) / 50 = 11400/50 = 228.
+	if got := calcPhysSkillDamage(100, 50, 50); got != 228 {
+		t.Errorf("calcPhysSkillDamage(100,50,50) = %d, want 228", got)
+	}
+	if got := calcPhysSkillDamage(0, 0, 0); got != 1 {
+		t.Errorf("min damage = %d, want 1", got)
+	}
+}
+
+const physSkillXML = `<list>
+	<skill id="9998" levels="1" name="Power Strike">
+		<set name="castRange" val="40" /><set name="hitTime" val="1000" />
+		<set name="mpConsume1" val="3" /><set name="operateType" val="A1" />
+		<set name="targetType" val="ENEMY" />
+		<effects><effect name="PhysicalAttack"><param power="30" /></effect></effects>
+	</skill>
+</list>`
+
+func TestCast_PhysicalDamageOnNPC(t *testing.T) {
+	gl, player := newTestLoopWithPlayer(t)
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "09900-09999.xml"), []byte(physSkillXML), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gl.SetSkillData(registry.NewSkillData([]string{dir}))
+	player.KnownSkills = map[int32]int32{9998: 1}
+	player.Character.CurrentMP = 200
+
+	npc := addAttackableNPC(gl, 1000, models.Position{X: 0, Y: 0, Z: 0})
+	npc.Template.PDef = 40
+	npc.CurrentHP = 500
+	player.TargetID = npc.ObjectID
+
+	gl.handleCastRequest(CmdCastRequest{CasterCharID: 7, SkillID: 9998})
+	if player.Casting == nil {
+		t.Fatal("physical skill did not begin casting")
+	}
+	(&CastHitEvent{CharID: 7, CastID: player.Casting.ID}).Execute(gl)
+	if npc.CurrentHP >= 500 {
+		t.Errorf("NPC HP = %v, want < 500 (took physical skill damage)", npc.CurrentHP)
+	}
+}

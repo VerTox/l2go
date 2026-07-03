@@ -92,6 +92,16 @@ func (gl *GameLoop) applyBuff(targetID int32, skill *models.Skill) {
 	gl.sendUserInfo(target)
 }
 
+// handleDispel cancels one of a player's active buffs (RequestDispel — the player
+// clicked a buff icon off). Reuses the buff-removal path.
+func (gl *GameLoop) handleDispel(cmd CmdDispel) {
+	player, ok := gl.world.GetPlayer(cmd.CasterCharID)
+	if !ok {
+		return
+	}
+	gl.toggleOff(player, cmd.SkillID)
+}
+
 // toggleOff removes a toggle skill from a player (recast). Returns true if it was
 // active and removed.
 func (gl *GameLoop) toggleOff(player *registry.PlayerWorldState, skillID int32) bool {

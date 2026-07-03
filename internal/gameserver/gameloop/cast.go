@@ -62,8 +62,15 @@ func (gl *GameLoop) handleCastRequest(cmd CmdCastRequest) {
 		return // nothing valid to cast on
 	}
 
-	// MP cost (initial). L2J splits mpConsume1 (on begin) / mpConsume2 (on hit).
-	if int(char.CurrentMP) < skill.MpConsume1 {
+	// Range check: the target must be within the skill's cast range (L2J validates
+	// this before casting; out of range simply fails here rather than approaching).
+	if !gl.targetInCastRange(caster, target, skill) {
+		return
+	}
+
+	// MP check: L2J validates the FULL cost (mpConsume1 + mpConsume2) up front, not
+	// just the initial part — otherwise a cast begins and fizzles at the hit.
+	if int(char.CurrentMP) < skill.MpConsume1+skill.MpConsume2 {
 		gl.sendToPlayer(caster, outclient.BuildSystemMessageNoParams(outclient.SysMsgNotEnoughMp))
 		return
 	}
@@ -87,7 +94,7 @@ func (gl *GameLoop) handleCastRequest(cmd CmdCastRequest) {
 		return
 	}
 
-	hitTime := castTime(skill)
+	hitTime := gl.castTime(caster, skill)
 
 	// Assign a unique id so a stale hit event (aborted/superseded) is ignored.
 	gl.castSeq++
@@ -129,14 +136,40 @@ func (gl *GameLoop) objectPosition(objectID int32, def models.Position) models.P
 	return def
 }
 
-// castTime returns the cast duration, clamped to a small minimum so instant skills
-// still round-trip a launch. (Casting-speed modifiers are a later refinement.)
-func castTime(skill *models.Skill) time.Duration {
-	d := time.Duration(skill.HitTime) * time.Millisecond
-	if d < minCastTime {
-		return minCastTime
+// castTime returns the cast duration scaled by the caster's casting speed, mirroring
+// L2J Formulas.calcCastTime: (hitTime / speed) * 333, where speed is MAtkSpd for
+// magic skills and PAtkSpd for physical ones. Clamped to 500ms when hitTime > 500.
+func (gl *GameLoop) castTime(caster *registry.PlayerWorldState, skill *models.Skill) time.Duration {
+	if skill.HitTime <= 0 {
+		return 0
 	}
-	return d
+	stats := gl.computePlayerStats(caster)
+	speed := stats.MAtkSpd
+	if !skill.IsMagic() {
+		speed = stats.PAtkSpd
+	}
+	if speed < 1 {
+		speed = 1
+	}
+	ms := (float64(skill.HitTime) / float64(speed)) * 333.0
+	if ms < 500 && skill.HitTime > 500 {
+		ms = 500
+	}
+	return time.Duration(ms) * time.Millisecond
+}
+
+// targetInCastRange reports whether the target is within the skill's cast range.
+// castRange <= 0 (self/unbounded) always passes; the NPC/player collision radius is
+// folded in as a small margin.
+func (gl *GameLoop) targetInCastRange(caster *registry.PlayerWorldState, targetID int32, skill *models.Skill) bool {
+	if skill.CastRange <= 0 || targetID == caster.CharID {
+		return true
+	}
+	tpos := gl.objectPosition(targetID, caster.Position)
+	dx := caster.Position.X - tpos.X
+	dy := caster.Position.Y - tpos.Y
+	reach := skill.CastRange + 80 // collision/leeway margin
+	return dx*dx+dy*dy <= reach*reach
 }
 
 // resolveCastTarget picks the object the cast applies to. SELF-target skills always
@@ -224,7 +257,7 @@ func (gl *GameLoop) applySkillEffects(caster *registry.PlayerWorldState, targetI
 		return
 	}
 
-	var hp, mp, cp, dmgPower int
+	var hp, mp, cp, magicPower, physPower, drainPower int
 	for _, eff := range skill.Effects {
 		if eff.Scope != models.ScopeGeneral && eff.Scope != models.ScopeSelf {
 			continue
@@ -237,7 +270,11 @@ func (gl *GameLoop) applySkillEffects(caster *registry.PlayerWorldState, targetI
 		case "Cp", "CpHeal", "CpHealPercent":
 			cp += effectPower(eff)
 		case "MagicalAttack", "MagicalAttackRange", "MagicalAttackMp", "MagicalAttackByAbnormal":
-			dmgPower += effectPower(eff)
+			magicPower += effectPower(eff)
+		case "PhysicalAttack", "PhysicalAttackHpLink", "PhysicalAttackMute":
+			physPower += effectPower(eff)
+		case "HpDrain", "DeathLink":
+			drainPower += effectPower(eff)
 		}
 	}
 
@@ -249,32 +286,48 @@ func (gl *GameLoop) applySkillEffects(caster *registry.PlayerWorldState, targetI
 		}
 	}
 
-	// Offensive magic damage on an NPC target.
-	if dmgPower > 0 {
-		gl.applyMagicDamage(caster, targetID, dmgPower)
+	// Offensive damage on an NPC target (players/PvP: l2go-fgz).
+	npc, isNPC := gl.world.GetNPC(targetID)
+	if !isNPC || npc.IsDead || npc.Template == nil {
+		return
+	}
+	if magicPower > 0 {
+		gl.dealSkillDamageToNPC(caster, npc, calcMagicDamage(float64(gl.computePlayerStats(caster).MAtk), npc.Template.MDef, magicPower))
+	}
+	if physPower > 0 {
+		gl.dealSkillDamageToNPC(caster, npc, calcPhysSkillDamage(gl.computePlayerStats(caster).PAtk, int(npc.Template.PDef), physPower))
+	}
+	if drainPower > 0 {
+		dmg := calcMagicDamage(float64(gl.computePlayerStats(caster).MAtk), npc.Template.MDef, drainPower)
+		gl.dealSkillDamageToNPC(caster, npc, dmg)
+		// Drain: heal the caster for half the damage dealt (L2J absorbs a share).
+		if caster.Character.CurrentHP > 0 {
+			gl.handleRestoreStats(CmdRestoreStats{CharID: caster.CharID, HP: int32(dmg / 2)})
+		}
 	}
 }
 
-// applyMagicDamage computes and applies a magic-attack skill's damage to an NPC
-// target, then reports it. Formula mirrors L2J Formulas.calcMagicDam (High Five):
-//
-//	damage = (91 * sqrt(mAtk) / mDef) * power
-//
-// Spiritshot/crit multipliers and magic-resist are later refinements.
-func (gl *GameLoop) applyMagicDamage(caster *registry.PlayerWorldState, targetID int32, power int) {
-	npc, ok := gl.world.GetNPC(targetID)
-	if !ok || npc.IsDead || npc.Template == nil {
-		return
-	}
-	damage := calcMagicDamage(float64(gl.computePlayerStats(caster).MAtk), npc.Template.MDef, power)
+// dealSkillDamageToNPC applies skill damage to an NPC and reports it to the caster.
+func (gl *GameLoop) dealSkillDamageToNPC(caster *registry.PlayerWorldState, npc *models.NpcInstance, damage int) {
 	gl.dealDamageToNPC(npc, caster.CharID, damage)
-
-	// "C1 done S3 damage to C2" to the caster.
 	gl.sendToPlayer(caster, outclient.NewSystemMessage(outclient.SysMsgC1DoneS3DamageToC2).
 		AddPlayerName(caster.Character.Name).
 		AddNpcName(npc.TemplateID).
 		AddInt(int32(damage)).
 		Build())
+}
+
+// calcPhysSkillDamage is a physical-skill damage approximation: (76 * (pAtk + power))
+// / pDef, mirroring the auto-attack formula plus the skill's power. Floored, min 1.
+func calcPhysSkillDamage(pAtk, pDef, power int) int {
+	if pDef < 1 {
+		pDef = 1
+	}
+	damage := (76 * (pAtk + power)) / pDef
+	if damage < 1 {
+		damage = 1
+	}
+	return damage
 }
 
 // calcMagicDamage is L2J Formulas.calcMagicDam (High Five) without shield/crit/

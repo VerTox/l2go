@@ -150,3 +150,23 @@ func TestBuff_HoTTick(t *testing.T) {
 		t.Errorf("HoT tick HP = %v, want 120 (100 + 20)", player.Character.CurrentHP)
 	}
 }
+
+func TestBuff_Dispel(t *testing.T) {
+	gl, player := loopWithBuffSkill(t, windWalkXML)
+	gl.handleCastRequest(CmdCastRequest{CasterCharID: 7, SkillID: 1204})
+	(&CastHitEvent{CharID: 7, CastID: player.Casting.ID}).Execute(gl)
+	if !player.Effects.HasSkill(1204) {
+		t.Fatal("buff not applied")
+	}
+
+	gl.handleDispel(CmdDispel{CasterCharID: 7, SkillID: 1204})
+
+	if player.Effects.HasSkill(1204) {
+		t.Error("buff should be removed after dispel")
+	}
+	for _, m := range player.Character.StatMods {
+		if m.Stat == models.StatRunSpd {
+			t.Errorf("stat mod lingered after dispel: %+v", player.Character.StatMods)
+		}
+	}
+}

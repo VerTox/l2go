@@ -16,6 +16,5 @@ func registerCombatStubs(r *Registry) {
 	r.registerStub(StateInGame, 0x5c, "FinishRotating")
 	// RequestExMagicSkillUseGround (0xD0:0x44): применение скилла по точке на земле.
 	r.registerMultiStub(StateInGame, 0x44, "RequestExMagicSkillUseGround")
-	// RequestDispel (0xD0:0x4b): снять баф/дебаф.
-	r.registerMultiStub(StateInGame, 0x4b, "RequestDispel")
+	// RequestDispel (0xD0:0x4b) — реальный обработчик в cast.go (отмена баффа).
 }

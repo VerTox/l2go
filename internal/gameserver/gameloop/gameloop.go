@@ -265,6 +265,8 @@ func (gl *GameLoop) processCommand(cmd Command) {
 		gl.handleRestoreStats(c)
 	case CmdCastRequest:
 		gl.handleCastRequest(c)
+	case CmdDispel:
+		gl.handleDispel(c)
 	case CmdChatMessage:
 		gl.handleChatMessage(c)
 	}

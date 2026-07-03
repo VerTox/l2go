@@ -28,6 +28,15 @@ type CmdCastRequest struct {
 
 func (CmdCastRequest) commandMarker() {}
 
+// CmdDispel — player asked to cancel one of their active buffs (RequestDispel,
+// ctrl/right-click on a buff icon).
+type CmdDispel struct {
+	CasterCharID int32
+	SkillID      int32
+}
+
+func (CmdDispel) commandMarker() {}
+
 // CmdInteractRequest — player clicked a non-attackable NPC out of interaction
 // range; approach it and open the dialogue on arrival (L2J AI_INTENTION_INTERACT).
 type CmdInteractRequest struct {
