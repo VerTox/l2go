@@ -11,6 +11,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	"github.com/VerTox/l2go/internal/gameserver/data"
 	"github.com/VerTox/l2go/internal/gameserver/models"
 )
 
@@ -104,10 +105,18 @@ type xmlNpc struct {
 	Race      string        `xml:"race"`
 	Sex       string        `xml:"sex"`
 	Equipment *xmlEquipment `xml:"equipment"`
+	Acquire   *xmlAcquire   `xml:"acquire"`
 	Stats     *xmlStats     `xml:"stats"`
 	AI        *xmlAI        `xml:"ai"`
 	Collision *xmlCollision `xml:"collision"`
 	Status    *xmlStatus    `xml:"status"`
+}
+
+// xmlAcquire is the datapack <acquire expRate=".." sp=".."/> reward element.
+// expRate is a per-NPC coefficient (exp = level² × expRate), sp is the raw value.
+type xmlAcquire struct {
+	ExpRate string `xml:"expRate,attr"`
+	Sp      string `xml:"sp,attr"`
 }
 
 type xmlEquipment struct {
@@ -225,6 +234,13 @@ func convertXMLNpc(xn xmlNpc) *models.NpcTemplate {
 		t.RHand = xn.Equipment.RHand
 		t.LHand = xn.Equipment.LHand
 		t.Chest = xn.Equipment.Chest
+	}
+
+	// Rewards from the datapack <acquire>: base exp = level² × expRate (L2J
+	// getExpReward pre-rate), sp is the raw value. Absent → 0 (no reward).
+	if xn.Acquire != nil {
+		t.RewardExp = data.CalcNPCBaseExp(xn.Level, parseFloat64(xn.Acquire.ExpRate))
+		t.RewardSp = int64(parseFloat64(xn.Acquire.Sp))
 	}
 
 	// Stats

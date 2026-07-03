@@ -19,12 +19,17 @@ func (gl *GameLoop) awardExpForNPCKill(npc *models.NpcInstance) {
 	}
 
 	npcLevel := 1
+	var baseExp, baseSP int64
 	if npc.Template != nil {
 		npcLevel = npc.Template.Level
+		// Rewards come from the datapack (<acquire>): base exp = level² × expRate,
+		// sp = raw sp — both precomputed on the template. No npcLevel² synthesis.
+		baseExp = npc.Template.RewardExp
+		baseSP = npc.Template.RewardSp
 	}
-
-	baseExp := data.CalcNPCBaseExp(npcLevel)
-	baseSP := data.CalcNPCBaseSP(npcLevel)
+	if baseExp <= 0 && baseSP <= 0 {
+		return // NPC yields no reward (no <acquire> in the datapack)
+	}
 
 	// Compute total hate for proportional distribution
 	var totalHate int64
@@ -55,8 +60,10 @@ func (gl *GameLoop) awardExpForNPCKill(npc *models.NpcInstance) {
 		earnedExp := int64(float64(baseExp) * proportion * penalty * gl.expRate)
 		earnedSP := int64(float64(baseSP) * proportion * penalty * gl.spRate)
 
-		if earnedExp < 1 {
-			earnedExp = 1
+		// No artificial floor: L2J truncates to int and lets a heavily over-levelled
+		// (grey) mob yield 0. Values are already >= 0 (all factors non-negative).
+		if earnedExp < 0 {
+			earnedExp = 0
 		}
 		if earnedSP < 0 {
 			earnedSP = 0

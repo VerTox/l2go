@@ -1,5 +1,7 @@
 package data
 
+import "math"
+
 // expTable holds cumulative EXP thresholds for each level (1–87).
 // Index = level, value = total EXP required to reach that level.
 // Source: L2J High Five datapack experienceData.
@@ -152,37 +154,23 @@ func ExpPercent(currentLevel int, currentExp int64) float64 {
 	return pct
 }
 
-// CalcNPCBaseExp returns the base EXP reward for killing an NPC of the given level.
-// Formula: npcLevel^2 (simple L2-style base; server rate applied separately).
-func CalcNPCBaseExp(npcLevel int) int64 {
-	return int64(npcLevel) * int64(npcLevel)
+// CalcNPCBaseExp returns the base EXP reward for killing an NPC, mirroring L2J
+// L2Npc.getExpReward before the server rate: exp = level² × expRate, where expRate
+// is the per-NPC coefficient from the datapack <acquire expRate=".."/>. SP is not
+// synthesized — it comes straight from the datapack <acquire sp=".."/>.
+func CalcNPCBaseExp(npcLevel int, expRate float64) int64 {
+	return int64(float64(npcLevel*npcLevel) * expRate)
 }
 
-// CalcNPCBaseSP returns the base SP reward for killing an NPC of the given level.
-// Formula: npcLevel * 2 (simple approximation; server rate applied separately).
-func CalcNPCBaseSP(npcLevel int) int64 {
-	return int64(npcLevel) * 2
-}
-
-// LevelPenalty returns the EXP multiplier when player level differs from NPC level.
-// For level difference > 5, penalty = (5/6)^(diff-5).
-// For diff <= 5, returns 1.0 (no penalty).
+// LevelPenalty returns the EXP/SP multiplier for the attacker-vs-NPC level gap,
+// mirroring L2J calculateExpAndSp (stock HF, exponent config off). The penalty is
+// ASYMMETRIC: it only applies when the player is more than 5 levels ABOVE the mob
+// (grey mobs) — diff = playerLevel - npcLevel > 5 → (5/6)^(diff-5). A player at,
+// below, or within 5 levels of the mob takes full reward. There is no 1% floor.
 func LevelPenalty(playerLevel, npcLevel int) float64 {
 	diff := playerLevel - npcLevel
-	if diff < 0 {
-		diff = -diff
-	}
 	if diff <= 5 {
 		return 1.0
 	}
-	// (5/6)^(diff-5)
-	penalty := 1.0
-	ratio := 5.0 / 6.0
-	for i := 0; i < diff-5; i++ {
-		penalty *= ratio
-	}
-	if penalty < 0.01 {
-		penalty = 0.01 // minimum 1%
-	}
-	return penalty
+	return math.Pow(5.0/6.0, float64(diff-5))
 }

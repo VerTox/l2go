@@ -33,6 +33,12 @@ type NpcTemplate struct {
 	CritRate    int
 	AttackRange int
 
+	// Rewards (from datapack <acquire expRate=".." sp=".."/>). RewardExp is the base
+	// EXP = level² × expRate (L2J getExpReward before server rate); RewardSp is the
+	// raw sp value. Both 0 for NPCs with no <acquire> (non-killable / no reward).
+	RewardExp int64
+	RewardSp  int64
+
 	// Equipment visuals (3 slots)
 	RHand int32
 	LHand int32
