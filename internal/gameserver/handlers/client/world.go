@@ -41,6 +41,14 @@ func (h *Handler) handleEnterWorld(ctx context.Context, c *client.ClientConn, pa
 		return nil
 	}
 
+	// Reconcile auto-get skills (class tree) for the current level: grants any the
+	// character is missing — pre-existing characters and level-ups that happened
+	// offline. Must run before StatMods/SkillList below so freshly granted passives
+	// take effect. Best-effort: a failure just leaves the current skill set.
+	if _, err := h.characterUseCase.ReconcileAutoGetSkills(ctx, playerState.Character); err != nil {
+		log.Ctx(ctx).Error().Err(err).Int32("char_id", playerState.CharID).Msg("failed to reconcile auto-get skills")
+	}
+
 	// Resolve passive-skill stat modifiers before building UserInfo/CharInfo so the
 	// client sees the buffed numbers. Safe to write char.StatMods here: the game
 	// loop only starts reading this player's stats after CmdPlayerEnteredWorld

@@ -268,6 +268,22 @@ func (g *GameServer) initDatabase(ctx context.Context) error {
 		log.Ctx(ctx).Warn().Msg("Failed to load map regions from any path")
 	}
 
+	// Load class skill trees (auto-get skills granted per class/level). (l2go-3ih)
+	for _, path := range []string{
+		"data/skillTrees/classSkillTree.xml",
+		"../../data/skillTrees/classSkillTree.xml",
+		"references/data/skillTrees/classSkillTree.xml",
+		"../../references/data/skillTrees/classSkillTree.xml",
+	} {
+		if err := registry.GetSkillTreeRegistry().LoadFromFile(path); err == nil {
+			log.Ctx(ctx).Info().Str("path", path).Msg("Class skill trees loaded successfully")
+			break
+		}
+	}
+	if !registry.GetSkillTreeRegistry().IsLoaded() {
+		log.Ctx(ctx).Warn().Msg("Failed to load class skill trees from any path")
+	}
+
 	// Load NPC spawns from database and populate world
 	if npcTemplatesLoaded {
 		// Seed spawnlist table if empty (one-time import from L2J datapack)

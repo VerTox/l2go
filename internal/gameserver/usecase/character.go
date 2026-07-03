@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/VerTox/l2go/internal/gameserver/models"
+	"github.com/VerTox/l2go/internal/gameserver/registry"
 	"github.com/VerTox/l2go/internal/gameserver/repo"
 )
 
@@ -93,9 +94,9 @@ func (uc *CharacterUseCase) CreateCharacter(ctx context.Context, req *models.Cha
 			return fmt.Errorf("failed to create starting items: %w", err)
 		}
 
-		// Learn starting skills
-		if err := uc.learnStartingSkills(ctx, tx, char.ID, template); err != nil {
-			return fmt.Errorf("failed to learn starting skills: %w", err)
+		// Grant auto-get skills for the starting class/level (Lucky, Common Craft, ...)
+		if _, err := uc.grantAutoGetSkills(ctx, tx.Skill(), char, nil); err != nil {
+			return fmt.Errorf("failed to grant starting skills: %w", err)
 		}
 
 		newChar = char
@@ -423,15 +424,46 @@ func (uc *CharacterUseCase) createStartingItems(ctx context.Context, tx repo.Tra
 	return nil
 }
 
-// learnStartingSkills teaches initial skills for new character
-func (uc *CharacterUseCase) learnStartingSkills(ctx context.Context, tx repo.Transaction, charID int32, template *CharacterTemplate) error {
-	for _, skillData := range template.StartingSkills {
-		if err := tx.Skill().LearnSkill(ctx, charID, skillData.SkillID, skillData.Level); err != nil {
-			return fmt.Errorf("failed to learn starting skill %d: %w", skillData.SkillID, err)
-		}
+// grantAutoGetSkills grants the class skill tree's auto-get skills for the
+// character's current class and level, skipping any already known at >= that
+// level. Works against either a transaction's or the pool's skill repository, so
+// it serves both creation and world-entry reconciliation. Returns the skills
+// actually written. Mirrors L2J SkillTreesData.getAvailableAutoGetSkills /
+// giveAvailableSkills, restricted to the auto-get subset (learn-by-NPC skills
+// with SP costs are a later phase, l2go-hv9).
+func (uc *CharacterUseCase) grantAutoGetSkills(ctx context.Context, skillRepo repo.SkillRepository, char *models.Character, existing []models.CharacterSkill) ([]registry.AutoGetSkill, error) {
+	desired := registry.GetSkillTreeRegistry().AutoGetSkills(char.ClassID, char.Level)
+	if len(desired) == 0 {
+		return nil, nil
+	}
+	have := make(map[int32]int, len(existing))
+	for _, s := range existing {
+		have[s.SkillID] = s.SkillLevel
 	}
 
-	return nil
+	var granted []registry.AutoGetSkill
+	for _, d := range desired {
+		if lvl, ok := have[d.SkillID]; ok && lvl >= d.Level {
+			continue // already known at this level or higher
+		}
+		if err := skillRepo.LearnSkill(ctx, char.ID, d.SkillID, d.Level); err != nil {
+			return granted, fmt.Errorf("failed to grant auto-get skill %d: %w", d.SkillID, err)
+		}
+		granted = append(granted, d)
+	}
+	return granted, nil
+}
+
+// ReconcileAutoGetSkills grants any auto-get skills the character should have at
+// its current class/level but is missing (new characters created before this
+// system, or level-ups that happened while offline). Idempotent: a fully
+// up-to-date character gets no writes. Returns the skills newly granted.
+func (uc *CharacterUseCase) ReconcileAutoGetSkills(ctx context.Context, char *models.Character) ([]registry.AutoGetSkill, error) {
+	existing, err := uc.repo.Skill().GetByCharacter(ctx, char.ID)
+	if err != nil {
+		return nil, err
+	}
+	return uc.grantAutoGetSkills(ctx, uc.repo.Skill(), char, existing)
 }
 
 // permanentlyDeleteCharacter completely removes character and all associated data
