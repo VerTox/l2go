@@ -25,6 +25,7 @@ const (
 
 	regionCleanupInterval = 10 * time.Second
 	autosaveInterval      = 5 * time.Minute
+	regenInterval         = 3 * time.Second // L2J REGEN period
 )
 
 // SpawnInfo stores the original spawn data for respawning an NPC.
@@ -129,6 +130,7 @@ func (gl *GameLoop) Run(ctx context.Context) error {
 
 	lastRegionCleanup := time.Now()
 	lastAutosave := time.Now()
+	lastRegen := time.Now()
 
 	log.Info().Msg("Game loop started")
 
@@ -154,6 +156,12 @@ func (gl *GameLoop) Run(ctx context.Context) error {
 			if time.Since(lastAutosave) > autosaveInterval {
 				gl.autosaveOnlinePlayers()
 				lastAutosave = time.Now()
+			}
+
+			// Periodic HP/MP/CP regeneration for living players (l2go-nty).
+			if time.Since(lastRegen) > regenInterval {
+				gl.regenPlayers()
+				lastRegen = time.Now()
 			}
 		}
 	}

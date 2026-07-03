@@ -123,6 +123,11 @@ internal/gameserver/
 ### Attack packet hit flags (HF, 77a)
 `packets/outclient/attack.go` uses L2J HF `Hit.java` bits: USESS `0x10` (OR'd with weapon grade id), CRIT `0x20`, SHLD `0x40`, MISS `0x80`. (Earlier values `0x01/0x02/0x04` were wrong; only CRIT matched.)
 
+## Regeneration (nty)
+
+- **Tick**: the game loop restores HP/MP/CP to every living player every `regenInterval` (3s, L2J REGEN period) via `gameloop/regen.go` `regenPlayers`. Runs on the loop goroutine (sole writer of vitals), clamps to maxima, skips dead (HP≤0) and already-full players, and sends `StatusUpdate` (Cur HP/MP/CP) to the player + `broadcastToTargeters`.
+- **Amounts** (`models/regen.go` `HpRegenPerTick`/`MpRegenPerTick`/`CpRegenPerTick`): a **level-only** approximation of the retail per-level `baseStats` `lvlUpgainData` table — exact at level 1 and level ≥ 20 (verified against HumanFighter/HumanMystic), MP/CP plateau at level 80. CON/MEN, posture (sitting/standing/running) and combat modifiers are **not** applied yet — the exact table lookup + full L2J `Formulas.calc*Regen` modifiers are a follow-up (**l2go-y93**). This exists so MP actually replenishes, making MP-consuming skills viable.
+
 ## Character Persistence
 
 - **Sole writer**: the game loop mutates `player.Character` progress (EXP/SP/level/HP) **without a lock**. Never read those fields from another goroutine — snapshot instead.
