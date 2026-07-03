@@ -38,8 +38,8 @@ func BuildShortCutInit(shortcuts []ShortCut) []byte {
 			w.WriteD(sc.SharedReuseGroup)
 			w.WriteD(0x00)
 			w.WriteD(0x00)
-			w.WriteD(0x00)
-			w.WriteD(0x00)
+			w.WriteH(0x00) // L2J writes two H here, NOT a trailing D pair
+			w.WriteH(0x00)
 		case ShortCutTypeSkill:
 			w.WriteD(sc.ID)
 			w.WriteD(sc.Level)

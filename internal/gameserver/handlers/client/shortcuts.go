@@ -2,10 +2,10 @@ package client
 
 func init() { addStubRegistrator(registerShortcutsStubs) }
 
-// registerShortcutsStubs регистрирует стаб-обработчики пакетов шорткатов (High Five).
+// registerShortcutsStubs регистрирует обработчики пакетов шорткатов (High Five).
 func registerShortcutsStubs(r *Registry) {
-	// RequestShortCutReg (0x3d): зарегистрировать шорткат. Для системы шорткатов.
-	r.registerStub(StateInGame, 0x3d, "RequestShortCutReg")
-	// RequestShortCutDel (0x3f): удалить шорткат. Для системы шорткатов.
-	r.registerStub(StateInGame, 0x3f, "RequestShortCutDel")
+	// RequestShortCutReg (0x3d): сохранить шорткат на быстрой панели + echo ShortCutRegister.
+	r.register(StateInGame, 0x3d, "RequestShortCutReg", (*Handler).handleRequestShortCutReg)
+	// RequestShortCutDel (0x3f): удалить шорткат (ответ клиенту не нужен, L2J-паритет).
+	r.register(StateInGame, 0x3f, "RequestShortCutDel", (*Handler).handleRequestShortCutDel)
 }

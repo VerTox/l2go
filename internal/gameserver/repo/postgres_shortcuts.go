@@ -120,7 +120,7 @@ func (r *ShortcutRepositoryImpl) SetShortcut(ctx context.Context, shortcut *mode
 	query := `
 		INSERT INTO character_shortcuts (char_id, slot, page, type, shortcut_id, level, sub_level)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		ON CONFLICT (char_id, slot, page) 
+		ON CONFLICT (char_id, slot, page, class_index)
 		DO UPDATE SET type = $4, shortcut_id = $5, level = $6, sub_level = $7`
 
 	_, err := r.db.Exec(ctx, query,

@@ -260,19 +260,89 @@ func (h *Handler) handleRequestGotoLobby(ctx context.Context, c *client.ClientCo
 	return h.sendUpdatedCharacterList(ctx, c, session)
 }
 
+// handleRequestShortCutReg (0x3d) persists a shortcut the client dropped onto the
+// quick bar and echoes ShortCutRegister to sync the placement. Slot/page are already
+// decoded from the packed value by ShortcutRegisterRequest.Read.
 func (h *Handler) handleRequestShortCutReg(ctx context.Context, c *client.ClientConn, payload []byte) error {
 	packet := &inclient.ShortcutRegisterRequest{}
 	l2pkt.ParsePacket(payload, packet)
 
-	log.Ctx(ctx).Info().
+	session := h.getSession(c)
+	if session == nil {
+		return nil
+	}
+	playerState, exists := h.world.GetPlayerByAccount(session.AccountName)
+	if !exists {
+		return nil
+	}
+
+	// L2J clamps the page to 0..10; anything else is malformed/unsupported.
+	if packet.Page < 0 || packet.Page > 10 {
+		return nil
+	}
+
+	sc := &models.CharacterShortcut{
+		CharID:     playerState.CharID,
+		Slot:       int(packet.Slot),
+		Page:       int(packet.Page),
+		Type:       int(packet.Type),
+		ShortcutID: int(packet.Id),
+		Level:      int(packet.Level),
+	}
+	if err := h.characterUseCase.SaveShortcut(ctx, sc); err != nil {
+		log.Ctx(ctx).Error().Err(err).
+			Int32("char_id", playerState.CharID).
+			Int32("slot", packet.Slot).
+			Int32("page", packet.Page).
+			Msg("failed to persist shortcut")
+		return nil
+	}
+
+	log.Ctx(ctx).Debug().
+		Int32("char_id", playerState.CharID).
 		Int32("type", int32(packet.Type)).
 		Int32("slot", packet.Slot).
 		Int32("page", packet.Page).
 		Int32("id", packet.Id).
-		Int32("level", packet.Level).
-		Int32("character_type", packet.CharacterType).
-		Msg("RequestShortCutReg received")
+		Msg("shortcut registered")
 
+	echo := outclient.BuildShortCutRegister(outclient.ShortCut{
+		Slot:             packet.Slot,
+		Page:             packet.Page,
+		Type:             outclient.ShortCutType(packet.Type),
+		ID:               packet.Id,
+		Level:            packet.Level,
+		CharacterType:    packet.CharacterType,
+		SharedReuseGroup: -1,
+	})
+	return c.Send(echo)
+}
+
+// handleRequestShortCutDel (0x3f) removes a shortcut the client dropped off the
+// quick bar. L2J sends no confirmation — the packet only informs the server.
+func (h *Handler) handleRequestShortCutDel(ctx context.Context, c *client.ClientConn, payload []byte) error {
+	packet := &inclient.ShortcutDeleteRequest{}
+	l2pkt.ParsePacket(payload, packet)
+
+	session := h.getSession(c)
+	if session == nil {
+		return nil
+	}
+	playerState, exists := h.world.GetPlayerByAccount(session.AccountName)
+	if !exists {
+		return nil
+	}
+	if packet.Page < 0 || packet.Page > 10 {
+		return nil
+	}
+
+	if err := h.characterUseCase.DeleteShortcut(ctx, playerState.CharID, int(packet.Slot), int(packet.Page)); err != nil {
+		log.Ctx(ctx).Error().Err(err).
+			Int32("char_id", playerState.CharID).
+			Int32("slot", packet.Slot).
+			Int32("page", packet.Page).
+			Msg("failed to delete shortcut")
+	}
 	return nil
 }
 

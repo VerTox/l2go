@@ -78,7 +78,7 @@ func (h *Handler) sendWorldEntryPackets(ctx context.Context, c *client.ClientCon
 	//	return fmt.Errorf("failed to send CharSelected: %w", err)
 	//}
 
-	shortCutData := h.BuildShortCutPacket(char)
+	shortCutData := h.BuildShortCutPacket(ctx, char)
 	if err := c.Send(shortCutData); err != nil {
 		return fmt.Errorf("failed to send ShortCut: %w", err)
 	}
@@ -422,9 +422,31 @@ func (h *Handler) buildInventoryUpdatePacket(ctx context.Context, char *models.C
 	return outclient.BuildInventoryUpdate(inventoryUpdate)
 }
 
-func (h *Handler) BuildShortCutPacket(char *models.Character) []byte {
-	shortCut := make([]outclient.ShortCut, 0)
-	return outclient.BuildShortCutInit(shortCut)
+// BuildShortCutPacket builds ShortCutInit (0x45) from the character's persisted
+// quick-bar shortcuts so they survive relogs. On error it falls back to an empty
+// bar rather than failing world entry.
+func (h *Handler) BuildShortCutPacket(ctx context.Context, char *models.Character) []byte {
+	stored, err := h.characterUseCase.GetShortcuts(ctx, char.ID)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).
+			Int32("char_id", char.ID).
+			Msg("failed to load shortcuts; sending empty quick bar")
+		return outclient.BuildShortCutInit(nil)
+	}
+
+	shortCuts := make([]outclient.ShortCut, 0, len(stored))
+	for _, sc := range stored {
+		shortCuts = append(shortCuts, outclient.ShortCut{
+			Slot:             int32(sc.Slot),
+			Page:             int32(sc.Page),
+			Type:             outclient.ShortCutType(sc.Type),
+			ID:               int32(sc.ShortcutID),
+			Level:            int32(sc.Level),
+			CharacterType:    1, // player (pet shortcuts are not persisted yet)
+			SharedReuseGroup: -1,
+		})
+	}
+	return outclient.BuildShortCutInit(shortCuts)
 }
 
 // buildItemListPacket builds the ItemList (0x11) packet. showWindow controls the

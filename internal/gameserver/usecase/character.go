@@ -466,3 +466,18 @@ func (uc *CharacterUseCase) GetCharacterAllItems(ctx context.Context, charID int
 	}
 	return items, nil
 }
+
+// GetShortcuts loads all persisted quick-bar shortcuts for a character (world entry).
+func (uc *CharacterUseCase) GetShortcuts(ctx context.Context, charID int32) ([]models.CharacterShortcut, error) {
+	return uc.repo.Shortcut().GetByCharacter(ctx, charID)
+}
+
+// SaveShortcut upserts a single shortcut (RequestShortCutReg).
+func (uc *CharacterUseCase) SaveShortcut(ctx context.Context, sc *models.CharacterShortcut) error {
+	return uc.repo.Shortcut().SetShortcut(ctx, sc)
+}
+
+// DeleteShortcut removes the shortcut at slot/page (RequestShortCutDel).
+func (uc *CharacterUseCase) DeleteShortcut(ctx context.Context, charID int32, slot, page int) error {
+	return uc.repo.Shortcut().DeleteShortcut(ctx, charID, slot, page)
+}
