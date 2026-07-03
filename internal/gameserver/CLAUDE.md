@@ -90,6 +90,26 @@ internal/gameserver/
 - **No player auto-retaliation**: a player hit by a mob enters combat stance but does NOT auto-attack back — matches retail HF. L2J's `L2PlayerAI` doesn't override `onEvtAttacked`; the base `L2CharacterAI.onEvtAttacked` only calls `clientStartAutoAttack()` (stance/AutoAttackStart), never `doAttack`. Players attack only on explicit request. (l2go-i75)
 - **Death/respawn**: Die packet → corpse decay (7s) → respawn (60s) with new ObjectID
 
+## Item Use & Handlers (ItemHandler dispatch — epic l2go-irn, DONE)
+
+- **Dispatch**: `usecase/inventory.go` `UseItem` forks equip-vs-etc. Non-equip items route through `useNonEquipItem`, which looks up a handler by `template.Handler` (string) in `ItemHandlerRegistry`. **No handler = silent no-op, not an error** (mirrors L2J). Handlers implement `ItemHandler{ UseItem(ctx, ItemUseContext) (consumed bool, err error) }`.
+- **Registration**: all handlers register in `service.go` `prepareHandlers` via `g.usc.inventory.ItemHandlers().Register("<Handler>", impl)`. Registered: `ItemSkills`/`ManaPotion` (potions), `SoulShots`/`SpiritShot`/`BlessedSpiritShot` (+`BeastSoulShot`/`BeastSpiritShot`/`FishShots` = parked no-ops, no pet/fishing systems), `EnchantScrolls`, `ExtractableItems`, `Recipes`.
+- **Rewards → client**: handlers that add items (extractable) use `ItemUseContext.Emit` so new/changed items ride the used item's `InventoryUpdate` (built in `handlers/client/equipment.go` `sendEquipmentUpdatePackets`).
+- **Template fields** (parsed by `registry/itemtemplates.go`, epic xv8): `Handler`, `ItemSkills []{ID,Level}` (from `item_skill` `id-lvl;...`), `ReuseDelay`, `SharedReuseGroup`, `ImmediateEffect`, `QuestItem` (type2==QUEST), `CapsuledItems` (extractable), `Soulshots`/`Spiritshots` counts.
+- **UseItem pre-checks** (5i0, before the fork): quest-item → `CANNOT_USE_QUEST_ITEMS`; dead → `S1_CANNOT_BE_USED`; reuse-cooldown → remaining-time SystemMessage. usecase is transport-free (returns `Messages`/`ReuseSync` specs; handler translates to packets).
+- **Reuse timers** (6vj): `registry.ItemReuseRegistry` (in-memory per-char `map[charID]map[objectID]stamp`, shared-group aware, injectable clock, cleared on `WorldRegistry.RemovePlayer`). Armed in `useNonEquipItem` after `consumed==true`. `ExUseSharedGroupItem` (0xFE:0x4A) sent **only for `shared_reuse_group > 0`** — matches L2J + lineage2ts (both gate `group<=0 → return`). charID == player objectID.
+- **Charged shots** (sew): `registry.ChargedShotRegistry` (per-weapon-objectID in-memory flag). Grade-check via `gradeSPlus` (S/S80/S84→S+). Visual = `MagicSkillUse` (0x48).
+- **Enchant** (f16 + 629): two-step HF window flow. `EnchantScrolls` handler arms scroll in `registry.EnchantStateRegistry` + sends legacy `ChooseInventoryItem`; client opens window itself and sends `RequestExTryToPutEnchantTargetItem` (0xD0:0x4c) → server `ValidateTarget` → `ExPutEnchantTargetItemResult` (0xFE:0x81); `RequestEnchantItem` (0x5f) does the enchant; `RequestExCancelEnchantItem` (0xD0:0x4e) closes. Chances are **retail-exact** from `enchantItemGroups.xml`+`enchantItemData.xml` (`registry/enchantgroups.go`, per-enchant-level tables, scrollGroupId binding).
+
+### INTERIM boundaries (replaced by the skill engine — l2go-2w8)
+- **Potions don't cast a real skill.** `diu` reads the linked `item_skill`'s effect+power from `registry/skilleffects.go` (lazy loader) and restores HP/MP/CP directly via the game loop (`CmdRestoreStats` → `handleRestoreStats`). It broadcasts a **stop-gap `MagicSkillUse`** (the item's skill id/level) for the cast animation only — no HoT/duration/land-rate/conditions.
+- **Soulshot charge is not applied to damage** (charge set/consumed + visual only; damage integration parked in l2go-77a).
+
+### Known item gaps (open bugs)
+- **l2go-28l**: reuse-cooldown sweep not drawn on the item icon even for a grouped item (10152) that DOES send `ExUseSharedGroupItem`. Top hypothesis: the sweep is on the **shortcut bar** slot, not the inventory-window icon, and shortcut registration (`RequestShortCutReg`, l2go-znj) isn't implemented — so there's nowhere to show it. Verify by seeding `character_shortcuts` or doing znj first.
+- **l2go-1in**: `InventoryUpdate` writes 3 fixed enchant-options; HF/our `ItemList` write a variable count (0 for normal items). Latent for multi-item InventoryUpdate.
+- **l2go-znj**: items can't be placed on the quick bar (RequestShortCutReg + ExAutoSoulShot not implemented).
+
 ## Character Persistence
 
 - **Sole writer**: the game loop mutates `player.Character` progress (EXP/SP/level/HP) **without a lock**. Never read those fields from another goroutine — snapshot instead.
