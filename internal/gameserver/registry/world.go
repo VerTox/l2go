@@ -68,6 +68,14 @@ type PlayerWorldState struct {
 	// Owned by the game loop goroutine.
 	Casting *CastState `json:"-"`
 
+	// PassiveMods are the character's passive-skill stat modifiers (l2go-9ep),
+	// set at world entry. Combined with active-buff mods into Character.StatMods.
+	PassiveMods []models.StatModifier `json:"-"`
+
+	// Effects holds the active continuous effects (buffs/debuffs/toggles, l2go-c8t).
+	// Owned by the game loop goroutine.
+	Effects models.CharEffectList `json:"-"`
+
 	// Known objects (sent to client, used for visibility tracking)
 	KnownNPCs map[int32]bool `json:"-"` // NPC objectIDs already sent to this client
 	// KnownPlayers tracks other players already spawned to this client (CharInfo sent).

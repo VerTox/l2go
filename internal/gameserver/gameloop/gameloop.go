@@ -148,6 +148,7 @@ func (gl *GameLoop) Run(ctx context.Context) error {
 	lastRegionCleanup := time.Now()
 	lastAutosave := time.Now()
 	lastRegen := time.Now()
+	lastBuffService := time.Now()
 
 	log.Info().Msg("Game loop started")
 
@@ -179,6 +180,12 @@ func (gl *GameLoop) Run(ctx context.Context) error {
 			if time.Since(lastRegen) > regenInterval {
 				gl.regenPlayers()
 				lastRegen = time.Now()
+			}
+
+			// Buff expiry + HoT/DoT ticks (l2go-c8t).
+			if time.Since(lastBuffService) > buffInterval {
+				gl.serviceBuffs()
+				lastBuffService = time.Now()
 			}
 		}
 	}

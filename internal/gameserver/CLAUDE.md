@@ -136,6 +136,15 @@ internal/gameserver/
 - **New packets** (`packets/outclient/magicpackets.go`): `MagicSkillLaunched` (0x54), `SetupGauge` (0x6b), `MagicSkillCanceled` (0x49), `SkillCoolTime` (0xC7).
 - **Deferred**: spiritshot ×2/×4 magic-damage multiplier + crit/resist (l2go-v7w); potions still restore via the interim `CmdRestoreStats` path rather than a real skill cast (l2go-849).
 
+## Continuous effects / buffs (c8t)
+
+- **Model** (`models/buff.go`): `BuffInfo` (runtime skill instance: id/level/displayId, abnormalType/Lvl, duration, `Mods []StatModifier`, `Ticks []BuffTick` for HoT/DoT, ExpiresAt/NextTick). `CharEffectList` stores active buffs with L2J stacking: same skill id refreshes; same non-NONE abnormalType keeps only the higher abnormalLvl (weaker rejected); NONE never cross-overrides.
+- **Apply** (`gameloop/buff.go`): a continuous skill (`isBuffSkill`: A2/A3/A4/DA2 or toggle) routes through `applyBuff` in the cast hit (instead of instant effects). `buildBuffFromSkill` reads GENERAL/SELF effects — `Buff`/`Debuff` funcs → `Mods`, `TickHp`/`TickHpFatal`/`TickMp` → `Ticks`. Toggles recast → `toggleOff` (instant, no cast bar).
+- **Stats**: `Character.StatMods = PassiveMods + Effects.Mods()`, rebuilt (`rebuildStatMods`) on every buff change; `PlayerWorldState.PassiveMods` is the passive base set at world entry (l2go-9ep), buffs layer on top. UserInfo resent on change.
+- **Tick** (`serviceBuffs`, every `buffInterval`=1s, loop goroutine): expires timed buffs and fires HoT/DoT (`fireBuffTicks` → restore for +power, `applyDoTToPlayer` clamped to ≥1 HP for −power). On change → rebuild StatMods + resend AbnormalStatusUpdate + UserInfo.
+- **Packet**: `AbnormalStatusUpdate` (0x85, `abnormalstatusupdate.go`) — the buff bar (displayId, displayLevel, remaining seconds; −1 infinite/toggle).
+- **Scope now**: buffs/toggles/HoT/DoT on **players** (self/target). Deferred: debuffs landed on NPCs (land-rate), buff-slot limits, PartySpelled/Olympiad bars (l2go-… follow-up).
+
 ## Regeneration (nty)
 
 - **Tick**: the game loop restores HP/MP/CP to every living player every `regenInterval` (3s, L2J REGEN period) via `gameloop/regen.go` `regenPlayers`. Runs on the loop goroutine (sole writer of vitals), clamps to maxima, skips dead (HP≤0) and already-full players, and sends `StatusUpdate` (Cur HP/MP/CP) to the player + `broadcastToTargeters`.

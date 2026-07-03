@@ -41,8 +41,14 @@ func (gl *GameLoop) handleCastRequest(cmd CmdCastRequest) {
 		return // skill not known
 	}
 	skill := gl.skillData.GetSkill(int(cmd.SkillID), level)
-	if skill == nil || !skill.OperateType.IsActive() {
-		return // unknown or non-castable (passive/toggle handled elsewhere)
+	if skill == nil || (!skill.OperateType.IsActive() && !skill.IsToggle()) {
+		return // unknown or non-castable (passive skills aren't cast)
+	}
+
+	// Toggle already active → recast turns it off instantly (no cast bar).
+	if skill.IsToggle() && caster.Effects.HasSkill(cmd.SkillID) {
+		gl.toggleOff(caster, cmd.SkillID)
+		return
 	}
 
 	// Skill on cooldown?
@@ -197,6 +203,13 @@ func (e *CastHitEvent) Execute(gl *GameLoop) {
 // damage effects deal magic/physical damage to an NPC target. Buffs/abnormals with
 // duration are a later phase (l2go-c8t).
 func (gl *GameLoop) applySkillEffects(caster *registry.PlayerWorldState, targetID int32, skill *models.Skill) {
+	// Continuous skills (buffs/toggles/HoT/DoT) apply a lasting effect instead of an
+	// instant one (l2go-c8t).
+	if isBuffSkill(skill) {
+		gl.applyBuff(targetID, skill)
+		return
+	}
+
 	var hp, mp, cp, dmgPower int
 	for _, eff := range skill.Effects {
 		if eff.Scope != models.ScopeGeneral && eff.Scope != models.ScopeSelf {

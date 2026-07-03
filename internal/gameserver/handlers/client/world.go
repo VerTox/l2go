@@ -530,7 +530,10 @@ func (h *Handler) loadPlayerSkills(ctx context.Context, player *registry.PlayerW
 		known[cs.SkillID] = int32(cs.SkillLevel)
 	}
 	player.KnownSkills = known
-	char.StatMods = collectPassiveModifiers(skills, h.skillData)
+	// Passive mods form the base of StatMods; active buffs (l2go-c8t) are layered on
+	// top by the game loop. At entry there are no buffs yet, so StatMods == passives.
+	player.PassiveMods = collectPassiveModifiers(skills, h.skillData)
+	char.StatMods = player.PassiveMods
 }
 
 // collectPassiveModifiers resolves each learned skill against its template and
