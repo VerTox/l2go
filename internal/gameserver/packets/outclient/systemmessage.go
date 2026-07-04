@@ -11,6 +11,7 @@ const (
 	SysMsgCannotRestartInCombat  = 102  // CANT_RESTART_WHILE_FIGHTING "You cannot restart while in combat."
 	SysMsgTargetNotFound         = 145  // TARGET_IS_NOT_FOUND_IN_THE_GAME (TELL to offline player)
 	SysMsgNotEnoughMp            = 24   // NOT_ENOUGH_MP "Not enough MP."
+	SysMsgIncorrectTarget        = 109  // INCORRECT_TARGET "Invalid target." (l2go-fgz)
 	SysMsgDontSpam               = 1078 // DONT_SPAM "Please refrain from constant individual purchases."
 
 	// Soulshot / Spiritshot messages (L2J SystemMessageId).
