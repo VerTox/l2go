@@ -46,13 +46,6 @@ func playerPhysicalAttackRange(_ *registry.PlayerWorldState) int {
 	return defaultPhysicalAttackRange
 }
 
-// meleeReach computes the attack reach for a normal melee hit of player vs npc,
-// combining the player's physical attack range with both collision radii.
-func (gl *GameLoop) meleeReach(player *registry.PlayerWorldState, npc *models.NpcInstance) int {
-	playerCollision, npcCollision := gl.collisionRadii(player, npc)
-	return attackReach(playerPhysicalAttackRange(player), playerCollision, npcCollision)
-}
-
 // interactApproachOffset computes the MoveToPawn offset for walking up to an NPC
 // to interact: the interact base plus both collision radii (mirrors meleeReach but
 // with the interact base). Kept below INTERACTION_DISTANCE so the dialogue check

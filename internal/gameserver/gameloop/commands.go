@@ -13,6 +13,7 @@ type CmdAttackRequest struct {
 	TargetObjectID int32
 	AttackerPos    models.Position
 	AccountName    string
+	Force          bool // Ctrl force-attack (Attack 0x01); plain Action click = false
 }
 
 func (CmdAttackRequest) commandMarker() {}

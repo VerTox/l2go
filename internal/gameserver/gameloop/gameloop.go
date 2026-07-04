@@ -274,12 +274,34 @@ func (gl *GameLoop) processCommand(cmd Command) {
 
 // handleAttackRequest starts auto-attack on a target.
 func (gl *GameLoop) handleAttackRequest(cmd CmdAttackRequest) {
-	npc, exists := gl.world.GetNPC(cmd.TargetObjectID)
-	if !exists || npc.IsDead {
+	tgt, exists := gl.resolveCombatTarget(cmd.TargetObjectID)
+	if !exists || tgt.dead {
 		return
 	}
 
-	if !npc.IsAttackable() {
+	attacker, ok := gl.world.GetPlayer(cmd.AttackerCharID)
+	if !ok {
+		return
+	}
+
+	if tgt.isPlayer() {
+		if tgt.objectID == cmd.AttackerCharID {
+			return // can't attack self
+		}
+		// PvP gate (L2J checkPvpSkill / onForcedAttack): plain click needs the
+		// target flagged/PK; Ctrl force (Attack 0x01) always allowed but flags us.
+		allowed, flagAttacker := canAttackPlayer(tgt.player, cmd.Force, time.Now())
+		if !allowed {
+			gl.sendToPlayer(attacker, outclient.BuildSystemMessageNoParams(outclient.SysMsgIncorrectTarget))
+			if conn := gl.connections.GetConnection(cmd.AccountName); conn != nil {
+				_ = conn.Send(outclient.BuildActionFailed())
+			}
+			return
+		}
+		if flagAttacker {
+			gl.setPvPFlag(attacker)
+		}
+	} else if !tgt.npc.IsAttackable() {
 		return
 	}
 
@@ -308,13 +330,11 @@ func (gl *GameLoop) handleAttackRequest(cmd CmdAttackRequest) {
 	// begins the swing) on server arrival — no dependency on stale client position.
 	// If already in reach, begin swinging immediately.
 	gl.setIntention(cmd.AttackerCharID, IntentionAttack, cmd.TargetObjectID)
-	if player, exists := gl.world.GetPlayer(cmd.AttackerCharID); exists {
-		reach := gl.meleeReach(player, npc)
-		dx := player.Position.X - npc.Position.X
-		dy := player.Position.Y - npc.Position.Y
-		if dx*dx+dy*dy > reach*reach {
-			gl.startMoveToTarget(player, npc, reach)
-		}
+	reach := gl.meleeReachTo(attacker, tgt)
+	dx := attacker.Position.X - tgt.pos.X
+	dy := attacker.Position.Y - tgt.pos.Y
+	if dx*dx+dy*dy > reach*reach {
+		gl.startMoveToTargetPos(attacker, tgt.objectID, tgt.pos, reach)
 	}
 	// Always schedule the first NextAttackEvent regardless of distance. If out of
 	// reach, NextAttackEvent will see distSq > rangeSq and enter the heartbeat loop
