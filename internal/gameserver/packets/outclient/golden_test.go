@@ -40,6 +40,12 @@ func TestCharCreateFail(t *testing.T) {
 	checkGolden(t, "charcreatefail_toomany", NewCharCreateFail(CharCreateFailReasonTooManyChars))
 }
 
+func TestAcquireSkill(t *testing.T) {
+	checkGolden(t, "acquireskilllist", BuildAcquireSkillList([]AcquireSkillEntry{{ID: 3, Level: 1, SP: 50, HasReq: false}}))
+	checkGolden(t, "acquireskillinfo", BuildAcquireSkillInfo(3, 1, 50))
+	checkGolden(t, "acquireskilldone", BuildAcquireSkillDone())
+}
+
 func TestCharList(t *testing.T) {
 	checkGolden(t, "charlist", NewCharList())
 }
