@@ -313,6 +313,13 @@ func (h *Handler) handleCannotMoveAnymore(ctx context.Context, c *client.ClientC
 // tested densities in budget. Beyond it, distant players in a crowd don't see this
 // mover animate until it stops/respawns their view — retail-acceptable, and the
 // only lever that fits the volume budget. Tunable by load measurement.
+//
+// KNOWN LIMITATION — SIEGES/MASS-PvP (l2go-919): this cap is GLOBAL and HARD. In a
+// siege (hundreds of players clustered) seeing the enemy formation move is core
+// gameplay, so a fixed 48 would break it. Safe today (no siege/PvP zones exist yet),
+// but when they land this MUST become zone-aware — raise or disable the cap in
+// mass-PvP zones (retail sieges lag by design; L2J does not cap at all). Do not ship
+// sieges without addressing l2go-919.
 const moveBroadcastObserverCap = 48
 
 // closestPlayers returns at most k of the given players, the ones nearest to pos.
