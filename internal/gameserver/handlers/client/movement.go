@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"sort"
 
 	"github.com/rs/zerolog/log"
 
@@ -303,15 +304,52 @@ func (h *Handler) handleCannotMoveAnymore(ctx context.Context, c *client.ClientC
 
 // Helper methods
 
-// broadcastMovementToVisiblePlayers broadcasts movement to all visible players
+// moveBroadcastObserverCap bounds how many nearby players a single movement is
+// broadcast to (l2go-pec). Movement fan-out is the dominant packet volume at high
+// population (movers x observers ~ 1M+/s at a crowd) and, unlike batching, only
+// capping the observer count cuts the actual packet COUNT (build + per-client XOR).
+// Budget is movers x observers <= ~200K on the current host: with 5000 movers that
+// needs <= ~40 observers, with 1000 movers <= 200 — so a single cap here keeps all
+// tested densities in budget. Beyond it, distant players in a crowd don't see this
+// mover animate until it stops/respawns their view — retail-acceptable, and the
+// only lever that fits the volume budget. Tunable by load measurement.
+const moveBroadcastObserverCap = 48
+
+// closestPlayers returns at most k of the given players, the ones nearest to pos.
+// Ordering is by squared distance (no sqrt needed). It sorts the input slice in
+// place — the caller owns a freshly built VisiblePlayers slice, so this is safe.
+func closestPlayers(players []*registry.PlayerWorldState, pos models.Position, k int) []*registry.PlayerWorldState {
+	if len(players) <= k {
+		return players
+	}
+	sort.Slice(players, func(i, j int) bool {
+		return sqDist(players[i].Position, pos) < sqDist(players[j].Position, pos)
+	})
+	return players[:k]
+}
+
+// sqDist is the squared 2D distance between two positions (int64 to avoid overflow
+// at map scale). Used only for ordering, so the sqrt is unnecessary.
+func sqDist(a, b models.Position) int64 {
+	dx := int64(a.X - b.X)
+	dy := int64(a.Y - b.Y)
+	return dx*dx + dy*dy
+}
+
+// broadcastMovementToVisiblePlayers broadcasts movement to nearby players, capped to
+// the closest moveBroadcastObserverCap of them (l2go-pec) to bound the fan-out.
 func (h *Handler) broadcastMovementToVisiblePlayers(ctx context.Context, result *usecase.MovementResult, excludeClient *client.ClientConn) error {
 	if len(result.VisiblePlayers) == 0 {
 		return nil // No players to notify
 	}
 
+	// Cap the fan-out to the nearest observers around the mover's start position.
+	observers := closestPlayers(result.VisiblePlayers, result.StartPosition, moveBroadcastObserverCap)
+
 	logger := log.Ctx(ctx).With().
 		Int32("moving_char", result.CharacterID).
 		Int("visible_count", len(result.VisiblePlayers)).
+		Int("observer_count", len(observers)).
 		Logger()
 
 	// Create MoveToLocation packet for broadcasting
@@ -324,8 +362,8 @@ func (h *Handler) broadcastMovementToVisiblePlayers(ctx context.Context, result 
 	packetData := movePacket.GetData()
 	broadcastCount := 0
 
-	// Broadcast to all visible players
-	for _, visiblePlayer := range result.VisiblePlayers {
+	// Broadcast to the capped observer set.
+	for _, visiblePlayer := range observers {
 		// Find client connection for this visible player by account name
 		visibleClient := h.findClientByAccount(visiblePlayer.AccountName)
 
