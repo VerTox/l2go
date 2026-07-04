@@ -1,6 +1,8 @@
 package gameloop
 
 import (
+	"time"
+
 	"github.com/rs/zerolog/log"
 
 	"github.com/VerTox/l2go/internal/gameserver/data"
@@ -209,6 +211,12 @@ func (gl *GameLoop) buildUserInfoForPlayer(player *registry.PlayerWorldState) []
 		inCombatFlag = 1
 	}
 
+	// PvP flag so the player's own name renders purple while flagged. (l2go-fgz)
+	var pvpFlag int32 = 0
+	if player.IsPvPFlagged(time.Now()) {
+		pvpFlag = 1
+	}
+
 	// Папердолл из кэшированных на персонаже слотов (display + object IDs), чтобы
 	// UserInfo из game loop (старт боя, combat stance, level up) не «раздевал» персонажа.
 	paperdoll := outclient.NewPaperdollInfo()
@@ -252,7 +260,7 @@ func (gl *GameLoop) buildUserInfoForPlayer(player *registry.PlayerWorldState) []
 		MAtk:     int32(computed.MAtk),
 		CastSpd:  int32(computed.MAtkSpd),
 		MDef:     int32(computed.MDef),
-		PvPFlag:    0,
+		PvPFlag:    pvpFlag,
 		Karma:      int32(char.Karma),
 		RunSpd:     int32(computed.RunSpd),
 		WalkSpd:    int32(computed.WalkSpd),

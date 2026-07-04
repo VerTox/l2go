@@ -152,6 +152,8 @@ func (gl *GameLoop) sendUserInfo(player *registry.PlayerWorldState) {
 // the loop goroutine every buffInterval.
 func (gl *GameLoop) serviceBuffs() {
 	now := time.Now()
+	// Expire PvP flags (independent of buffs) before servicing effects. (l2go-fgz)
+	gl.expirePvPFlags()
 	for _, player := range gl.world.GetAllPlayers() {
 		if player.Character == nil || player.Effects.Len() == 0 {
 			continue
