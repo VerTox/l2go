@@ -87,6 +87,7 @@ func (gl *GameLoop) applyBuff(targetID int32, skill *models.Skill) {
 	if !target.Effects.Add(buff) {
 		return // a stronger buff of this abnormal type is active
 	}
+	gl.buffedPlayers[target.CharID] = struct{}{} // track for the serviceBuffs sweep (l2go-t2q)
 	gl.rebuildStatMods(target)
 	gl.sendAbnormalStatus(target)
 	gl.sendUserInfo(target)
@@ -107,6 +108,9 @@ func (gl *GameLoop) handleDispel(cmd CmdDispel) {
 func (gl *GameLoop) toggleOff(player *registry.PlayerWorldState, skillID int32) bool {
 	if !player.Effects.RemoveSkill(skillID) {
 		return false
+	}
+	if player.Effects.Len() == 0 {
+		delete(gl.buffedPlayers, player.CharID) // last effect gone — untrack (l2go-t2q)
 	}
 	gl.rebuildStatMods(player)
 	gl.sendAbnormalStatus(player)
@@ -153,12 +157,15 @@ func (gl *GameLoop) sendUserInfo(player *registry.PlayerWorldState) {
 func (gl *GameLoop) serviceBuffs() {
 	now := time.Now()
 	// Expire PvP flags (independent of buffs) before servicing effects. (l2go-fgz)
-	// Note: expirePvPFlags returns before this loop starts, so both may share the
-	// loop's playerScratch buffer without overlap. (l2go-3rx)
 	gl.expirePvPFlags()
-	gl.playerScratch = gl.world.SnapshotPlayers(gl.playerScratch)
-	for _, player := range gl.playerScratch {
-		if player.Character == nil || player.Effects.Len() == 0 {
+
+	// Iterate only players with an active effect (l2go-t2q) — most online players
+	// carry none, so scanning all N every second was waste. Deleting the current key
+	// mid-range is safe in Go.
+	for charID := range gl.buffedPlayers {
+		player, ok := gl.world.GetPlayer(charID)
+		if !ok || player.Character == nil || player.Effects.Len() == 0 {
+			delete(gl.buffedPlayers, charID) // gone or no effects — untrack
 			continue
 		}
 		changed := false
@@ -183,6 +190,9 @@ func (gl *GameLoop) serviceBuffs() {
 			gl.rebuildStatMods(player)
 			gl.sendAbnormalStatus(player)
 			gl.sendUserInfo(player)
+			if player.Effects.Len() == 0 {
+				delete(gl.buffedPlayers, charID) // last effect expired — untrack
+			}
 		}
 	}
 }

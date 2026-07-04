@@ -62,6 +62,7 @@ func (gl *GameLoop) setPvPFlag(player *registry.PlayerWorldState) {
 	}
 	was := player.IsPvPFlagged(time.Now())
 	player.PvPFlagUntil = time.Now().Add(pvpFlagDuration)
+	gl.flaggedPlayers[player.CharID] = struct{}{} // track for the expiry sweep (l2go-t2q)
 	if !was {
 		gl.broadcastRelation(player)
 		gl.sendUserInfo(player)
@@ -70,18 +71,29 @@ func (gl *GameLoop) setPvPFlag(player *registry.PlayerWorldState) {
 
 // expirePvPFlags clears flags whose window has passed, refreshing the relation
 // (name back to white) and the player's own UserInfo. Called from serviceBuffs.
+//
+// Iterates only the flagged subset (l2go-t2q) — flags are rare and short-lived, so
+// scanning all N online every second was pure waste. Deleting the current key
+// during the range is safe in Go.
 func (gl *GameLoop) expirePvPFlags() {
 	now := time.Now()
-	gl.playerScratch = gl.world.SnapshotPlayers(gl.playerScratch)
-	for _, player := range gl.playerScratch {
+	for charID := range gl.flaggedPlayers {
+		player, ok := gl.world.GetPlayer(charID)
+		if !ok {
+			delete(gl.flaggedPlayers, charID) // gone — drop stale entry
+			continue
+		}
 		if player.PvPFlagUntil.IsZero() {
+			delete(gl.flaggedPlayers, charID) // already cleared elsewhere — untrack
 			continue
 		}
 		if !now.Before(player.PvPFlagUntil) {
 			player.PvPFlagUntil = time.Time{}
+			delete(gl.flaggedPlayers, charID)
 			gl.broadcastRelation(player)
 			gl.sendUserInfo(player)
 		}
+		// else: still flagged, not yet expired — keep tracking.
 	}
 }
 

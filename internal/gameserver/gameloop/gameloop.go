@@ -93,13 +93,21 @@ type GameLoop struct {
 	// unchanged without it.
 	prom *PromMetrics
 
-	// playerScratch is a reusable buffer for the loop's whole-world sweeps
-	// (advancePlayerMovement, regen, buffs, pvp expiry, despawn, autosave), so they
-	// no longer allocate a fresh player map every call. Loop-goroutine only and NOT
-	// reentrant: a sweep iterating this buffer must not call another routine that
-	// snapshots into it. All current sweeps are sequential and none nests a
-	// SnapshotPlayers call, so this holds. (l2go-3rx)
+	// playerScratch is a reusable buffer for the loop's genuine whole-world sweeps
+	// (advancePlayerMovement, regen — both must touch every player), so they no longer
+	// allocate a fresh player map every call. Loop-goroutine only and NOT reentrant: a
+	// sweep iterating this buffer must not call another routine that snapshots into
+	// it. Both current users are sequential and neither nests a SnapshotPlayers call,
+	// so this holds. (l2go-3rx)
 	playerScratch []*registry.PlayerWorldState
+
+	// buffedPlayers / flaggedPlayers are the small active subsets the per-second
+	// sweeps actually work on, so serviceBuffs / expirePvPFlags iterate only players
+	// with an active effect / PvP flag instead of scanning all N online every tick
+	// (most players have neither). Loop-owned: mutated only on the loop goroutine as
+	// buffs/flags are added, expire, or the player disconnects. (l2go-t2q)
+	buffedPlayers  map[int32]struct{}
+	flaggedPlayers map[int32]struct{}
 }
 
 // New creates a new GameLoop. expRate and spRate control experience/SP multipliers (default 1.0).
@@ -122,6 +130,8 @@ func New(world *registry.WorldRegistry, connections *registry.ConnectionRegistry
 		activeRegions:   make(map[string]*ActiveRegion),
 		interactPending: make(map[int32]int32),
 		skillReuse:      make(map[int32]map[int32]time.Time),
+		buffedPlayers:   make(map[int32]struct{}),
+		flaggedPlayers:  make(map[int32]struct{}),
 		expRate:         expRate,
 		spRate:          spRate,
 	}
@@ -481,6 +491,11 @@ func (gl *GameLoop) handlePlayerDisconnected(cmd CmdPlayerDisconnected) {
 
 	// Drop skill cooldowns for the disconnected player (mirrors item-reuse cleanup).
 	delete(gl.skillReuse, cmd.CharID)
+
+	// Drop the per-tick sweep memberships so they don't leak or fire on a gone
+	// player (the sweeps also self-heal a stale entry, but untrack eagerly). (l2go-t2q)
+	delete(gl.buffedPlayers, cmd.CharID)
+	delete(gl.flaggedPlayers, cmd.CharID)
 
 	// Stop all NPCs attacking this player
 	gl.stopAllNPCAttacksOnPlayer(cmd.CharID)
