@@ -5,8 +5,8 @@ func init() { addStubRegistrator(registerCombatStubs) }
 // registerCombatStubs регистрирует стаб-обработчики боевых пакетов (High Five).
 // Пакеты пока только логируют факт получения; здесь же будет их логика.
 func registerCombatStubs(r *Registry) {
-	// Attack (0x01): авто-атака — клиент сообщает об атаке цели.
-	r.registerStub(StateInGame, 0x01, "Attack")
+	// Attack (0x01): Ctrl force-attack по цели — реальный обработчик (l2go-npi).
+	r.register(StateInGame, 0x01, "Attack", (*Handler).handleAttack)
 	// AttackRequest (0x32): запрос атаки через интерфейс.
 	r.registerStub(StateInGame, 0x32, "AttackRequest")
 	// RequestMagicSkillUse (0x39) — реальный обработчик в cast.go (l2go-lu8).

@@ -96,8 +96,17 @@ func (h *Handler) handleAction(ctx context.Context, c *client.ClientConn, payloa
 			}
 			return c.Send(outclient.BuildActionFailed())
 		}
-		// Target is a player — PvP not implemented
-		logger.Debug().Msg("player interaction not implemented")
+		// Target is a player — request an attack (plain click = non-force). The
+		// game loop's PvP gate decides whether it lands (target flagged/PK) or is
+		// refused (INCORRECT_TARGET). Ctrl force-attack comes via Attack (0x01).
+		logger.Debug().Msg("player attack request (non-force)")
+		h.gameLoopCmd <- gameloop.CmdAttackRequest{
+			AttackerCharID: playerState.CharID,
+			TargetObjectID: pkt.ObjectID,
+			AttackerPos:    playerState.Position,
+			AccountName:    session.AccountName,
+			Force:          false,
+		}
 		return c.Send(outclient.BuildActionFailed())
 	}
 
@@ -121,6 +130,49 @@ func (h *Handler) handleAction(ctx context.Context, c *client.ClientConn, payloa
 	}
 
 	// Send ActionFailed to unblock the client
+	return c.Send(outclient.BuildActionFailed())
+}
+
+// handleAttack processes the Attack packet (0x01) — Ctrl force-attack. If the
+// object isn't yet the player's target, it behaves like a first click (select).
+// If it's already the target, it's a force-attack: CmdAttackRequest{Force:true},
+// letting the loop bypass the flag/karma gate (and flag the attacker).
+func (h *Handler) handleAttack(ctx context.Context, c *client.ClientConn, payload []byte) error {
+	pkt, err := inclient.ParseAttack(payload)
+	if err != nil {
+		log.Ctx(ctx).Debug().Err(err).Msg("failed to parse Attack packet")
+		return c.Send(outclient.BuildActionFailed())
+	}
+
+	session := h.getSession(c)
+	if session == nil {
+		return c.Send(outclient.BuildActionFailed())
+	}
+	playerState, exists := h.world.GetPlayerByAccount(session.AccountName)
+	if !exists {
+		return c.Send(outclient.BuildActionFailed())
+	}
+
+	// Not yet selected → treat as a first click (select only).
+	if playerState.TargetID != pkt.ObjectID {
+		playerState.TargetID = pkt.ObjectID
+		if err := c.Send(outclient.BuildMyTargetSelected(pkt.ObjectID, 0)); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("failed to send MyTargetSelected")
+		}
+		return c.Send(outclient.BuildActionFailed())
+	}
+	if pkt.ObjectID == playerState.CharID {
+		return c.Send(outclient.BuildActionFailed())
+	}
+
+	// Already targeted → force-attack.
+	h.gameLoopCmd <- gameloop.CmdAttackRequest{
+		AttackerCharID: playerState.CharID,
+		TargetObjectID: pkt.ObjectID,
+		AttackerPos:    playerState.Position,
+		AccountName:    session.AccountName,
+		Force:          true,
+	}
 	return c.Send(outclient.BuildActionFailed())
 }
 
