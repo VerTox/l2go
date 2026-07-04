@@ -13,12 +13,42 @@ type AutoGetSkill struct {
 	Level   int
 }
 
+// SkillRef is a skill id + level (prerequisite reference).
+type SkillRef struct {
+	SkillID int32
+	Level   int
+}
+
+// SkillLearn describes a skill learnable at an NPC trainer (l2go-hv9).
+type SkillLearn struct {
+	SkillID      int32
+	Level        int
+	GetLevel     int
+	LevelUpSp    int
+	LearnedByNpc bool
+	PreReqs      []SkillRef
+}
+
 // classTreeEntry is one raw <skill> row of a class skill tree.
 type classTreeEntry struct {
-	SkillID  int32
-	SkillLvl int
-	GetLevel int
-	AutoGet  bool
+	SkillID      int32
+	SkillLvl     int
+	GetLevel     int
+	AutoGet      bool
+	LevelUpSp    int
+	LearnedByNpc bool
+	PreReqs      []SkillRef
+}
+
+func (e classTreeEntry) toLearn() SkillLearn {
+	return SkillLearn{
+		SkillID:      e.SkillID,
+		Level:        e.SkillLvl,
+		GetLevel:     e.GetLevel,
+		LevelUpSp:    e.LevelUpSp,
+		LearnedByNpc: e.LearnedByNpc,
+		PreReqs:      e.PreReqs,
+	}
 }
 
 // SkillTreeData holds the per-class skill trees parsed from classSkillTree.xml.
@@ -80,11 +110,18 @@ func (r *SkillTreeData) load(data []byte) error {
 		}
 		entries := make([]classTreeEntry, 0, len(t.Skills))
 		for _, s := range t.Skills {
+			var preReqs []SkillRef
+			for _, pr := range s.PreReq {
+				preReqs = append(preReqs, SkillRef{SkillID: pr.SkillID, Level: pr.SkillLvl})
+			}
 			entries = append(entries, classTreeEntry{
-				SkillID:  s.SkillID,
-				SkillLvl: s.SkillLvl,
-				GetLevel: s.GetLevel,
-				AutoGet:  s.AutoGet,
+				SkillID:      s.SkillID,
+				SkillLvl:     s.SkillLvl,
+				GetLevel:     s.GetLevel,
+				AutoGet:      s.AutoGet,
+				LevelUpSp:    s.LevelUpSp,
+				LearnedByNpc: s.LearnedByNpc,
+				PreReqs:      preReqs,
 			})
 		}
 		trees[t.ClassID] = entries
@@ -135,6 +172,72 @@ func (r *SkillTreeData) AutoGetSkills(classID, level int) []AutoGetSkill {
 	return out
 }
 
+// GetLearnableSkills returns the learnedByNpc skills a character of the given class
+// can learn now: level >= getLevel and either level 1 (skill unknown) or exactly the
+// next level of a known skill. Mirrors L2J SkillTreesData.getAvailableSkills over the
+// complete (inherited) tree. Ordered by (skillId, level) for determinism.
+func (r *SkillTreeData) GetLearnableSkills(classID, playerLevel int, known map[int32]int32) []SkillLearn {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var out []SkillLearn
+	seen := make(map[int]bool)
+	for cid := classID; ; {
+		if seen[cid] {
+			break
+		}
+		seen[cid] = true
+		for _, e := range r.trees[cid] {
+			if !e.LearnedByNpc || playerLevel < e.GetLevel {
+				continue
+			}
+			cur := int(known[e.SkillID]) // 0 if unknown
+			if (cur == 0 && e.SkillLvl == 1) || cur == e.SkillLvl-1 {
+				out = append(out, e.toLearn())
+			}
+		}
+		p, has := r.parent[cid]
+		if !has {
+			break
+		}
+		cid = p
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].SkillID != out[j].SkillID {
+			return out[i].SkillID < out[j].SkillID
+		}
+		return out[i].Level < out[j].Level
+	})
+	return out
+}
+
+// GetSkillLearn looks up a specific learnedByNpc skill (id, level) in the class's
+// complete tree, or nil if it isn't a valid NPC-learnable entry for the class.
+func (r *SkillTreeData) GetSkillLearn(classID int, skillID int32, level int) *SkillLearn {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	seen := make(map[int]bool)
+	for cid := classID; ; {
+		if seen[cid] {
+			break
+		}
+		seen[cid] = true
+		for _, e := range r.trees[cid] {
+			if e.SkillID == skillID && e.SkillLvl == level && e.LearnedByNpc {
+				l := e.toLearn()
+				return &l
+			}
+		}
+		p, has := r.parent[cid]
+		if !has {
+			break
+		}
+		cid = p
+	}
+	return nil
+}
+
 // --- XML shapes ---
 
 type xmlSkillTreeList struct {
@@ -150,8 +253,16 @@ type xmlClassSkillTree struct {
 }
 
 type xmlTreeSkill struct {
+	SkillID      int32       `xml:"skillId,attr"`
+	SkillLvl     int         `xml:"skillLvl,attr"`
+	GetLevel     int         `xml:"getLevel,attr"`
+	AutoGet      bool        `xml:"autoGet,attr"`
+	LevelUpSp    int         `xml:"levelUpSp,attr"`
+	LearnedByNpc bool        `xml:"learnedByNpc,attr"`
+	PreReq       []xmlPreReq `xml:"preRequisiteSkill"`
+}
+
+type xmlPreReq struct {
 	SkillID  int32 `xml:"skillId,attr"`
 	SkillLvl int   `xml:"skillLvl,attr"`
-	GetLevel int   `xml:"getLevel,attr"`
-	AutoGet  bool  `xml:"autoGet,attr"`
 }
