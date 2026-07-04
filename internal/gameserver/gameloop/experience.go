@@ -144,6 +144,9 @@ func (gl *GameLoop) applyLevelUp(player *registry.PlayerWorldState, oldLevel, ne
 	// Restore HP/MP to full on level up
 	char.CurrentHP = float64(newMaxHP)
 	char.CurrentMP = float64(newMaxMP)
+
+	// Level changed → the memoized ComputedStats is stale. (l2go-gur)
+	player.InvalidateStats()
 }
 
 // sendExpRewardNotification sends SystemMessage and UserInfo to a player after earning EXP.

@@ -687,9 +687,17 @@ func (gl *GameLoop) broadcastToTargeters(objectID int32, data []byte) {
 	}
 }
 
-// computePlayerStats computes derived combat stats for a player.
+// computePlayerStats computes derived combat stats for a player, memoized on the
+// player state. Called on the loop goroutine from movement/combat/cast/EXP/target;
+// the cache is invalidated on any stat change (buffs, level-up, equip), so a hit is
+// the common case between changes. (l2go-gur)
 func (gl *GameLoop) computePlayerStats(player *registry.PlayerWorldState) models.ComputedStats {
-	return usecase.ComputeCharacterStats(player.Character)
+	if s, ok := player.CachedStats(); ok {
+		return s
+	}
+	s := usecase.ComputeCharacterStats(player.Character)
+	player.SetCachedStats(s)
+	return s
 }
 
 // getNpcTemplate looks up an NPC template by ID.

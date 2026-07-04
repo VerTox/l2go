@@ -6,6 +6,7 @@ import (
 	"math"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -91,7 +92,34 @@ type PlayerWorldState struct {
 
 	// Session info
 	SessionData map[string]interface{} `json:"session_data,omitempty"`
+
+	// cachedStats memoizes ComputeCharacterStats for the loop's hot stat consumers
+	// (computePlayerStats: movement/combat/cast/EXP/target). The cached VALUE is
+	// written only by the loop goroutine on a miss, so it needs no lock; statsValid
+	// is atomic so the connection-goroutine stat-change sites (equip → RebuildStatMods)
+	// can invalidate it race-free. A stale read right after an invalidate is bounded
+	// to a single recompute on the next call. (l2go-gur)
+	cachedStats models.ComputedStats
+	statsValid  atomic.Bool
 }
+
+// CachedStats returns the memoized ComputedStats and whether it is still valid.
+// Loop-goroutine consumer; see computePlayerStats. (l2go-gur)
+func (p *PlayerWorldState) CachedStats() (models.ComputedStats, bool) {
+	return p.cachedStats, p.statsValid.Load()
+}
+
+// SetCachedStats stores a freshly computed ComputedStats and marks it valid. Called
+// only on the loop goroutine (cache miss).
+func (p *PlayerWorldState) SetCachedStats(s models.ComputedStats) {
+	p.cachedStats = s
+	p.statsValid.Store(true)
+}
+
+// InvalidateStats marks the cached stats stale so the next computePlayerStats
+// recomputes. Safe to call from any goroutine (atomic flag): the loop invalidates
+// on buff change and level-up, the connection goroutine on equip. (l2go-gur)
+func (p *PlayerWorldState) InvalidateStats() { p.statsValid.Store(false) }
 
 // RebuildStatMods recomputes Character.StatMods as the union of the character's
 // passive-skill mods, equipped-item mods, and active-buff mods. It is the single
@@ -106,6 +134,9 @@ func (p *PlayerWorldState) RebuildStatMods() {
 	mods = append(mods, p.EquipMods...)
 	mods = append(mods, p.Effects.Mods()...)
 	p.Character.StatMods = mods
+
+	// StatMods changed → any memoized ComputedStats is stale. (l2go-gur)
+	p.InvalidateStats()
 }
 
 // IsPvPFlagged reports whether the player currently carries a PvP flag.
