@@ -61,11 +61,14 @@ func TestClientConn_KicksSlowClientWithoutBlocking(t *testing.T) {
 
 	sc := NewClientConn(srv)
 
-	// cli is never read, so the writer blocks on its first Write and the queue
-	// fills. Bounded loop + timeout guard: if Send ever blocked, this would hang.
+	// cli is never read, so the writer blocks on its first (batched) Write and the
+	// queue fills. The writer coalesces one batch off the queue before blocking, so
+	// a stuck client absorbs up to ~2x capacity before the kick (drained batch +
+	// refilled buffer) — send well past that to guarantee overflow. Bounded loop +
+	// timeout guard: if Send ever blocked, this would hang.
 	done := make(chan bool, 1)
 	go func() {
-		for i := 0; i < sendQueueCapacity+100; i++ {
+		for i := 0; i < 3*sendQueueCapacity; i++ {
 			err := sc.Send([]byte{1, 2, 3})
 			if err != nil {
 				done <- errors.Is(err, errSendQueueFull)

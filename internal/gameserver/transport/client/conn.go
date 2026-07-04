@@ -21,6 +21,12 @@ const sendQueueCapacity = 1024
 // write, so a half-open/stuck client cannot wedge its writer indefinitely.
 const writeTimeout = 30 * time.Second
 
+// maxBatchPackets caps how many queued packets the writer coalesces into one socket
+// write (l2go-20j). Big enough to amortize the syscall under a broadcast burst,
+// small enough to bound per-write latency/size and keep the slow-client backpressure
+// working (the writer must reach flush, not drain a fast producer forever).
+const maxBatchPackets = 256
+
 // errSendQueueFull is returned by Send when the outbound queue is full and the
 // connection is being closed as a slow/stuck client.
 var errSendQueueFull = errors.New("send queue full: closing slow connection")
@@ -114,49 +120,79 @@ func (cc *ClientConn) Send(data []byte) error {
 // the socket write, so encryption stays strictly sequential and packet order is
 // preserved. It exits on a write error (closing the connection, which unblocks the
 // read loop) or when the connection is closed.
+//
+// Batching (l2go-20j): after taking one packet it non-blockingly drains whatever
+// else is already queued and frames+encrypts them all into one reusable buffer,
+// then does a SINGLE socket write. Each packet is still encrypted separately, in
+// FIFO order (the cipher's outKey advances per packet), so the wire bytes are
+// byte-for-byte identical to writing each packet on its own — the client reads
+// [len][payload] framed packets from the TCP stream exactly as before. This
+// collapses N write syscalls + goroutine wakeups into one under load (a mass
+// broadcast queues many packets per connection per tick), which is where the CPU
+// went; at low load a lone packet is just written by itself.
 func (cc *ClientConn) writeLoop() {
+    var batch []byte // reused across iterations; writer-goroutine-owned
     for {
         select {
         case data := <-cc.sendCh:
-            if err := cc.writePacket(data); err != nil {
+            batch = cc.appendFramed(batch[:0], data)
+            // Coalesce everything else already waiting into the same write.
+            batch = cc.drainInto(batch)
+            if err := cc.flush(batch); err != nil {
                 _ = cc.Close()
                 return
             }
         case <-cc.done:
-            cc.drain()
+            // Flush whatever is queued at close time (best-effort) so a final
+            // packet enqueued just before a graceful close still goes out.
+            batch = cc.drainInto(batch[:0])
+            _ = cc.flush(batch)
             return
         }
     }
 }
 
-// drain flushes packets already queued at close time (best-effort), so a final
-// packet enqueued just before a graceful close (e.g. a leave-world notice) still
-// goes out. Stops on the first write error or an empty queue.
-func (cc *ClientConn) drain() {
-    for {
+// drainInto appends up to maxBatchPackets-1 further queued packets (without
+// blocking) onto batch, framed and encrypted, and returns the extended buffer. The
+// cap bounds a single write's size/latency and, crucially, guarantees the writer
+// flushes (and can block on a stuck socket) rather than draining a fast producer
+// forever — which would let one connection monopolize the writer and defeat the
+// slow-client backpressure.
+func (cc *ClientConn) drainInto(batch []byte) []byte {
+    for n := 1; n < maxBatchPackets; n++ {
         select {
         case data := <-cc.sendCh:
-            if err := cc.writePacket(data); err != nil {
-                return
-            }
+            batch = cc.appendFramed(batch, data)
         default:
-            return
+            return batch
         }
     }
+    return batch
 }
 
-// writePacket frames, encrypts (if enabled), and writes one packet. Runs only on
-// the writer goroutine, so the stateful cipher needs no lock. It copies data into a
-// fresh buffer before the in-place XOR, so a shared source slice is never mutated.
-func (cc *ClientConn) writePacket(data []byte) error {
-    buf := make([]byte, 2+len(data))
-    binary.LittleEndian.PutUint16(buf[:2], uint16(len(data)+2))
-    copy(buf[2:], data)
+// appendFramed appends one length-prefixed, encrypted packet to dst and returns the
+// extended slice. Runs only on the writer goroutine, so the stateful cipher needs no
+// lock. The source data is copied into dst before the in-place XOR, so a shared
+// broadcast slice is never mutated; the length header stays plaintext.
+func (cc *ClientConn) appendFramed(dst, data []byte) []byte {
+    start := len(dst)
+    dst = append(dst, 0, 0) // length placeholder
+    dst = append(dst, data...)
+    binary.LittleEndian.PutUint16(dst[start:start+2], uint16(len(data)+2))
     if cc.enable {
-        cc.crypt.Encrypt(buf[2:])
+        cc.crypt.Encrypt(dst[start+2:]) // this packet's payload only; advances outKey by its size
+    }
+    return dst
+}
+
+// flush writes the batched bytes to the socket in one syscall, bounded by the write
+// deadline so a stuck client cannot wedge the writer.
+func (cc *ClientConn) flush(batch []byte) error {
+    if len(batch) == 0 {
+        return nil
     }
     _ = cc.Conn.SetWriteDeadline(time.Now().Add(writeTimeout))
-    _, err := cc.Conn.Write(buf)
+    _, err := cc.Conn.Write(batch)
     return err
 }
 
