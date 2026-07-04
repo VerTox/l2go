@@ -363,20 +363,44 @@ func (wr *WorldRegistry) GetObjectsInRange(pos models.Position, radius int) []*W
 	return objects
 }
 
-// GetPlayersInRange returns all players within range of a position
+// GetPlayersInRange returns all players within range of a position.
+//
+// Backed by the region grid (regions): only the cells overlapping the radius are
+// scanned, so the cost tracks players-near-the-point rather than total online N.
+// Players are indexed into regions by AddPlayer/UpdatePlayerPosition/RemovePlayer,
+// so the grid is always current. Mirrors GetNPCsInRange — the shared regions map
+// holds both player charIDs and NPC objectIDs, so a wr.players lookup filters out
+// NPC ids naturally. (l2go-g63)
 func (wr *WorldRegistry) GetPlayersInRange(pos models.Position, radius int) []*PlayerWorldState {
 	wr.mu.RLock()
 	defer wr.mu.RUnlock()
-	
+
+	regionKeys := wr.getNearbyRegions(pos.X, pos.Y, radius)
+
 	var players []*PlayerWorldState
-	
-	for _, state := range wr.players {
-		distance := wr.calculateDistance(pos, state.Position)
-		if distance <= radius {
-			players = append(players, state)
+	seen := make(map[int32]bool)
+
+	for _, regionKey := range regionKeys {
+		objectIDs, exists := wr.regions[regionKey]
+		if !exists {
+			continue
+		}
+		for _, objectID := range objectIDs {
+			if seen[objectID] {
+				continue
+			}
+			seen[objectID] = true
+
+			state, isPlayer := wr.players[objectID]
+			if !isPlayer {
+				continue
+			}
+			if wr.calculateDistance(pos, state.Position) <= radius {
+				players = append(players, state)
+			}
 		}
 	}
-	
+
 	return players
 }
 
