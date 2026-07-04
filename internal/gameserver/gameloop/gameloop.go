@@ -646,14 +646,18 @@ func (gl *GameLoop) broadcastToNearby(pos models.Position, data []byte) {
 	}
 }
 
-// broadcastToTargeters sends a packet to all players who have the given object as their target.
+// broadcastToTargeters sends a packet to all players who have the given object as
+// their target. Backed by the reverse targeter index (l2go-45b): O(targeters), not
+// O(online) — previously this copied the whole player map and scanned it on every
+// call, which, called per-player each regen/DoT tick, was O(N^2) with no crowding.
 func (gl *GameLoop) broadcastToTargeters(objectID int32, data []byte) {
-	allPlayers := gl.world.GetAllPlayers()
-	for _, p := range allPlayers {
-		if p.TargetID == objectID {
-			if conn := gl.connections.GetConnection(p.AccountName); conn != nil {
-				_ = conn.Send(data)
-			}
+	for _, charID := range gl.world.GetPlayersTargeting(objectID) {
+		p, ok := gl.world.GetPlayer(charID)
+		if !ok {
+			continue
+		}
+		if conn := gl.connections.GetConnection(p.AccountName); conn != nil {
+			_ = conn.Send(data)
 		}
 	}
 }

@@ -132,6 +132,10 @@ type WorldRegistry struct {
 
 	// Spatial indexing (simple implementation)
 	regions map[string][]int32             // "x,y" -> []objectIDs
+
+	// Reverse who-targets-what index, so an object's updates broadcast to exactly
+	// its targeters in O(targeters) instead of scanning all players. (l2go-45b)
+	targets *targetIndex
 }
 
 // NewWorldRegistry creates a new world registry
@@ -141,6 +145,7 @@ func NewWorldRegistry() *WorldRegistry {
 		objects: make(map[int32]*WorldObject),
 		npcs:    make(map[int32]*models.NpcInstance),
 		regions: make(map[string][]int32),
+		targets: newTargetIndex(),
 	}
 }
 
@@ -213,10 +218,15 @@ func (wr *WorldRegistry) RemovePlayer(ctx context.Context, charID int32) error {
 	// Remove from spatial index
 	regionKey := wr.getRegionKey(state.Position.X, state.Position.Y)
 	wr.removeFromRegion(regionKey, charID)
-	
+
 	// Remove from maps
 	delete(wr.players, charID)
 	delete(wr.objects, charID)
+
+	// Drop from the reverse target index both ways: as a targeter (unlink its own
+	// target) and as a target (drop anyone aiming at this now-gone player). (l2go-45b)
+	wr.targets.set(charID, 0)
+	wr.targets.dropTarget(charID)
 
 	// Drop in-memory item reuse cooldowns so they reset on relog, like retail.
 	GetItemReuseRegistry().Clear(charID)
@@ -325,8 +335,30 @@ func (wr *WorldRegistry) SetPlayerCombatState(charID int32, inCombat bool) error
 	
 	state.InCombat = inCombat
 	state.LastUpdate = time.Now()
-	
+
 	return nil
+}
+
+// SetPlayerTarget records a player's current target (0 = none). It is the sole
+// writer of PlayerWorldState.TargetID and keeps the reverse targeter index in
+// sync, so broadcastToTargeters(objectID) can reach exactly the players aiming at
+// objectID without scanning everyone. Safe to call from any goroutine. (l2go-45b)
+func (wr *WorldRegistry) SetPlayerTarget(charID, targetID int32) {
+	wr.mu.Lock()
+	if state, exists := wr.players[charID]; exists {
+		state.TargetID = targetID
+	}
+	wr.mu.Unlock()
+
+	// Index has its own lock — updated outside wr.mu to keep the world critical
+	// section short and avoid coupling the two locks.
+	wr.targets.set(charID, targetID)
+}
+
+// GetPlayersTargeting returns a snapshot of charIDs whose current target is
+// objectID. O(targeters), independent of total online count. (l2go-45b)
+func (wr *WorldRegistry) GetPlayersTargeting(objectID int32) []int32 {
+	return wr.targets.targetersOf(objectID)
 }
 
 // World Object Management
@@ -442,6 +474,10 @@ func (wr *WorldRegistry) RemoveNPC(objectID int32) {
 
 	delete(wr.npcs, objectID)
 	delete(wr.objects, objectID)
+
+	// Drop lingering targeters of this NPC (it may respawn under a new objectID).
+	// (l2go-45b)
+	wr.targets.dropTarget(objectID)
 }
 
 // GetNPC retrieves an NPC instance by object ID.
@@ -553,10 +589,14 @@ func (wr *WorldRegistry) CleanupOfflinePlayers(ctx context.Context, maxOfflineTi
 			// Remove from spatial index
 			regionKey := wr.getRegionKey(state.Position.X, state.Position.Y)
 			wr.removeFromRegion(regionKey, charID)
-			
+
 			// Remove from maps
 			delete(wr.players, charID)
 			delete(wr.objects, charID)
+
+			// Drop from the reverse target index both ways (l2go-45b).
+			wr.targets.set(charID, 0)
+			wr.targets.dropTarget(charID)
 			removed++
 		}
 	}

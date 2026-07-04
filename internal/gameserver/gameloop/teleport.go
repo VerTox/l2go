@@ -25,7 +25,7 @@ func (gl *GameLoop) handleTeleport(cmd CmdTeleport) {
 
 	// Abort whatever the player was doing (L2J: stopMove, abortAttack, setTarget(null)).
 	gl.stopAttacker(cmd.CharID)
-	player.TargetID = 0
+	gl.world.SetPlayerTarget(cmd.CharID, 0) // clears the reverse targeter index too (l2go-45b)
 	player.IsMoving = false
 	player.MoveStartPos = models.Position{}
 	player.MoveDestination = models.Position{}

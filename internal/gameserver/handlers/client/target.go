@@ -121,8 +121,8 @@ func (h *Handler) handleAction(ctx context.Context, c *client.ClientConn, payloa
 		return c.Send(outclient.BuildActionFailed())
 	}
 
-	// First click — select target
-	playerState.TargetID = pkt.ObjectID
+	// First click — select target (updates the reverse targeter index too). (l2go-45b)
+	h.world.SetPlayerTarget(playerState.CharID, pkt.ObjectID)
 
 	// Send MyTargetSelected to the clicking player
 	if err := c.Send(outclient.BuildMyTargetSelected(pkt.ObjectID, 0)); err != nil {
@@ -166,7 +166,7 @@ func (h *Handler) handleAttack(ctx context.Context, c *client.ClientConn, payloa
 
 	// Not yet selected → treat as a first click (select only).
 	if playerState.TargetID != pkt.ObjectID {
-		playerState.TargetID = pkt.ObjectID
+		h.world.SetPlayerTarget(playerState.CharID, pkt.ObjectID) // (l2go-45b)
 		if err := c.Send(outclient.BuildMyTargetSelected(pkt.ObjectID, 0)); err != nil {
 			log.Ctx(ctx).Warn().Err(err).Msg("failed to send MyTargetSelected")
 		}
@@ -214,8 +214,8 @@ func (h *Handler) handleRequestTargetCancel(ctx context.Context, c *client.Clien
 	// Cancel any ongoing attack
 	h.gameLoopCmd <- gameloop.CmdCancelAttack{CharID: playerState.CharID}
 
-	// Clear player's target
-	playerState.TargetID = 0
+	// Clear player's target (and unlink it from the reverse targeter index). (l2go-45b)
+	h.world.SetPlayerTarget(playerState.CharID, 0)
 
 	// Send TargetUnselected to the player
 	return c.Send(outclient.BuildTargetUnselected(playerState.CharID))
