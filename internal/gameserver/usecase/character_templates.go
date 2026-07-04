@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/VerTox/l2go/internal/gameserver/models"
 )
@@ -464,15 +465,30 @@ func ComputeCharacterStats(char *models.Character) models.ComputedStats {
 	return models.ApplyStatModifiers(computed, char.StatMods)
 }
 
+// combatStatsByClass memoizes the classID → combat-base-stats lookup. Without it,
+// GetCombatBaseStatsByClass rebuilt the entire template slice (every class, with
+// its StartingItems arrays) and linearly scanned it on EVERY call — and it is
+// called from every ComputeCharacterStats, i.e. from movement, combat, cast, EXP
+// and CharInfo/UserInfo builds. The templates are static, so build the map once.
+// (l2go-795)
+var (
+	combatStatsByClassOnce sync.Once
+	combatStatsByClass     map[int]models.CombatBaseStats
+)
+
 // GetCombatBaseStatsByClass returns combat base stats for a given class ID.
 // This is used by handlers to compute stats when building packets.
 func GetCombatBaseStatsByClass(classID int) models.CombatBaseStats {
-	templates := getDefaultCharacterTemplates()
-	for _, t := range templates {
-		if t.ClassID == classID {
-			return t.BaseStats.Combat
+	combatStatsByClassOnce.Do(func() {
+		templates := getDefaultCharacterTemplates()
+		combatStatsByClass = make(map[int]models.CombatBaseStats, len(templates))
+		for _, t := range templates {
+			combatStatsByClass[t.ClassID] = t.BaseStats.Combat
 		}
+	})
+	if cs, ok := combatStatsByClass[classID]; ok {
+		return cs
 	}
-	// Fallback to fighter stats
+	// Fallback to fighter stats (unknown/awakened class not in the base templates).
 	return fighterCombatStats()
 }

@@ -5,9 +5,15 @@ import (
 	"github.com/VerTox/l2go/internal/gameserver/registry"
 )
 
+// charInfoBuildCount counts BuildCharInfo passes for tests to assert the mover is
+// built once per reconcile rather than once per observer (l2go-795). Loop-goroutine
+// only, so no synchronization; a single int add is negligible in production.
+var charInfoBuildCount int
+
 // buildPlayerCharInfo builds a CharInfo packet for a player from live world state,
 // using the cached paperdoll (no DB lookup) so it is safe to call every tick.
 func buildPlayerCharInfo(player *registry.PlayerWorldState) []byte {
+	charInfoBuildCount++
 	char := player.Character
 	ci := outclient.NewCharInfo(
 		char,
@@ -58,6 +64,14 @@ func (gl *GameLoop) reconcilePlayerVisibility(charID int32) {
 		}
 	}
 
+	// The mover's own spawn packets (CharInfo + Relation) are identical for every
+	// observer, so build them once and reuse for all — previously spawnPlayerTo(other,
+	// mover) rebuilt the mover's CharInfo once per observer, i.e. N times per reconcile
+	// during a mass spawn (the O(N^2) the whole crowd pays). Built lazily so a reconcile
+	// that spawns nobody new pays nothing. Reuse is safe: conn.Send copies the bytes
+	// before its in-place XOR, so the shared slice is never mutated. (l2go-795)
+	var moverCharInfo, moverRelation []byte
+
 	// Entering range (within watch): spawn each side to the other exactly once.
 	for _, other := range gl.world.GetPlayersInRange(mover.Position, registry.VisibilityWatchRadius) {
 		if other.CharID == charID {
@@ -68,7 +82,12 @@ func (gl *GameLoop) reconcilePlayerVisibility(charID int32) {
 			mover.KnownPlayers[other.CharID] = true
 		}
 		if !other.KnownPlayers[charID] {
-			gl.spawnPlayerTo(other, mover)
+			if moverCharInfo == nil {
+				moverCharInfo = buildPlayerCharInfo(mover)
+				moverRelation = outclient.NewSingleRelation(mover.CharID, int32(mover.Character.Karma), 0).GetData()
+			}
+			gl.sendToPlayer(other, moverCharInfo)
+			gl.sendToPlayer(other, moverRelation)
 			other.KnownPlayers[charID] = true
 		}
 	}
