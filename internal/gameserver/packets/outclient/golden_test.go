@@ -35,6 +35,11 @@ func TestCharCreateOk(t *testing.T) {
 	checkGolden(t, "charcreateok_false", NewCharCreateOk(false))
 }
 
+func TestCharCreateFail(t *testing.T) {
+	checkGolden(t, "charcreatefail_nameexists", NewCharCreateFail(CharCreateFailReasonNameExists))
+	checkGolden(t, "charcreatefail_toomany", NewCharCreateFail(CharCreateFailReasonTooManyChars))
+}
+
 func TestCharList(t *testing.T) {
 	checkGolden(t, "charlist", NewCharList())
 }

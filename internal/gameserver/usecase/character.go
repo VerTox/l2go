@@ -288,7 +288,7 @@ func (uc *CharacterUseCase) validateCharacterCreation(ctx context.Context, req *
 	}
 
 	if total >= 7 { // L2J default character limit
-		return fmt.Errorf("maximum character limit reached")
+		return models.ErrTooManyCharacters
 	}
 
 	return nil

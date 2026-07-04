@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 
 	"github.com/rs/zerolog/log"
 
@@ -48,7 +49,7 @@ func (h *Handler) handleCharacterCreate(ctx context.Context, c *client.ClientCon
 	session := h.getSession(c)
 	if session == nil {
 		log.Ctx(ctx).Error().Msg("no session found for character creation")
-		if err := c.Send(outclient.NewCharCreateOk(false)); err != nil {
+		if err := c.Send(outclient.NewCharCreateFail(outclient.CharCreateFailReasonCreationFailed)); err != nil {
 			return err
 		}
 		return nil
@@ -79,10 +80,12 @@ func (h *Handler) handleCharacterCreate(ctx context.Context, c *client.ClientCon
 
 	character, err := h.characterUseCase.CreateCharacter(ctx, req)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Str("name", packet.Name).Msg("character creation failed")
+		reason := charCreateFailReason(err)
+		log.Ctx(ctx).Error().Err(err).Str("name", packet.Name).Int32("reason", reason).Msg("character creation failed")
 
-		// Send failure response
-		if err := c.Send(outclient.NewCharCreateOk(false)); err != nil {
+		// Send a typed failure so the client shows the actual reason (name taken,
+		// too many characters, invalid name, ...) instead of a blank rejection.
+		if err := c.Send(outclient.NewCharCreateFail(reason)); err != nil {
 			return err
 		}
 		return nil
@@ -102,6 +105,23 @@ func (h *Handler) handleCharacterCreate(ctx context.Context, c *client.ClientCon
 		return err
 	}
 	return nil
+}
+
+// charCreateFailReason maps a CreateCharacter use-case error to the L2J
+// CharCreateFail reason code the client understands. (l2go-k9a)
+func charCreateFailReason(err error) int32 {
+	switch {
+	case errors.Is(err, models.ErrCharacterExists):
+		return outclient.CharCreateFailReasonNameExists
+	case errors.Is(err, models.ErrInvalidCharacterName):
+		return outclient.CharCreateFailReasonIncorrectName
+	case errors.Is(err, models.ErrTooManyCharacters):
+		return outclient.CharCreateFailReasonTooManyChars
+	default:
+		// ErrInvalidRace/Sex/Class and unexpected errors are client-impossible
+		// under normal play → generic failure.
+		return outclient.CharCreateFailReasonCreationFailed
+	}
 }
 
 // handleCharacterDelete processes character deletion

@@ -332,6 +332,7 @@ var (
 	ErrCharacterNotFound    = &CharacterError{"character not found"}
 	ErrCharacterExists      = &CharacterError{"character already exists"}
 	ErrInvalidSlot          = &CharacterError{"invalid character slot"}
+	ErrTooManyCharacters    = &CharacterError{"maximum character limit reached"}
 )
 
 // CharacterError represents character-related errors
