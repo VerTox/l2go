@@ -284,6 +284,22 @@ func (g *GameServer) initDatabase(ctx context.Context) error {
 		log.Ctx(ctx).Warn().Msg("Failed to load class skill trees from any path")
 	}
 
+	// Load class category data (gates NPC-trainer skill learning by class category). (l2go-hv9)
+	for _, path := range []string{
+		"data/categoryData.xml",
+		"../../data/categoryData.xml",
+		"references/data/categoryData.xml",
+		"../../references/data/categoryData.xml",
+	} {
+		if err := registry.GetCategoryRegistry().LoadFromFile(path); err == nil {
+			log.Ctx(ctx).Info().Str("path", path).Msg("Category data loaded successfully")
+			break
+		}
+	}
+	if !registry.GetCategoryRegistry().IsLoaded() {
+		log.Ctx(ctx).Warn().Msg("Failed to load category data from any path")
+	}
+
 	// Load NPC spawns from database and populate world
 	if npcTemplatesLoaded {
 		// Seed spawnlist table if empty (one-time import from L2J datapack)
