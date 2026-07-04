@@ -106,8 +106,8 @@ func (e *NextAttackEvent) Execute(gl *GameLoop) {
 		return // attack cancelled or retargeted
 	}
 
-	npc, exists := gl.world.GetNPC(e.TargetObjectID)
-	if !exists || npc.IsDead {
+	tgt, exists := gl.resolveCombatTarget(e.TargetObjectID)
+	if !exists || tgt.dead {
 		gl.stopAttacker(e.AttackerCharID)
 		return
 	}
@@ -121,10 +121,10 @@ func (e *NextAttackEvent) Execute(gl *GameLoop) {
 	// Attack reach per L2J: player physical attack range + both collision radii.
 	// The same value is the MoveToPawn offset, so the client stops exactly within
 	// range (the old hardcoded offset 60 vs range 90 left big-collision mobs short).
-	reach := gl.meleeReach(player, npc)
+	reach := gl.meleeReachTo(player, tgt)
 
-	dx := player.Position.X - npc.Position.X
-	dy := player.Position.Y - npc.Position.Y
+	dx := player.Position.X - tgt.pos.X
+	dy := player.Position.Y - tgt.pos.Y
 	distSq := dx*dx + dy*dy
 	rangeSq := reach * reach
 	if distSq > rangeSq {
@@ -135,7 +135,7 @@ func (e *NextAttackEvent) Execute(gl *GameLoop) {
 		// safety net: IsMoving can be cleared off-tick (CannotMoveAnymore /
 		// StartMovement no-op), and onMovementArrived alone would then never resume.
 		if !player.IsMoving {
-			gl.startMoveToTarget(player, npc, reach)
+			gl.startMoveToTargetPos(player, tgt.objectID, tgt.pos, reach)
 		}
 		gl.events.Schedule(&NextAttackEvent{
 			At:             time.Now().Add(400 * time.Millisecond),
@@ -170,12 +170,11 @@ func (e *NextAttackEvent) Execute(gl *GameLoop) {
 		pAtk = computed.PAtk
 		critRate = computed.CritRate
 	}
-	if npc.Template != nil {
-		evasion = int(npc.Template.PDef / 10) // rough evasion estimate
-		pDef = int(npc.Template.PDef)
-		if pDef < 1 {
-			pDef = 1
-		}
+	// Defender stats from the resolved target (NPC template or player computed).
+	evasion = tgt.evasion
+	pDef = tgt.pDef
+	if pDef < 1 {
+		pDef = 1
 	}
 
 	// Snapshot the soulshot charge on the equipped weapon once per swing, exactly
@@ -240,8 +239,13 @@ func (e *NextAttackEvent) Execute(gl *GameLoop) {
 				gl.sendToPlayer(player, outclient.NewSystemMessage(outclient.SysMsgC1HadCriticalHit).
 					AddPlayerName(name).Build())
 			}
-			gl.sendToPlayer(player, outclient.NewSystemMessage(outclient.SysMsgC1DoneS3DamageToC2).
-				AddPlayerName(name).AddNpcName(npc.TemplateID).AddInt(damage).Build())
+			msg := outclient.NewSystemMessage(outclient.SysMsgC1DoneS3DamageToC2).AddPlayerName(name)
+			if tgt.isPlayer() {
+				msg = msg.AddPlayerName(tgt.player.Character.Name)
+			} else {
+				msg = msg.AddNpcName(tgt.npc.TemplateID)
+			}
+			gl.sendToPlayer(player, msg.AddInt(damage).Build())
 		}
 	}
 
@@ -256,7 +260,7 @@ func (e *NextAttackEvent) Execute(gl *GameLoop) {
 		damage,
 		flags,
 		int32(player.Position.X), int32(player.Position.Y), int32(player.Position.Z),
-		int32(npc.Position.X), int32(npc.Position.Y), int32(npc.Position.Z),
+		int32(tgt.pos.X), int32(tgt.pos.Y), int32(tgt.pos.Z),
 	)
 	gl.broadcastToNearby(player.Position, attackPkt)
 
@@ -294,12 +298,20 @@ type HitEvent struct {
 func (e *HitEvent) ExecuteAt() time.Time { return e.At }
 
 func (e *HitEvent) Execute(gl *GameLoop) {
-	npc, exists := gl.world.GetNPC(e.TargetObjectID)
-	if !exists || npc.IsDead {
+	tgt, exists := gl.resolveCombatTarget(e.TargetObjectID)
+	if !exists || tgt.dead {
 		return
 	}
 
-	gl.dealDamageToNPC(npc, e.AttackerCharID, int(e.Damage))
+	if tgt.isPlayer() {
+		// PvP melee: deal damage to the player defender and flag the victim
+		// (retaliation is then free). The gate ran at attack initiation.
+		gl.dealDamageToPlayer(tgt.player, e.AttackerCharID, int(e.Damage))
+		gl.setPvPFlag(tgt.player)
+		return
+	}
+
+	gl.dealDamageToNPC(tgt.npc, e.AttackerCharID, int(e.Damage))
 
 	// Auto-soulshot: arm the next swing off-loop (recharge the weapon from the
 	// player's active auto-shots). Mirrors L2J recharging at the end of onHitTimer.
