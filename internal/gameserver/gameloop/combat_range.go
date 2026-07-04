@@ -2,7 +2,6 @@ package gameloop
 
 import (
 	"github.com/VerTox/l2go/internal/gameserver/models"
-	"github.com/VerTox/l2go/internal/gameserver/packets/outclient"
 	"github.com/VerTox/l2go/internal/gameserver/registry"
 )
 
@@ -63,18 +62,3 @@ func (gl *GameLoop) interactApproachOffset(player *registry.PlayerWorldState, np
 	return attackReach(interactApproachBase, playerCollision, npcCollision)
 }
 
-// approachTarget sends a MoveToPawn so the client walks to within attack reach of
-// the npc. The offset equals the reach, matching L2J where the move offset and the
-// hit-range check are the same value. Re-issued on every out-of-range attack tick
-// (L2J re-runs maybeMoveToPawn each think) so a target that moved is still chased.
-func (gl *GameLoop) approachTarget(accountName string, player *registry.PlayerWorldState, npc *models.NpcInstance, reach int) {
-	conn := gl.connections.GetConnection(accountName)
-	if conn == nil {
-		return
-	}
-	_ = conn.Send(outclient.BuildMoveToPawn(
-		player.CharID, npc.ObjectID, int32(reach),
-		player.Position.X, player.Position.Y, player.Position.Z,
-		npc.Position.X, npc.Position.Y, npc.Position.Z,
-	))
-}

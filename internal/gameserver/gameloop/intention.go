@@ -50,15 +50,7 @@ func (gl *GameLoop) clearIntention(charID int32) {
 // within `reach`. It sets the movement fields the tick interpolation (phase 1) reads,
 // and sends a MoveToPawn so the client walks the same path. No-op if already in reach.
 func (gl *GameLoop) startMoveToTarget(player *registry.PlayerWorldState, npc *models.NpcInstance, reach int) {
-	dest := stopPointWithinReach(player.Position, npc.Position, reach)
-	if dest == player.Position {
-		return // already within reach
-	}
-	player.IsMoving = true
-	player.MoveStartPos = player.Position
-	player.MoveDestination = dest
-	player.MoveStarted = time.Now()
-	gl.approachTarget(player.AccountName, player, npc, reach)
+	gl.startMoveToTargetPos(player, npc.ObjectID, npc.Position, reach)
 }
 
 // onMovementArrived is called by the tick when a player's server-side movement
