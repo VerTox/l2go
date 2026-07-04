@@ -351,16 +351,13 @@ func (h *Handler) broadcastMovementToVisiblePlayers(ctx context.Context, result 
 	return nil
 }
 
-// findClientByAccount finds client connection by account name
-// TODO: This is O(n) lookup - in production, use a hash map for O(1) lookup
+// findClientByAccount finds a client connection by account name via the thread-safe
+// ConnectionRegistry (O(1)). It previously iterated h.sessions without holding
+// sessionsMu, which raced with connect/disconnect writes and fatally crashed the
+// whole process under load ("concurrent map iteration and map write"). The registry
+// is keyed by the same normalized account name that setSession registers. (l2go-7c0)
 func (h *Handler) findClientByAccount(accountName string) *client.ClientConn {
-	// Iterate through all active sessions to find matching account
-	for clientConn, session := range h.sessions {
-		if session != nil && session.AccountName == accountName {
-			return clientConn
-		}
-	}
-	return nil // Client not found or disconnected
+	return h.connections.GetConnection(accountName)
 }
 
 // sendPositionCorrection sends a position correction packet to the client
