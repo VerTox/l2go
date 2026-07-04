@@ -43,6 +43,10 @@ type PlayerWorldState struct {
 	Online      bool            `json:"online"`
 	InCombat    bool            `json:"in_combat"`
 	LastUpdate  time.Time       `json:"last_update"`
+
+	// PvPFlagUntil — время, до которого игрок PvP-флагнут (фиолетовое имя,
+	// атакуем без Ctrl). Loop-owned. Ноль = не флагнут. (l2go-fgz)
+	PvPFlagUntil time.Time `json:"-"`
 	
 	// IsTeleporting is set while a teleport is in flight: the server has sent
 	// TeleportToLocation and decayed the player, and is waiting for the client's
@@ -102,6 +106,11 @@ func (p *PlayerWorldState) RebuildStatMods() {
 	mods = append(mods, p.EquipMods...)
 	mods = append(mods, p.Effects.Mods()...)
 	p.Character.StatMods = mods
+}
+
+// IsPvPFlagged reports whether the player currently carries a PvP flag.
+func (p *PlayerWorldState) IsPvPFlagged(now time.Time) bool {
+	return !p.PvPFlagUntil.IsZero() && now.Before(p.PvPFlagUntil)
 }
 
 // CastState is an in-progress skill cast, owned by the game loop. The unique ID
