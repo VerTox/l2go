@@ -11,29 +11,25 @@ import (
 
 // --- test doubles ---
 
-// fakeSkillSource returns canned effects keyed by "id-level".
-type fakeSkillSource struct {
-	effects map[[2]int]registry.SkillEffect
+// fakeSkillTemplates resolves only the (id,level) pairs it was seeded with.
+type fakeSkillTemplates struct {
+	known map[[2]int]bool
 }
 
-func (f *fakeSkillSource) Lookup(id, level int) (registry.SkillEffect, bool) {
-	e, ok := f.effects[[2]int{id, level}]
-	return e, ok
+func (f *fakeSkillTemplates) GetSkill(id, level int) *models.Skill {
+	if f.known[[2]int{id, level}] {
+		return &models.Skill{ID: id, Level: level}
+	}
+	return nil
 }
 
-// recordingRestorer captures RestoreStats calls.
-type recordingRestorer struct {
-	calls               int
-	charID              int32
-	hp, mp, cp          int32
-	skillID, skillLevel int32
+// recordingCaster captures CastItemSkill calls.
+type recordingCaster struct {
+	calls []struct{ charID, skillID, level int32 }
 }
 
-func (r *recordingRestorer) RestoreStats(charID, hp, mp, cp, skillID, skillLevel int32) {
-	r.calls++
-	r.charID = charID
-	r.hp, r.mp, r.cp = hp, mp, cp
-	r.skillID, r.skillLevel = skillID, skillLevel
+func (r *recordingCaster) CastItemSkill(charID, skillID, level int32) {
+	r.calls = append(r.calls, struct{ charID, skillID, level int32 }{charID, skillID, level})
 }
 
 // fakeItemRepo implements repo.ItemRepository just enough for consumption.
@@ -61,17 +57,15 @@ type fakeRepo struct {
 
 func (f *fakeRepo) Item() repo.ItemRepository { return f.item }
 
-func newPotionTest(effects map[[2]int]registry.SkillEffect) (*PotionHandler, *recordingRestorer, *fakeItemRepo) {
-	restorer := &recordingRestorer{}
+func newPotionTest(known map[[2]int]bool) (*PotionHandler, *recordingCaster, *fakeItemRepo) {
+	caster := &recordingCaster{}
 	itemRepo := &fakeItemRepo{}
-	h := NewPotionHandler(&fakeSkillSource{effects: effects}, restorer)
-	return h, restorer, itemRepo
+	h := NewPotionHandler(&fakeSkillTemplates{known: known}, caster)
+	return h, caster, itemRepo
 }
 
-func TestPotionHandler_RestoresHPAndConsumes(t *testing.T) {
-	h, restorer, itemRepo := newPotionTest(map[[2]int]registry.SkillEffect{
-		{2037, 1}: {Kind: registry.EffectHP, Amount: 50},
-	})
+func TestPotionHandler_CastsAndConsumes(t *testing.T) {
+	h, caster, itemRepo := newPotionTest(map[[2]int]bool{{2037, 1}: true})
 	repository := &fakeRepo{item: itemRepo}
 
 	item := &models.CharacterItem{ObjectID: 500, ItemID: 1539, OwnerID: 7, Count: 3}
@@ -91,12 +85,9 @@ func TestPotionHandler_RestoresHPAndConsumes(t *testing.T) {
 	if !consumed {
 		t.Fatal("consumed = false, want true")
 	}
-	// Restore routed with HP=50, no MP/CP.
-	if restorer.skillID != 2037 || restorer.skillLevel != 1 {
-		t.Errorf("cast skill = (%d,%d), want (2037,1) forwarded for MagicSkillUse visual", restorer.skillID, restorer.skillLevel)
-	}
-	if restorer.calls != 1 || restorer.charID != 7 || restorer.hp != 50 || restorer.mp != 0 || restorer.cp != 0 {
-		t.Errorf("restorer = %+v, want 1 call charID=7 hp=50", restorer)
+	// The linked skill is cast once through the engine.
+	if len(caster.calls) != 1 || caster.calls[0] != (struct{ charID, skillID, level int32 }{7, 2037, 1}) {
+		t.Errorf("caster.calls = %+v, want one cast {7,2037,1}", caster.calls)
 	}
 	// One potion consumed (3 -> 2), item updated not deleted.
 	if item.Count != 2 {
@@ -111,9 +102,7 @@ func TestPotionHandler_RestoresHPAndConsumes(t *testing.T) {
 }
 
 func TestPotionHandler_LastItemDeleted(t *testing.T) {
-	h, _, itemRepo := newPotionTest(map[[2]int]registry.SkillEffect{
-		{10001, 1}: {Kind: registry.EffectMP, Amount: 100},
-	})
+	h, _, itemRepo := newPotionTest(map[[2]int]bool{{10001, 1}: true})
 	repository := &fakeRepo{item: itemRepo}
 
 	item := &models.CharacterItem{ObjectID: 501, ItemID: 728, OwnerID: 7, Count: 1}
@@ -138,7 +127,7 @@ func TestPotionHandler_LastItemDeleted(t *testing.T) {
 }
 
 func TestPotionHandler_NoSkillsIsNoOp(t *testing.T) {
-	h, restorer, itemRepo := newPotionTest(nil)
+	h, caster, itemRepo := newPotionTest(nil)
 	repository := &fakeRepo{item: itemRepo}
 
 	item := &models.CharacterItem{ObjectID: 502, ItemID: 1, OwnerID: 7, Count: 5}
@@ -149,19 +138,19 @@ func TestPotionHandler_NoSkillsIsNoOp(t *testing.T) {
 		t.Fatalf("UseItem error: %v", err)
 	}
 	if consumed {
-		t.Error("consumed = true, want false when no restore effect resolved")
+		t.Error("consumed = true, want false when no skills declared")
 	}
-	if restorer.calls != 0 {
-		t.Errorf("restorer called %d times, want 0", restorer.calls)
+	if len(caster.calls) != 0 {
+		t.Errorf("caster called %d times, want 0", len(caster.calls))
 	}
 	if item.Count != 5 || itemRepo.updated != nil || itemRepo.deleted != 0 {
 		t.Error("no consumption expected on no-op")
 	}
 }
 
-func TestPotionHandler_UnknownEffectNotConsumed(t *testing.T) {
-	// Skill exists in template but the loader does not resolve it (e.g. buff skill).
-	h, restorer, itemRepo := newPotionTest(map[[2]int]registry.SkillEffect{})
+func TestPotionHandler_UnknownSkillNotConsumed(t *testing.T) {
+	// Skill declared in the template but not resolvable in the datapack → no-op.
+	h, caster, itemRepo := newPotionTest(map[[2]int]bool{})
 	repository := &fakeRepo{item: itemRepo}
 
 	item := &models.CharacterItem{ObjectID: 503, ItemID: 99, OwnerID: 7, Count: 2}
@@ -174,7 +163,7 @@ func TestPotionHandler_UnknownEffectNotConsumed(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UseItem error: %v", err)
 	}
-	if consumed || restorer.calls != 0 || item.Count != 2 {
-		t.Error("unresolved skill must be a no-op (not consumed, no restore)")
+	if consumed || len(caster.calls) != 0 || item.Count != 2 {
+		t.Error("unresolved skill must be a no-op (not consumed, not cast)")
 	}
 }

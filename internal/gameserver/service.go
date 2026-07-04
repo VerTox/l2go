@@ -501,15 +501,16 @@ func (g *GameServer) prepareHandlers() {
 		"references/data/stats/skills",
 		"../../references/data/stats/skills",
 	}
-	skillEffects := registry.NewSkillEffectRegistry(skillRoots)
-	potionHandler := usecase.NewPotionHandler(skillEffects, g.gameLoop.StatRestorer())
-
 	// Skill engine template registry (epic l2go-z36). Lazily parses the skill
 	// datapack into per-(id,level) templates. Wired into the client handler so the
 	// SkillList packet can flag passive skills correctly.
 	g.skillData = registry.NewSkillData(skillRoots)
 	g.handlers.client.SetSkillData(g.skillData)
 	g.gameLoop.SetSkillData(g.skillData) // casting (l2go-lu8)
+
+	// Potions cast their linked item skill through the real skill engine (l2go-849):
+	// validate the template via SkillData, cast via the loop's ItemSkillCaster.
+	potionHandler := usecase.NewPotionHandler(g.skillData, g.gameLoop.ItemSkillCaster())
 	g.usc.inventory.ItemHandlers().Register("ItemSkills", potionHandler)
 	g.usc.inventory.ItemHandlers().Register("ManaPotion", potionHandler)
 

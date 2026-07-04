@@ -1,10 +1,23 @@
 package registry
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/VerTox/l2go/internal/gameserver/models"
 )
+
+// writeSkillFile writes a skill XML file into dir (test helper for datapack parsing).
+func writeSkillFile(t *testing.T, dir, name, body string) {
+	t.Helper()
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, name), []byte(body), 0o644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+}
 
 func TestSkillHashCode(t *testing.T) {
 	// L2J getSkillHashCode: id*1021 + level.

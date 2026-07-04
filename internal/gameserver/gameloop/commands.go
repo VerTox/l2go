@@ -141,22 +141,28 @@ type CmdChatMessage struct {
 func (CmdChatMessage) commandMarker() {}
 
 // CmdRestoreStats — restore a live player's vital stats (HP/MP/CP), clamped to
-// their maxima, and broadcast the resulting HP/MP/CP bars. Sent by the interim
-// potion item handler (l2go-diu); the amounts are pre-resolved from the item's
-// linked restore skill. A dead player (CurrentHP<=0) is left untouched.
+// their maxima, and broadcast the resulting HP/MP/CP bars. Emitted by the skill
+// engine (heal/drain effects in applySkillEffects, HoT ticks). A dead player
+// (CurrentHP<=0) is left untouched.
 type CmdRestoreStats struct {
 	CharID int32
 	HP     int32
 	MP     int32
 	CP     int32
-	// SkillID/SkillLevel: the item's linked skill, broadcast as a MagicSkillUse
-	// cast visual so the client plays the animation and starts the item icon
-	// reuse-cooldown sweep. 0 = no cast visual.
-	SkillID    int32
-	SkillLevel int32
 }
 
 func (CmdRestoreStats) commandMarker() {}
+
+// CmdItemSkillCast — cast an item's linked skill (potions/consumables) by (id,level)
+// bypassing the player's KnownSkills gate. Routed through the real skill engine
+// (applySkillEffects), replacing the interim direct-restore path (l2go-849).
+type CmdItemSkillCast struct {
+	CharID  int32
+	SkillID int32
+	Level   int32
+}
+
+func (CmdItemSkillCast) commandMarker() {}
 
 // CmdRevive — resurrect a dead player and teleport it to a respawn point (Dest).
 // Restores HP, broadcasts Revive, then teleports. Used by RequestRestartPoint.

@@ -52,19 +52,19 @@ func TestHandleRestoreStats_DeadPlayerIgnored(t *testing.T) {
 	}
 }
 
-// TestStatRestorer_EnqueuesCommand verifies the adapter posts a CmdRestoreStats.
-func TestStatRestorer_EnqueuesCommand(t *testing.T) {
+// TestItemSkillCaster_EnqueuesCommand verifies the adapter posts a CmdItemSkillCast.
+func TestItemSkillCaster_EnqueuesCommand(t *testing.T) {
 	gl, _ := newTestLoopWithPlayer(t)
-	gl.StatRestorer().RestoreStats(7, 10, 20, 30, 2037, 1)
+	gl.ItemSkillCaster().CastItemSkill(7, 2037, 1)
 
 	select {
 	case cmd := <-gl.commands:
-		rs, ok := cmd.(CmdRestoreStats)
+		c, ok := cmd.(CmdItemSkillCast)
 		if !ok {
-			t.Fatalf("got %T, want CmdRestoreStats", cmd)
+			t.Fatalf("got %T, want CmdItemSkillCast", cmd)
 		}
-		if rs.CharID != 7 || rs.HP != 10 || rs.MP != 20 || rs.CP != 30 || rs.SkillID != 2037 || rs.SkillLevel != 1 {
-			t.Errorf("cmd = %+v, want {7,10,20,30,2037,1}", rs)
+		if c.CharID != 7 || c.SkillID != 2037 || c.Level != 1 {
+			t.Errorf("cmd = %+v, want {7,2037,1}", c)
 		}
 	default:
 		t.Fatal("no command enqueued")

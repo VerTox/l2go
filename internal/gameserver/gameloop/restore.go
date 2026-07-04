@@ -2,7 +2,6 @@ package gameloop
 
 import (
 	"github.com/VerTox/l2go/internal/gameserver/packets/outclient"
-	"github.com/VerTox/l2go/internal/gameserver/registry"
 	"github.com/VerTox/l2go/internal/gameserver/usecase"
 )
 
@@ -46,43 +45,57 @@ func (gl *GameLoop) handleRestoreStats(cmd CmdRestoreStats) {
 		_ = conn.Send(gl.buildUserInfoForPlayer(player))
 	}
 	gl.broadcastToTargeters(cmd.CharID, su)
-
-	// INTERIM cast visual (l2go-diu): broadcast the linked skill's MagicSkillUse so
-	// the client plays the potion animation and starts the item-icon reuse cooldown
-	// sweep (the client drives the sweep off the cast; a real skill engine will
-	// replace this with an actual doSimultaneousCast). Self-cast: caster == target;
-	// player object id == char id. broadcastToNearby includes the owner.
-	if cmd.SkillID > 0 {
-		msu := outclient.BuildMagicSkillUse(
-			cmd.CharID, cmd.CharID, cmd.SkillID, cmd.SkillLevel, 0, 0,
-			int32(player.Position.X), int32(player.Position.Y), int32(player.Position.Z),
-			int32(player.Position.X), int32(player.Position.Y), int32(player.Position.Z),
-		)
-		gl.broadcastToNearby(player.Position, msu)
-	}
 }
 
-// statRestorer adapts the game loop's command channel to usecase.StatRestorer so
-// item handlers can request a restore without depending on the loop internals.
-type statRestorer struct {
+// handleItemSkillCast casts an item's linked skill (potion/consumable) through the
+// real skill engine, bypassing the KnownSkills gate (item skills are not in the
+// player's skill tree). Consumables have immediate effect, so this is an instant
+// cast: broadcast the animation, then apply effects now — no cast bar. Routes
+// restore/buff effects through applySkillEffects (l2go-849, replaces the interim
+// direct-restore path). (l2go-849)
+func (gl *GameLoop) handleItemSkillCast(cmd CmdItemSkillCast) {
+	if gl.skillData == nil {
+		return
+	}
+	caster, ok := gl.world.GetPlayer(cmd.CharID)
+	if !ok || caster.Character == nil || caster.Character.CurrentHP <= 0 {
+		return
+	}
+	skill := gl.skillData.GetSkill(int(cmd.SkillID), int(cmd.Level))
+	if skill == nil {
+		return
+	}
+
+	// Self-cast animation (caster == target; player object id == char id) so the
+	// client plays the potion effect and runs the item-icon reuse sweep.
+	px, py, pz := int32(caster.Position.X), int32(caster.Position.Y), int32(caster.Position.Z)
+	gl.broadcastToNearby(caster.Position, outclient.BuildMagicSkillUse(
+		cmd.CharID, cmd.CharID, cmd.SkillID, cmd.Level, 0, 0, px, py, pz, px, py, pz,
+	))
+	gl.broadcastToNearby(caster.Position, outclient.BuildMagicSkillLaunched(
+		cmd.CharID, cmd.SkillID, cmd.Level, []int32{cmd.CharID},
+	))
+	gl.applySkillEffects(caster, cmd.CharID, skill)
+}
+
+// itemSkillCaster adapts the game loop's command channel to usecase.ItemSkillCaster
+// so item handlers can trigger a real item-skill cast without depending on the loop
+// internals (the loop owns casting/vitals state).
+type itemSkillCaster struct {
 	ch chan<- Command
 }
 
-func (s statRestorer) RestoreStats(charID, hp, mp, cp, skillID, skillLevel int32) {
-	s.ch <- CmdRestoreStats{CharID: charID, HP: hp, MP: mp, CP: cp, SkillID: skillID, SkillLevel: skillLevel}
+func (c itemSkillCaster) CastItemSkill(charID, skillID, level int32) {
+	c.ch <- CmdItemSkillCast{CharID: charID, SkillID: skillID, Level: level}
 }
 
-// StatRestorer returns a usecase.StatRestorer backed by this loop's command channel.
-func (gl *GameLoop) StatRestorer() usecase.StatRestorer {
-	return statRestorer{ch: gl.commands}
+// ItemSkillCaster returns a usecase.ItemSkillCaster backed by this loop's command channel.
+func (gl *GameLoop) ItemSkillCaster() usecase.ItemSkillCaster {
+	return itemSkillCaster{ch: gl.commands}
 }
 
 // ensure the adapter satisfies the usecase contract at compile time.
-var _ usecase.StatRestorer = statRestorer{}
-
-// SkillEffectSource returns a skill-effect lookup for the interim potion handler.
-// It is a thin re-export so callers wire it without importing registry directly.
-var _ usecase.SkillEffectSource = (*registry.SkillEffectRegistry)(nil)
+var _ usecase.ItemSkillCaster = itemSkillCaster{}
 
 func clampFloat(v, max float64) float64 {
 	if v > max {

@@ -4,71 +4,61 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/VerTox/l2go/internal/gameserver/registry"
+	"github.com/VerTox/l2go/internal/gameserver/models"
 )
 
-// SkillEffectSource resolves an item skill (id+level) to a minimal restore effect.
-// Implemented by registry.SkillEffectRegistry; abstracted here for testability.
-type SkillEffectSource interface {
-	Lookup(skillID, level int) (registry.SkillEffect, bool)
+// ItemSkillCaster triggers a real cast of an item's linked skill (id+level) through
+// the skill engine. Implemented on the game-loop side (it owns casting/vitals state
+// and broadcasts the animation), so the handler stays free of packet/world deps.
+type ItemSkillCaster interface {
+	CastItemSkill(charID, skillID, level int32)
 }
 
-// StatRestorer applies a vital-stat restore to a live player. It is implemented on
-// the game-loop side (the loop owns authoritative HP/MP/CP and broadcasts the
-// resulting StatusUpdate/UserInfo), so the handler stays free of packet/world deps.
-type StatRestorer interface {
-	RestoreStats(charID, hp, mp, cp, skillID, skillLevel int32)
+// SkillTemplateSource resolves a skill template by (id, level). Implemented by
+// registry.SkillData; used here only to validate that the potion's linked skill
+// exists before consuming the item.
+type SkillTemplateSource interface {
+	GetSkill(skillID, level int) *models.Skill
 }
 
 // PotionHandler implements ItemHandler for consumable potions whose item_skill
-// points at a restore skill (handlers "ItemSkills" and "ManaPotion" in HF data).
+// points at a skill (handlers "ItemSkills" and "ManaPotion" in HF data). It casts
+// that skill through the real skill engine (restore effects, and buffs/HoT via the
+// continuous-effect engine), then consumes one item. (l2go-849, replaces the interim
+// direct-restore path l2go-diu.)
 //
-// INTERIM (l2go-diu, decision b2): there is no skill engine yet, so instead of
-// casting the linked skill we read its restore effect (HP/MP/CP + amount) from the
-// skill data and apply it immediately, then consume one item. This will be replaced
-// by a real doSimultaneousCast once the skill engine lands. Reuse timers / shared
-// reuse groups (ExUseSharedGroupItem) are out of scope here — tracked by l2go-6vj.
+// Item reuse timers / shared reuse groups (ExUseSharedGroupItem) are handled by the
+// inventory use case off item consumption, not here.
 type PotionHandler struct {
-	skills  SkillEffectSource
-	restore StatRestorer
+	skills SkillTemplateSource
+	caster ItemSkillCaster
 }
 
-// NewPotionHandler builds a potion handler that resolves effects via skills and
-// applies restores through restore.
-func NewPotionHandler(skills SkillEffectSource, restore StatRestorer) *PotionHandler {
-	return &PotionHandler{skills: skills, restore: restore}
+// NewPotionHandler builds a potion handler that validates skills via skills and
+// casts them through caster.
+func NewPotionHandler(skills SkillTemplateSource, caster ItemSkillCaster) *PotionHandler {
+	return &PotionHandler{skills: skills, caster: caster}
 }
 
-// UseItem resolves the item's linked restore skill(s), consumes one item and routes
-// the HP/MP/CP restore to the live player. Returns consumed=false (no-op) when the
-// item declares no resolvable restore effect.
+// UseItem casts the item's linked skill(s) through the skill engine and consumes one
+// item. Returns consumed=false (no-op) when the item declares no resolvable skill,
+// so a potion is never consumed without an effect.
 func (p *PotionHandler) UseItem(ctx context.Context, use ItemUseContext) (bool, error) {
 	if use.Template == nil || len(use.Template.ItemSkills) == 0 {
 		return false, nil
 	}
 
-	var hp, mp, cp int32
-	matched := false
+	// Collect the skills that actually resolve in the datapack; a potion pointing at
+	// only unknown skills behaves like an unhandled item (no-op, not consumed).
+	type cast struct{ id, level int32 }
+	var casts []cast
 	for _, sk := range use.Template.ItemSkills {
-		eff, ok := p.skills.Lookup(sk.ID, sk.Level)
-		if !ok {
+		if p.skills != nil && p.skills.GetSkill(sk.ID, sk.Level) == nil {
 			continue
 		}
-		switch eff.Kind {
-		case registry.EffectHP:
-			hp += int32(eff.Amount)
-		case registry.EffectMP:
-			mp += int32(eff.Amount)
-		case registry.EffectCP:
-			cp += int32(eff.Amount)
-		default:
-			continue
-		}
-		matched = true
+		casts = append(casts, cast{id: int32(sk.ID), level: int32(sk.Level)})
 	}
-	if !matched {
-		// No restore effect we understand — behave like an unhandled item (no-op),
-		// so we never consume a potion without applying its effect.
+	if len(casts) == 0 {
 		return false, nil
 	}
 
@@ -76,12 +66,9 @@ func (p *PotionHandler) UseItem(ctx context.Context, use ItemUseContext) (bool, 
 		return false, err
 	}
 
-	// INTERIM cast visual: we don't run the real skill, but broadcasting the
-	// linked skill's MagicSkillUse gives the client the cast animation and starts
-	// the shortcut/reuse cooldown sweep on the item icon. Use the item's primary
-	// item_skill as the cast skill.
-	castID, castLvl := use.Template.ItemSkills[0].ID, use.Template.ItemSkills[0].Level
-	p.restore.RestoreStats(use.CharID, hp, mp, cp, int32(castID), int32(castLvl))
+	for _, c := range casts {
+		p.caster.CastItemSkill(use.CharID, c.id, c.level)
+	}
 	return true, nil
 }
 
