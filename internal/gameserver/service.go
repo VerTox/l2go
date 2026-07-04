@@ -516,6 +516,7 @@ func (g *GameServer) prepareHandlers() {
 	// SkillList packet can flag passive skills correctly.
 	g.skillData = registry.NewSkillData(skillRoots)
 	g.handlers.client.SetSkillData(g.skillData)
+	g.handlers.client.SetPromMetrics(g.promMetrics) // world-entry funnel (l2go-5wq)
 	g.gameLoop.SetSkillData(g.skillData) // casting (l2go-lu8)
 
 	// Potions cast their linked item skill through the real skill engine (l2go-849):

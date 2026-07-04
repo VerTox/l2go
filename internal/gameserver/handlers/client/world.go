@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"time"
 
 	"github.com/rs/zerolog/log"
 
@@ -20,10 +21,15 @@ import (
 
 // handleEnterWorld processes final world entry after character selection
 func (h *Handler) handleEnterWorld(ctx context.Context, c *client.ClientConn, payload []byte) error {
+	// World-entry funnel instrumentation (l2go-5wq): time the whole handler and
+	// record the outcome by result on every exit.
+	entryStart := time.Now()
+
 	// Get session to access account and character info
 	session := h.getSession(c)
 	if session == nil {
 		log.Ctx(ctx).Error().Msg("no session found for world entry")
+		h.prom.RecordWorldEntry("no_session", time.Since(entryStart))
 		return nil
 	}
 
@@ -38,6 +44,7 @@ func (h *Handler) handleEnterWorld(ctx context.Context, c *client.ClientConn, pa
 		log.Ctx(ctx).Error().
 			Str("account", session.AccountName).
 			Msg("player not found in world for EnterWorld")
+		h.prom.RecordWorldEntry("player_not_found", time.Since(entryStart))
 		return nil
 	}
 
@@ -58,6 +65,7 @@ func (h *Handler) handleEnterWorld(ctx context.Context, c *client.ClientConn, pa
 	// Send world entry packet sequence
 	if err := h.sendWorldEntryPackets(ctx, c, playerState.Character); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to send world entry packets")
+		h.prom.RecordWorldEntry("send_failed", time.Since(entryStart))
 		return err
 	}
 
@@ -72,6 +80,8 @@ func (h *Handler) handleEnterWorld(ctx context.Context, c *client.ClientConn, pa
 		AccountName: session.AccountName,
 		Position:    playerState.Position,
 	}
+
+	h.prom.RecordWorldEntry("ok", time.Since(entryStart))
 
 	log.Ctx(ctx).Info().
 		Int32("char_id", playerState.CharID).

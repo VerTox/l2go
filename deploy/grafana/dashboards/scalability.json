@@ -1,0 +1,127 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "time": { "from": "now-30m", "to": "now" },
+  "refresh": "5s",
+  "title": "Game Loop — Scalability",
+  "uid": "l2go-scalability",
+  "tags": ["l2go", "gameloop", "scalability"],
+  "schemaVersion": 39,
+  "version": 1,
+  "templating": { "list": [] },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Visibility fan-out vs players (the O(N²) driver)",
+      "description": "Max visible-player set (left) overlaid on online players (right). When fan-out climbs faster than players, local density is compounding — the clustered-vs-spread difference shows here.",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "players" }, "properties": [ { "id": "custom.axisPlacement", "value": "right" }, { "id": "unit", "value": "short" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } } ] },
+          { "matcher": { "id": "byName", "options": "known-players max" }, "properties": [ { "id": "custom.axisPlacement", "value": "left" }, { "id": "unit", "value": "short" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } } ] }
+        ]
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "l2go_gameloop_known_players_max", "legendFormat": "known-players max" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "l2go_gameloop_players", "legendFormat": "players" }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Fan-out distribution (per-player quantiles)",
+      "description": "How many players each player sees. p99 vs p50 shows whether the load is evenly spread or a few dense hotspots dominate.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 1 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "calcs": ["max", "mean"], "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.50, sum(rate(l2go_gameloop_known_players_bucket[$__rate_interval])) by (le))", "legendFormat": "p50" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.95, sum(rate(l2go_gameloop_known_players_bucket[$__rate_interval])) by (le))", "legendFormat": "p95" },
+        { "refId": "C", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.99, sum(rate(l2go_gameloop_known_players_bucket[$__rate_interval])) by (le))", "legendFormat": "p99" }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Tick p99 by phase (where the time goes)",
+      "description": "99th percentile per subsystem. Isolates which phase blows the 100ms budget — the region_cleanup line confirms the ~38K-NPC sweep spike.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 1 }, "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": 0.1 } ] } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "calcs": ["max"], "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.99, sum(rate(l2go_gameloop_tick_phase_seconds_bucket[$__rate_interval])) by (le, phase))", "legendFormat": "{{phase}}" }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "World-entry rate by result",
+      "description": "Entries/sec by outcome. A rising non-ok share under mass entry is the 0ar FAILED-entry symptom, measured server-side.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 17 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "bars", "fillOpacity": 70, "lineWidth": 1, "stacking": { "mode": "normal" } } }, "overrides": [
+        { "matcher": { "id": "byName", "options": "ok" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } } ] }
+      ] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(rate(l2go_world_entry_total[$__rate_interval])) by (result)", "legendFormat": "{{result}}" }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "World-entry latency (quantiles)",
+      "description": "Server-side entry handler time. Climbs when DB-bound entry work (skill reconcile, item list) saturates under mass login.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 17 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 1 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "calcs": ["max", "mean"], "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.50, sum(rate(l2go_world_entry_duration_seconds_bucket[$__rate_interval])) by (le))", "legendFormat": "p50" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.99, sum(rate(l2go_world_entry_duration_seconds_bucket[$__rate_interval])) by (le))", "legendFormat": "p99" }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Active regions & NPC total",
+      "description": "Region-grid working set (left) and total NPCs (right). Active regions scale with how spread players are.",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 25 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 1 } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "npc total" }, "properties": [ { "id": "custom.axisPlacement", "value": "right" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "purple" } } ] },
+          { "matcher": { "id": "byName", "options": "active regions" }, "properties": [ { "id": "custom.axisPlacement", "value": "left" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "blue" } } ] }
+        ]
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "l2go_gameloop_active_regions", "legendFormat": "active regions" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "l2go_gameloop_npc_total", "legendFormat": "npc total" }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Persistence sink queue depth",
+      "description": "Backlog of the async DB sinks. A filling queue means DB latency is outpacing the loop — the earliest stall warning.",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 25 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 1 }, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 50 }, { "color": "red", "value": 200 } ] } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "l2go_sink_save_queue_depth", "legendFormat": "save" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "l2go_sink_recharge_queue_depth", "legendFormat": "recharge" },
+        { "refId": "C", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "l2go_sink_learn_queue_depth", "legendFormat": "learn" }
+      ]
+    }
+  ]
+}

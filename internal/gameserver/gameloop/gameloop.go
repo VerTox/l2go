@@ -202,11 +202,15 @@ func (gl *GameLoop) Run(ctx context.Context) error {
 			lastTickStart = tickStart
 			cmdDepth := len(gl.commands) // backlog seen before draining
 
+			phaseStart := time.Now()
 			gl.tick()
+			gl.prom.observePhase("core", time.Since(phaseStart))
 
 			// Periodic region cleanup
 			if time.Since(lastRegionCleanup) > regionCleanupInterval {
+				phaseStart = time.Now()
 				gl.deactivateStaleRegions()
+				gl.prom.observePhase("region_cleanup", time.Since(phaseStart))
 				lastRegionCleanup = time.Now()
 			}
 
@@ -214,19 +218,25 @@ func (gl *GameLoop) Run(ctx context.Context) error {
 			// this goroutine so character reads are race-free; the DB write happens
 			// off-loop via the persist sink.
 			if time.Since(lastAutosave) > autosaveInterval {
+				phaseStart = time.Now()
 				gl.autosaveOnlinePlayers()
+				gl.prom.observePhase("autosave", time.Since(phaseStart))
 				lastAutosave = time.Now()
 			}
 
 			// Periodic HP/MP/CP regeneration for living players (l2go-nty).
 			if time.Since(lastRegen) > regenInterval {
+				phaseStart = time.Now()
 				gl.regenPlayers()
+				gl.prom.observePhase("regen", time.Since(phaseStart))
 				lastRegen = time.Now()
 			}
 
 			// Buff expiry + HoT/DoT ticks (l2go-c8t).
 			if time.Since(lastBuffService) > buffInterval {
+				phaseStart = time.Now()
 				gl.serviceBuffs()
+				gl.prom.observePhase("buffs", time.Since(phaseStart))
 				lastBuffService = time.Now()
 			}
 
@@ -243,6 +253,30 @@ func (gl *GameLoop) Run(ctx context.Context) error {
 			if tickStart.Sub(metrics.windowStart) >= tickMetricsReportInterval {
 				metrics.report(tickStart, gl.world.GetOnlinePlayerCount())
 				metrics.reset(tickStart)
+				// World-inventory gauges once per window: activeRegions is loop-owned
+				// (read race-free here), NPC count comes from the thread-safe registry.
+				activeRegions := 0
+				for _, r := range gl.activeRegions {
+					if r.Active {
+						activeRegions++
+					}
+				}
+				gl.prom.setWorldInventory(activeRegions, gl.world.GetNPCCount())
+
+				// Visibility fan-out sample once per window (l2go-bws): KnownPlayers is
+				// loop-owned, so this sweep on the loop goroutine is race-free. Fresh
+				// snapshot (nil) to avoid touching the reusable playerScratch buffer.
+				// Only KnownPlayers — KnownNPCs is owned by each connection goroutine and
+				// reading it here would race.
+				maxFanOut := 0
+				for _, p := range gl.world.SnapshotPlayers(nil) {
+					n := len(p.KnownPlayers)
+					gl.prom.observeKnownPlayers(n)
+					if n > maxFanOut {
+						maxFanOut = n
+					}
+				}
+				gl.prom.setKnownPlayersMax(maxFanOut)
 			}
 		}
 	}

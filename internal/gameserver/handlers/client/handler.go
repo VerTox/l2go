@@ -46,6 +46,9 @@ type Handler struct {
 	registry *Registry
 	// skillData resolves skill templates for the SkillList passive/enchant flags.
 	skillData SkillTemplateSource
+	// prom records world-entry funnel metrics (l2go-5wq). nil leaves entry
+	// instrumentation off; all calls are nil-safe.
+	prom *gameloop.PromMetrics
 	// Simple in-memory session storage (TODO: use proper session management)
 	sessions map[*client.ClientConn]*ClientSession
 	// sessions map is written/read from every connection goroutine; guard it.
@@ -85,6 +88,10 @@ func (h *Handler) SetEnchantUseCase(uc *usecase.EnchantUseCase) { h.enchantUseCa
 // SetSkillData wires the skill template registry used to resolve the SkillList
 // passive/enchanted flags. Kept out of New() like the other add-on setters.
 func (h *Handler) SetSkillData(sd SkillTemplateSource) { h.skillData = sd }
+
+// SetPromMetrics wires the Prometheus collectors used for the world-entry funnel.
+// Kept out of New() like the other add-on setters; nil leaves it off.
+func (h *Handler) SetPromMetrics(pm *gameloop.PromMetrics) { h.prom = pm }
 
 // Handle processes incoming client packets
 func (h *Handler) Handle(ctx context.Context, c *client.ClientConn) {
