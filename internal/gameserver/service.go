@@ -2,8 +2,10 @@ package gameserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -22,6 +24,10 @@ import (
 	"github.com/VerTox/l2go/internal/gameserver/usecase"
 )
 
+// metricsListenAddr is where the Prometheus /metrics endpoint binds. Fixed to
+// match the dev-stack scrape target (docker-compose gameserver:2112). (l2go-5pc)
+const metricsListenAddr = ":2112"
+
 type GameServer struct {
 	// Configuration
 	config config
@@ -39,6 +45,10 @@ type GameServer struct {
 
 	// Game loop
 	gameLoop *gameloop.GameLoop
+
+	// promMetrics exposes game-loop tick-health as Prometheus series over /metrics
+	// (l2go-5pc). Created in Run(), served by a worker in run().
+	promMetrics *gameloop.PromMetrics
 
 	// Use cases
 	usc usecases
@@ -839,6 +849,11 @@ func (g *GameServer) Run(ctx context.Context) error {
 	// Create game loop before use cases (handlers need the command channel)
 	g.gameLoop = gameloop.New(g.world, g.connections, g.config.expRate, g.config.spRate)
 
+	// Wire Prometheus tick-health collectors; the loop feeds them each tick and the
+	// /metrics worker in run() exposes them for scraping. (l2go-5pc)
+	g.promMetrics = gameloop.NewPromMetrics()
+	g.gameLoop.SetPromMetrics(g.promMetrics)
+
 	// Seed respawn data from the NPCs loaded into the world above, so killed NPCs
 	// can respawn (otherwise RespawnEvent finds no spawn info). (l2go-c44)
 	g.gameLoop.RegisterWorldSpawns()
@@ -939,6 +954,26 @@ func (g *GameServer) run(ctx context.Context) error {
 	// Start game loop
 	eg.Go(func() error {
 		return g.gameLoop.Run(egctx)
+	})
+
+	// Serve Prometheus tick-health metrics on /metrics. Bound to a fixed port that
+	// the dev-stack Prometheus scrapes (l2go-5pc); shuts down gracefully when the
+	// group context is cancelled so it never outlives the rest of the server.
+	eg.Go(func() error {
+		mux := http.NewServeMux()
+		mux.Handle("/metrics", g.promMetrics.Handler())
+		srv := &http.Server{Addr: metricsListenAddr, Handler: mux}
+		go func() {
+			<-egctx.Done()
+			shutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_ = srv.Shutdown(shutCtx)
+		}()
+		log.Ctx(ctx).Info().Str("addr", metricsListenAddr).Msg("Metrics endpoint listening on /metrics")
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			return fmt.Errorf("metrics server: %w", err)
+		}
+		return nil
 	})
 
 	// Start game client listener

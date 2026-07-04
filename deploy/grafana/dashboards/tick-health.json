@@ -1,0 +1,138 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "time": { "from": "now-15m", "to": "now" },
+  "refresh": "5s",
+  "title": "Game Loop — Tick Health",
+  "uid": "l2go-tick-health",
+  "tags": ["l2go", "gameloop"],
+  "schemaVersion": 39,
+  "version": 1,
+  "templating": { "list": [] },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Players online",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area" },
+      "targets": [ { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "l2go_gameloop_players" } ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Behind ticks / sec",
+      "description": "Ticks that missed the 100ms cadence (gap > 150ms), per second. Non-zero = the loop is falling behind.",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 2, "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 0.1 }, { "color": "red", "value": 1 } ] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area" },
+      "targets": [ { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "rate(l2go_gameloop_tick_behind_total[$__rate_interval])" } ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Tick work p99",
+      "description": "99th percentile of per-tick work time. Approaches the 100ms deadline = danger.",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 0.05 }, { "color": "red", "value": 0.1 } ] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area" },
+      "targets": [ { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.99, sum(rate(l2go_gameloop_tick_work_seconds_bucket[$__rate_interval])) by (le))" } ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Command backlog",
+      "description": "Command-channel depth at tick start (backpressure). Growing = handlers outpace the loop.",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 10 }, { "color": "red", "value": 100 } ] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area" },
+      "targets": [ { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "l2go_gameloop_command_backlog" } ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Tick work time (quantiles)",
+      "description": "Per-tick processing time. Histogram quantiles — approximate, not the exact windowed max in the log. Deadline is 100ms.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 1 }, "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": 0.1 } ] } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "calcs": ["max", "mean"], "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.50, sum(rate(l2go_gameloop_tick_work_seconds_bucket[$__rate_interval])) by (le))", "legendFormat": "p50" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.95, sum(rate(l2go_gameloop_tick_work_seconds_bucket[$__rate_interval])) by (le))", "legendFormat": "p95" },
+        { "refId": "C", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.99, sum(rate(l2go_gameloop_tick_work_seconds_bucket[$__rate_interval])) by (le))", "legendFormat": "p99" }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Scheduling gap (quantiles)",
+      "description": "Interval between tick starts. Healthy sits at 100ms; the red line at 150ms is the 'behind' threshold.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 1 }, "thresholds": { "mode": "absolute", "steps": [ { "color": "orange", "value": 0.1 }, { "color": "red", "value": 0.15 } ] } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "calcs": ["max", "mean"], "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.50, sum(rate(l2go_gameloop_tick_gap_seconds_bucket[$__rate_interval])) by (le))", "legendFormat": "p50" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.99, sum(rate(l2go_gameloop_tick_gap_seconds_bucket[$__rate_interval])) by (le))", "legendFormat": "p99" }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Tick work p99 vs players (correlation)",
+      "description": "The key load-scenario view: overlay p99 tick work (left, seconds) on online players (right). The point where work climbs against player count is the degradation knee — compare clustered vs spread here.",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "players" }, "properties": [ { "id": "custom.axisPlacement", "value": "right" }, { "id": "unit", "value": "short" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } } ] },
+          { "matcher": { "id": "byName", "options": "tick work p99" }, "properties": [ { "id": "unit", "value": "s" }, { "id": "custom.axisPlacement", "value": "left" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } } ] }
+        ]
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.99, sum(rate(l2go_gameloop_tick_work_seconds_bucket[$__rate_interval])) by (le))", "legendFormat": "tick work p99" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "l2go_gameloop_players", "legendFormat": "players" }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Behind ticks / sec",
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 21 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "bars", "fillOpacity": 60, "lineWidth": 1 }, "color": { "mode": "fixed", "fixedColor": "orange" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "rate(l2go_gameloop_tick_behind_total[$__rate_interval])", "legendFormat": "behind/s" } ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Command backlog",
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 21 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 1 }, "color": { "mode": "fixed", "fixedColor": "purple" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "l2go_gameloop_command_backlog", "legendFormat": "backlog" } ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Goroutines",
+      "description": "Go runtime goroutine count — watch for goroutine-per-connection growth under load.",
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 21 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 1 }, "color": { "mode": "fixed", "fixedColor": "blue" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "go_goroutines{job=\"gameserver\"}", "legendFormat": "goroutines" } ]
+    }
+  ]
+}

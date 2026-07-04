@@ -87,6 +87,11 @@ type GameLoop struct {
 	// castSeq is a monotonic counter assigning each cast a unique id so a scheduled
 	// hit event can detect it was aborted/superseded.
 	castSeq int64
+
+	// prom mirrors per-tick health samples into Prometheus collectors (l2go-5pc).
+	// nil until SetPromMetrics is called; every update is nil-safe so the loop runs
+	// unchanged without it.
+	prom *PromMetrics
 }
 
 // New creates a new GameLoop. expRate and spRate control experience/SP multipliers (default 1.0).
@@ -117,6 +122,10 @@ func New(world *registry.WorldRegistry, connections *registry.ConnectionRegistry
 // SetSkillData wires the skill template registry used for casting. Kept out of
 // New() like the other optional sinks.
 func (gl *GameLoop) SetSkillData(sd *registry.SkillData) { gl.skillData = sd }
+
+// SetPromMetrics wires the Prometheus collectors the loop feeds each tick. Kept
+// out of New() like the other optional sinks; nil leaves instrumentation off.
+func (gl *GameLoop) SetPromMetrics(pm *PromMetrics) { gl.prom = pm }
 
 // CommandChannel returns a send-only channel for handlers to submit commands.
 func (gl *GameLoop) CommandChannel() chan<- Command {
@@ -206,7 +215,13 @@ func (gl *GameLoop) Run(ctx context.Context) error {
 			// Record this tick's health and periodically report the window. work
 			// covers the whole iteration (tick + periodic subsystems above) so the
 			// report reflects the real per-tick budget against the 100ms deadline.
-			metrics.record(gap, time.Since(tickStart), cmdDepth)
+			work := time.Since(tickStart)
+			metrics.record(gap, work, cmdDepth)
+			// Mirror the same samples into Prometheus (nil-safe). players is set every
+			// tick — cheap (one registry read) — so a scrape sees a fresh count rather
+			// than the 10s window value, keeping work-vs-players correlation sharp.
+			gl.prom.recordTick(gap, work, cmdDepth, gap > behindThreshold)
+			gl.prom.setPlayers(gl.world.GetOnlinePlayerCount())
 			if tickStart.Sub(metrics.windowStart) >= tickMetricsReportInterval {
 				metrics.report(tickStart, gl.world.GetOnlinePlayerCount())
 				metrics.reset(tickStart)

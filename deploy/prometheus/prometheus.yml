@@ -1,0 +1,13 @@
+# Prometheus scrape config for the L2Go dev stack.
+# The gameserver exposes tick-health metrics on :2112/metrics (see l2go-5pc).
+# Until that endpoint lands the target simply shows DOWN — expected, harmless.
+global:
+  scrape_interval: 5s      # tight enough to catch tick-health swings during a load ramp
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: gameserver
+    static_configs:
+      - targets: ["gameserver:2112"]
+        labels:
+          service: gameserver

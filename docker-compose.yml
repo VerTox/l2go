@@ -61,6 +61,7 @@ services:
     container_name: l2go-gameserver
     ports:
       - "7777:7777"  # Client connections
+      - "2112:2112"  # Prometheus /metrics (tick-health, l2go-5pc)
     depends_on:
       postgres:
         condition: service_healthy
@@ -106,8 +107,49 @@ services:
     environment:
       ADMINER_DEFAULT_SERVER: postgres
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: l2go-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    restart: unless-stopped
+    networks:
+      - l2go-network
+
+  grafana:
+    # Pinned to a stable OSS release: :latest ships the experimental unified-storage
+    # provisioning pipeline which crash-loops on file-provisioned dashboards.
+    image: grafana/grafana:11.6.0
+    container_name: l2go-grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    volumes:
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    environment:
+      # Dev-only: anonymous admin so the dashboard opens without a login prompt.
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    restart: unless-stopped
+    networks:
+      - l2go-network
+
 volumes:
   postgres_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
     driver: local
 
 networks:

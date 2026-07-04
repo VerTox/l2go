@@ -1,0 +1,15 @@
+# Grafana dashboard provider — loads JSON dashboards from disk on startup.
+# The tick-health dashboard itself is delivered by l2go-8u4 into ./deploy/grafana/dashboards/.
+apiVersion: 1
+
+providers:
+  - name: l2go
+    orgId: 1
+    folder: L2Go
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false
