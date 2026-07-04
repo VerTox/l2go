@@ -130,8 +130,11 @@ type WorldRegistry struct {
 	objects map[int32]*WorldObject         // objectID -> object
 	npcs    map[int32]*models.NpcInstance  // objectID -> NPC instance
 
-	// Spatial indexing (simple implementation)
-	regions map[string][]int32             // "x,y" -> []objectIDs
+	// Spatial indexing (simple implementation). Keys are packed int64 region
+	// coordinates (see packRegion) rather than "x,y" strings, so grid queries build
+	// no per-call string garbage — the fixed ~6µs / dozens-of-allocs floor the
+	// string keys imposed on every GetPlayersInRange/GetNPCsInRange call. (l2go-8hy)
+	regions map[int64][]int32 // packRegion(rx,ry) -> []objectIDs
 
 	// Reverse who-targets-what index, so an object's updates broadcast to exactly
 	// its targeters in O(targeters) instead of scanning all players. (l2go-45b)
@@ -144,7 +147,7 @@ func NewWorldRegistry() *WorldRegistry {
 		players: make(map[int32]*PlayerWorldState),
 		objects: make(map[int32]*WorldObject),
 		npcs:    make(map[int32]*models.NpcInstance),
-		regions: make(map[string][]int32),
+		regions: make(map[int64][]int32),
 		targets: newTargetIndex(),
 	}
 }
@@ -315,8 +318,8 @@ func (wr *WorldRegistry) UpdatePlayerPosition(ctx context.Context, charID int32,
 		
 		log.Ctx(ctx).Debug().
 			Int32("char_id", charID).
-			Str("old_region", oldRegionKey).
-			Str("new_region", newRegionKey).
+			Int64("old_region", oldRegionKey).
+			Int64("new_region", newRegionKey).
 			Msg("Player changed region")
 	}
 	
@@ -636,16 +639,24 @@ func (wr *WorldRegistry) CleanupOfflinePlayers(ctx context.Context, maxOfflineTi
 
 // Private helper methods
 
-// getRegionKey creates a spatial index key from coordinates
-func (wr *WorldRegistry) getRegionKey(x, y int) string {
-	// Simple grid-based spatial indexing (1000x1000 units per region)
-	regionX := x / 1000
-	regionY := y / 1000
-	return fmt.Sprintf("%d,%d", regionX, regionY)
+// regionSize is the side length in world units of one spatial-index cell.
+const regionSize = 1000
+
+// packRegion packs region-grid coordinates into a single int64 map key: rx in the
+// high 32 bits, ry in the low 32. Region coords (world coord / 1000) fit in int32
+// for any realistic map, so this is collision-free and allocation-free — unlike the
+// old fmt.Sprintf("%d,%d") key it replaces. (l2go-8hy)
+func packRegion(rx, ry int) int64 {
+	return int64(rx)<<32 | int64(int32(ry))&0xffffffff
+}
+
+// getRegionKey creates a spatial index key from world coordinates.
+func (wr *WorldRegistry) getRegionKey(x, y int) int64 {
+	return packRegion(x/regionSize, y/regionSize)
 }
 
 // removeFromRegion removes an object from a spatial region
-func (wr *WorldRegistry) removeFromRegion(regionKey string, objectID int32) {
+func (wr *WorldRegistry) removeFromRegion(regionKey int64, objectID int32) {
 	if objectIDs, exists := wr.regions[regionKey]; exists {
 		for i, id := range objectIDs {
 			if id == objectID {
@@ -661,21 +672,21 @@ func (wr *WorldRegistry) removeFromRegion(regionKey string, objectID int32) {
 	}
 }
 
-// getNearbyRegions returns region keys for nearby regions
-func (wr *WorldRegistry) getNearbyRegions(x, y, radius int) []string {
-	regionSize := 1000
+// getNearbyRegions returns the packed keys of every region cell overlapping the
+// radius around (x,y). Allocation-free per key (int64 packing, no string build).
+func (wr *WorldRegistry) getNearbyRegions(x, y, radius int) []int64 {
 	startX := (x - radius) / regionSize
 	endX := (x + radius) / regionSize
 	startY := (y - radius) / regionSize
 	endY := (y + radius) / regionSize
-	
-	var regions []string
+
+	regions := make([]int64, 0, (endX-startX+1)*(endY-startY+1))
 	for rx := startX; rx <= endX; rx++ {
 		for ry := startY; ry <= endY; ry++ {
-			regions = append(regions, fmt.Sprintf("%d,%d", rx, ry))
+			regions = append(regions, packRegion(rx, ry))
 		}
 	}
-	
+
 	return regions
 }
 
