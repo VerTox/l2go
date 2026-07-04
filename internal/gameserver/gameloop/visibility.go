@@ -43,20 +43,6 @@ func (gl *GameLoop) spawnPlayerTo(viewer, spawned *registry.PlayerWorldState) {
 	gl.sendToPlayer(viewer, relation.GetData())
 }
 
-// reconcileAllVisibility rebuilds player-to-player visibility for every online
-// player as one bounded pass, decoupled from movement (l2go-awy). Mirrors L2J's
-// KnownListUpdateTaskManager: instead of an O(local) reconcile on every movement
-// step — O(N^2)/s when a crowd all moves — a single pass runs every
-// visibilityInterval. reconcilePlayerVisibility is bidirectional and idempotent, so
-// reconciling each player once covers spawn AND despawn for both sides. Loop-
-// goroutine only (KnownPlayers is loop-owned). A fresh snapshot (not the shared
-// playerScratch) since it runs ~1/s and calls back into range queries per player.
-func (gl *GameLoop) reconcileAllVisibility() {
-	for _, p := range gl.world.SnapshotPlayers(nil) {
-		gl.reconcilePlayerVisibility(p.CharID)
-	}
-}
-
 // reconcilePlayerVisibility brings the moving player's player-to-player visibility
 // up to date: spawns (CharInfo) players newly in range and despawns (DeleteObject)
 // players that left range — bidirectionally, so a stationary player also sees the

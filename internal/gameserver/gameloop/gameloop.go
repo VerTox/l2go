@@ -26,13 +26,6 @@ const (
 	regionCleanupInterval = 10 * time.Second
 	autosaveInterval      = 5 * time.Minute
 	regenInterval         = 3 * time.Second // L2J REGEN period
-
-	// visibilityInterval is how often player-to-player visibility is reconciled as a
-	// single bounded pass, decoupled from movement (l2go-awy). Mirrors L2J's
-	// KnownListUpdateTaskManager (KnownListUpdateInterval=1250ms). Client walking
-	// already only reconciled ~once/sec off ValidatePosition, so this keeps the same
-	// visibility latency while collapsing O(movers) reconcile passes/sec into one.
-	visibilityInterval = 1 * time.Second
 )
 
 // SpawnInfo stores the original spawn data for respawning an NPC.
@@ -187,7 +180,6 @@ func (gl *GameLoop) Run(ctx context.Context) error {
 	lastAutosave := time.Now()
 	lastRegen := time.Now()
 	lastBuffService := time.Now()
-	lastVisibility := time.Now()
 
 	// Tick-health instrumentation: how well the single loop goroutine keeps the
 	// 100ms cadence under load (scheduling gap, work time, command backlog). Owned
@@ -246,16 +238,6 @@ func (gl *GameLoop) Run(ctx context.Context) error {
 				gl.serviceBuffs()
 				gl.prom.observePhase("buffs", time.Since(phaseStart))
 				lastBuffService = time.Now()
-			}
-
-			// Periodic player-to-player visibility reconcile (l2go-awy): replaces the
-			// per-movement reconcile, so a crowd of movers costs one bounded pass/sec
-			// instead of O(movers) reconciles/sec.
-			if time.Since(lastVisibility) > visibilityInterval {
-				phaseStart = time.Now()
-				gl.reconcileAllVisibility()
-				gl.prom.observePhase("visibility", time.Since(phaseStart))
-				lastVisibility = time.Now()
 			}
 
 			// Record this tick's health and periodically report the window. work
@@ -353,9 +335,9 @@ func (gl *GameLoop) advancePlayerMovement(now time.Time) {
 		speed := usecase.PlayerMoveSpeed(gl.computePlayerStats(player), player.IsRunning)
 		pos, arrived := stepPlayerMovement(player, speed, now)
 		_ = gl.world.UpdatePlayerPosition(context.Background(), charID, pos, player.Heading)
-		// Player-to-player visibility is no longer reconciled per movement step — the
-		// periodic reconcileAllVisibility pass (l2go-awy) handles spawn/despawn as this
-		// mover crosses others' ranges, bounding the work to one pass/sec.
+		// Dynamic player-to-player visibility follows the authoritative server
+		// position: spawn/despawn other players as this one crosses their range.
+		gl.reconcilePlayerVisibility(charID)
 		if arrived {
 			player.IsMoving = false
 			player.MoveStartPos = models.Position{}
@@ -570,11 +552,11 @@ func (gl *GameLoop) handlePlayerEnteredWorld(cmd CmdPlayerEnteredWorld) {
 	gl.reconcilePlayerVisibility(cmd.CharID)
 }
 
-// handlePlayerMoved updates active regions and the registry position when a player
-// moves. Player-to-player visibility is NOT reconciled here anymore (l2go-awy): the
-// periodic reconcileAllVisibility pass handles it, so a crowd of ValidatePosition
-// updates no longer triggers O(movers) reconciles/sec. Walking visibility latency is
-// unchanged — client walking already only reconciled ~once/sec off ValidatePosition.
+// handlePlayerMoved updates active regions and player-to-player visibility when a
+// player moves. For client-authoritative ground walking the tick no longer
+// interpolates the position (l2go-2ax), so visibility must be reconciled here off
+// the client's ValidatePosition updates (the handler syncs the client position into
+// the registry before sending this command, so the read below is fresh).
 func (gl *GameLoop) handlePlayerMoved(cmd CmdPlayerMoved) {
 	// Re-activate regions around the new position
 	// (simple approach: always activate, deactivation handled by timeout)
@@ -588,6 +570,8 @@ func (gl *GameLoop) handlePlayerMoved(cmd CmdPlayerMoved) {
 			_ = gl.world.UpdatePlayerPosition(context.Background(), cmd.CharID, cmd.Position, p.Heading)
 		}
 	}
+
+	gl.reconcilePlayerVisibility(cmd.CharID)
 }
 
 // enterCombatStance puts a player into the weapon-drawn combat stance on the first
