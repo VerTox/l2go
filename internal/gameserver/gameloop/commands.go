@@ -7,6 +7,33 @@ type Command interface {
 	commandMarker()
 }
 
+// CmdOpenSkillLearn — player asked a trainer to show learnable skills (bypass). (l2go-hv9)
+type CmdOpenSkillLearn struct {
+	CharID   int32
+	NpcObjID int32
+}
+
+func (CmdOpenSkillLearn) commandMarker() {}
+
+// CmdSkillLearnInfo — player clicked a skill in the learn window (RequestAcquireSkillInfo).
+type CmdSkillLearnInfo struct {
+	CharID  int32
+	SkillID int32
+	Level   int32
+}
+
+func (CmdSkillLearnInfo) commandMarker() {}
+
+// CmdLearnSkill — player confirmed learning a skill (RequestAcquireSkill).
+type CmdLearnSkill struct {
+	CharID   int32
+	NpcObjID int32
+	SkillID  int32
+	Level    int32
+}
+
+func (CmdLearnSkill) commandMarker() {}
+
 // CmdAttackRequest — player wants to attack a target.
 type CmdAttackRequest struct {
 	AttackerCharID int32

@@ -76,6 +76,10 @@ type GameLoop struct {
 	// SetSkillData is called; casting is a no-op without it.
 	skillData *registry.SkillData
 
+	// skillLearnSink receives learned skills for async DB persistence (l2go-hv9).
+	// nil until SetSkillLearnSink is called.
+	skillLearnSink chan<- LearnedSkill
+
 	// skillReuse tracks per-player skill cooldowns (charID -> skillID -> ready-at).
 	// Separate from item reuse. Owned by the loop; cleared on disconnect.
 	skillReuse map[int32]map[int32]time.Time
@@ -269,6 +273,12 @@ func (gl *GameLoop) processCommand(cmd Command) {
 		gl.handleDispel(c)
 	case CmdChatMessage:
 		gl.handleChatMessage(c)
+	case CmdOpenSkillLearn:
+		gl.handleOpenSkillLearn(c)
+	case CmdSkillLearnInfo:
+		gl.handleSkillLearnInfo(c)
+	case CmdLearnSkill:
+		gl.handleLearnSkill(c)
 	}
 }
 

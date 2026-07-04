@@ -906,6 +906,21 @@ func (g *GameServer) run(ctx context.Context) error {
 	}()
 	g.gameLoop.SetAutoShotSink(rechargeCh)
 
+	// Async skill-learn persistence: the game loop deducts SP + updates the live
+	// known-skills map on its goroutine, then enqueues the learned skill here so the
+	// DB write never blocks the tick. (l2go-hv9)
+	learnCh := make(chan gameloop.LearnedSkill, 256)
+	learnDone := make(chan struct{})
+	go func() {
+		defer close(learnDone)
+		for ls := range learnCh {
+			if err := g.repo.Skill().LearnSkill(context.Background(), ls.CharID, ls.SkillID, int(ls.Level)); err != nil {
+				log.Ctx(ctx).Error().Err(err).Int32("char_id", ls.CharID).Int32("skill", ls.SkillID).Msg("failed to persist learned skill")
+			}
+		}
+	}()
+	g.gameLoop.SetSkillLearnSink(learnCh)
+
 	eg, egctx := errgroup.WithContext(ctx)
 
 	// Start heartbeat routine
@@ -946,6 +961,10 @@ func (g *GameServer) run(ctx context.Context) error {
 	// close the recharge sink and let its goroutine drain and exit.
 	close(rechargeCh)
 	<-rechargeDone
+
+	// Same for the skill-learn sink: the loop has stopped, drain and exit.
+	close(learnCh)
+	<-learnDone
 
 	// Save-on-shutdown: persist the freshest snapshot of every online player before
 	// the DB closes, so a graceful stop never loses session progress.

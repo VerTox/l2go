@@ -12,6 +12,8 @@ const (
 	SysMsgTargetNotFound         = 145  // TARGET_IS_NOT_FOUND_IN_THE_GAME (TELL to offline player)
 	SysMsgNotEnoughMp            = 24   // NOT_ENOUGH_MP "Not enough MP."
 	SysMsgIncorrectTarget        = 109  // INCORRECT_TARGET "Invalid target." (l2go-fgz)
+	SysMsgLearnedSkillS1         = 277  // LEARNED_SKILL_S1 (l2go-hv9)
+	SysMsgNotEnoughSpToLearn     = 278  // NOT_ENOUGH_SP_TO_LEARN_SKILL (l2go-hv9)
 	SysMsgDontSpam               = 1078 // DONT_SPAM "Please refrain from constant individual purchases."
 
 	// Soulshot / Spiritshot messages (L2J SystemMessageId).
