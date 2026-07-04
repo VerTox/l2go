@@ -68,6 +68,24 @@ func (gl *GameLoop) handleCastRequest(cmd CmdCastRequest) {
 		return
 	}
 
+	// PvP gate: an offensive skill on another player must pass checkPvpSkill
+	// (flag/karma/ctrl). Blocked → INCORRECT_TARGET + ActionFailed, no cast.
+	if isOffensiveSkill(skill) && target != caster.CharID {
+		if tgt, isPlayer := gl.world.GetPlayer(target); isPlayer {
+			allowed, flagAttacker := canAttackPlayer(tgt, cmd.CtrlPressed, time.Now())
+			if !allowed {
+				gl.sendToPlayer(caster, outclient.BuildSystemMessageNoParams(outclient.SysMsgIncorrectTarget))
+				if conn := gl.connections.GetConnection(caster.AccountName); conn != nil {
+					_ = conn.Send(outclient.BuildActionFailed())
+				}
+				return
+			}
+			if flagAttacker {
+				gl.setPvPFlag(caster)
+			}
+		}
+	}
+
 	// MP check: L2J validates the FULL cost (mpConsume1 + mpConsume2) up front, not
 	// just the initial part — otherwise a cast begins and fizzles at the hit.
 	if int(char.CurrentMP) < skill.MpConsume1+skill.MpConsume2 {
@@ -286,19 +304,57 @@ func (gl *GameLoop) applySkillEffects(caster *registry.PlayerWorldState, targetI
 		}
 	}
 
-	// Offensive damage on an NPC target (players/PvP: l2go-fgz).
+	if magicPower <= 0 && physPower <= 0 && drainPower <= 0 {
+		return
+	}
+	casterStats := gl.computePlayerStats(caster)
+
+	// PvP: target is another player. The cast-time gate (handleCastRequest) already
+	// validated checkPvpSkill and flagged the attacker; here we deal the damage and
+	// flag the victim (retaliation is then free).
+	if tgt, isPlayer := gl.world.GetPlayer(targetID); isPlayer && targetID != caster.CharID {
+		if tgt.Character == nil || tgt.Character.CurrentHP <= 0 {
+			return
+		}
+		defStats := gl.computePlayerStats(tgt)
+		total := 0
+		if magicPower > 0 {
+			total += calcMagicDamage(float64(casterStats.MAtk), float64(defStats.MDef), magicPower)
+		}
+		if physPower > 0 {
+			total += calcPhysSkillDamage(casterStats.PAtk, defStats.PDef, physPower)
+		}
+		drainDmg := 0
+		if drainPower > 0 {
+			drainDmg = calcMagicDamage(float64(casterStats.MAtk), float64(defStats.MDef), drainPower)
+			total += drainDmg
+		}
+		gl.dealDamageToPlayer(tgt, caster.CharID, total)
+		gl.setPvPFlag(tgt)
+		gl.sendToPlayer(caster, outclient.NewSystemMessage(outclient.SysMsgC1DoneS3DamageToC2).
+			AddPlayerName(caster.Character.Name).
+			AddPlayerName(tgt.Character.Name).
+			AddInt(int32(total)).
+			Build())
+		if drainDmg > 0 && caster.Character.CurrentHP > 0 {
+			gl.handleRestoreStats(CmdRestoreStats{CharID: caster.CharID, HP: int32(drainDmg / 2)})
+		}
+		return
+	}
+
+	// PvE: NPC target.
 	npc, isNPC := gl.world.GetNPC(targetID)
 	if !isNPC || npc.IsDead || npc.Template == nil {
 		return
 	}
 	if magicPower > 0 {
-		gl.dealSkillDamageToNPC(caster, npc, calcMagicDamage(float64(gl.computePlayerStats(caster).MAtk), npc.Template.MDef, magicPower))
+		gl.dealSkillDamageToNPC(caster, npc, calcMagicDamage(float64(casterStats.MAtk), npc.Template.MDef, magicPower))
 	}
 	if physPower > 0 {
-		gl.dealSkillDamageToNPC(caster, npc, calcPhysSkillDamage(gl.computePlayerStats(caster).PAtk, int(npc.Template.PDef), physPower))
+		gl.dealSkillDamageToNPC(caster, npc, calcPhysSkillDamage(casterStats.PAtk, int(npc.Template.PDef), physPower))
 	}
 	if drainPower > 0 {
-		dmg := calcMagicDamage(float64(gl.computePlayerStats(caster).MAtk), npc.Template.MDef, drainPower)
+		dmg := calcMagicDamage(float64(casterStats.MAtk), npc.Template.MDef, drainPower)
 		gl.dealSkillDamageToNPC(caster, npc, dmg)
 		// Drain: heal the caster for half the damage dealt (L2J absorbs a share).
 		if caster.Character.CurrentHP > 0 {
