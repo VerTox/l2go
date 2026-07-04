@@ -23,6 +23,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -43,10 +45,19 @@ func main() {
 		class     = flag.Int("class", int(models.ClassHumanFighter), "class id")
 		sex       = flag.Int("sex", int(models.SexMale), "sex (0=male, 1=female)")
 		skillTree = flag.String("skilltree", "references/data/skillTrees/classSkillTree.xml", "path to classSkillTree.xml (for auto-get skills)")
+		towns     = flag.String("towns", "", "semicolon-separated x,y,z spawn points to distribute characters across round-robin (empty = single template spawn / clustered)")
 	)
 	flag.Parse()
 
 	ctx := context.Background()
+
+	townPts, err := parseTowns(*towns)
+	if err != nil {
+		fatal("bad -towns: %v", err)
+	}
+	if len(townPts) > 0 {
+		fmt.Printf("distributing across %d spawn points (round-robin)\n", len(townPts))
+	}
 
 	// Auto-get starting skills need the class skill tree loaded. Best-effort:
 	// without it characters still enter the world, just with an empty skill list.
@@ -67,40 +78,61 @@ func main() {
 
 	uc := usecase.NewCharacterUseCase(repo.NewPostgreSQLRepository(pool))
 
+	// Character names must be unique server-wide and letters-only. Derive a stem
+	// from the account prefix (or -name override) so different scenarios never
+	// collide on names. index is letter-encoded onto the stem.
+	stem := *namePfx
+	if stem == "Bot" {
+		stem = nameStem(*prefix)
+	}
+
 	var created, skipped, failed int
 	start := time.Now()
 	for i := 1; i <= *n; i++ {
 		account := fmt.Sprintf("%s%04d", *prefix, i)
-		name := *namePfx + letterEncode(i)
+		name := stem + letterEncode(i)
 
-		// Idempotency: skip accounts that already have at least one character.
+		// Idempotency: reuse an account's existing character; only create when missing.
 		existing, err := uc.GetCharacterList(ctx, account)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "  [%s] lookup failed: %v\n", account, err)
 			failed++
 			continue
 		}
+		var charID int32
 		if len(existing) > 0 {
+			charID = existing[0].ID
 			skipped++
-			continue
+		} else {
+			req := &models.CharacterCreateRequest{
+				AccountName: account,
+				Name:        name,
+				Race:        *race,
+				Sex:         *sex,
+				ClassID:     *class,
+			}
+			char, err := uc.CreateCharacter(ctx, req)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "  [%s] create %q failed: %v\n", account, name, err)
+				failed++
+				continue
+			}
+			charID = char.ID
+			created++
+			if created <= 5 || created%50 == 0 {
+				fmt.Printf("  [%s] created %s (char_id=%d)\n", account, char.Name, char.ID)
+			}
 		}
 
-		req := &models.CharacterCreateRequest{
-			AccountName: account,
-			Name:        name,
-			Race:        *race,
-			Sex:         *sex,
-			ClassID:     *class,
-		}
-		char, err := uc.CreateCharacter(ctx, req)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "  [%s] create %q failed: %v\n", account, name, err)
-			failed++
-			continue
-		}
-		created++
-		if created <= 5 || created%25 == 0 {
-			fmt.Printf("  [%s] created %s (char_id=%d, slot=%d)\n", account, char.Name, char.ID, char.CharSlot)
+		// Distribute across towns: override the spawn position round-robin. Applied
+		// to both new and existing characters so re-running is idempotent and can
+		// reassign coordinates.
+		if len(townPts) > 0 {
+			t := townPts[(i-1)%len(townPts)]
+			if _, err := pool.Exec(ctx, "UPDATE characters SET x=$1, y=$2, z=$3 WHERE char_id=$4", t.x, t.y, t.z, charID); err != nil {
+				fmt.Fprintf(os.Stderr, "  [%s] set position failed: %v\n", account, err)
+				failed++
+			}
 		}
 	}
 
@@ -144,4 +176,54 @@ func letterEncode(i int) string {
 func fatal(format string, args ...any) {
 	fmt.Fprintf(os.Stderr, "seedbots: "+format+"\n", args...)
 	os.Exit(1)
+}
+
+// nameStem builds a letters-only, capitalized character-name stem from an account
+// prefix (e.g. "spread" -> "Spread"), capped so stem+index stays within 16 chars.
+func nameStem(prefix string) string {
+	var b strings.Builder
+	for _, r := range prefix {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') {
+			b.WriteRune(r)
+		}
+	}
+	s := b.String()
+	if s == "" {
+		s = "Bot"
+	}
+	if len(s) > 10 {
+		s = s[:10]
+	}
+	return strings.ToUpper(s[:1]) + strings.ToLower(s[1:])
+}
+
+type townPoint struct{ x, y, z int32 }
+
+// parseTowns parses a "x,y,z;x,y,z;..." spec into spawn points. Empty → no points.
+func parseTowns(spec string) ([]townPoint, error) {
+	spec = strings.TrimSpace(spec)
+	if spec == "" {
+		return nil, nil
+	}
+	var pts []townPoint
+	for _, part := range strings.Split(spec, ";") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		f := strings.Split(part, ",")
+		if len(f) != 3 {
+			return nil, fmt.Errorf("point %q must be x,y,z", part)
+		}
+		var c [3]int32
+		for k := 0; k < 3; k++ {
+			v, err := strconv.Atoi(strings.TrimSpace(f[k]))
+			if err != nil {
+				return nil, fmt.Errorf("point %q: %w", part, err)
+			}
+			c[k] = int32(v)
+		}
+		pts = append(pts, townPoint{c[0], c[1], c[2]})
+	}
+	return pts, nil
 }
