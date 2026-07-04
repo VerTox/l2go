@@ -8,6 +8,7 @@ import (
 	"github.com/VerTox/l2go/internal/gameserver/gameloop"
 	"github.com/VerTox/l2go/internal/gameserver/packets/inclient"
 	"github.com/VerTox/l2go/internal/gameserver/packets/outclient"
+	"github.com/VerTox/l2go/internal/gameserver/registry"
 	"github.com/VerTox/l2go/internal/gameserver/transport/client"
 )
 
@@ -91,7 +92,17 @@ func (h *Handler) handleAction(ctx context.Context, c *client.ClientConn, payloa
 			)); err != nil {
 				logger.Warn().Err(err).Msg("failed to send MoveToPawn")
 			}
-			if err := c.Send(outclient.BuildNpcHtmlMessage(pkt.ObjectID, outclient.DefaultNpcHtml)); err != nil {
+			html := outclient.DefaultNpcHtml
+			// Skill trainers that teach this player's class offer a "Learn Skills"
+			// bypass link (l2go-hv9).
+			if playerState.Character != nil && registry.IsTrainer(npc.TemplateID) &&
+				registry.CanTeach(npc.TemplateID,
+					int(playerState.Character.Race), int(playerState.Character.Sex), int(playerState.Character.ClassID)) {
+				html = "<html><body>Skill Trainer<br><br>" +
+					"<a action=\"bypass -h learn_skills\">Learn Skills</a>" +
+					"</body></html>"
+			}
+			if err := c.Send(outclient.BuildNpcHtmlMessage(pkt.ObjectID, html)); err != nil {
 				logger.Warn().Err(err).Msg("failed to send NpcHtmlMessage")
 			}
 			return c.Send(outclient.BuildActionFailed())

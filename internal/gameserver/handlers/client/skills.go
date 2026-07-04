@@ -7,10 +7,8 @@ func init() { addStubRegistrator(registerSkillsStubs) }
 func registerSkillsStubs(r *Registry) {
 	// RequestSkillList (0x50): запрос списка скиллов.
 	r.registerStub(StateInGame, 0x50, "RequestSkillList")
-	// RequestAcquireSkillInfo (0x73): инфо об изучаемом скилле.
-	r.registerStub(StateInGame, 0x73, "RequestAcquireSkillInfo")
-	// RequestAcquireSkill (0x7c): изучить скилл.
-	r.registerStub(StateInGame, 0x7c, "RequestAcquireSkill")
+	// RequestAcquireSkillInfo (0x73) / RequestAcquireSkill (0x7c) — реальные
+	// обработчики в skills_learn.go (l2go-hv9).
 	// RequestExEnchantSkillInfo (0xD0:0x0e): инфо о зачаровании скилла.
 	r.registerMultiStub(StateInGame, 0x0e, "RequestExEnchantSkillInfo")
 	// RequestExEnchantSkill (0xD0:0x0f): зачаровать скилл.

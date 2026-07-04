@@ -8,8 +8,7 @@ func init() { addStubRegistrator(registerNpcInteractionStubs) }
 func registerNpcInteractionStubs(r *Registry) {
 	// RequestLinkHtml (0x22): нажатие HTML-ссылки в NPC-диалоге.
 	r.registerStub(StateInGame, 0x22, "RequestLinkHtml")
-	// RequestBypassToServer (0x23): bypass-команда из NPC-диалога.
-	r.registerStub(StateInGame, 0x23, "RequestBypassToServer")
+	// RequestBypassToServer (0x23) — реальный обработчик в skills_learn.go (l2go-hv9).
 	// DlgAnswer (0xc6): ответ на системный диалог подтверждения.
 	r.registerStub(StateInGame, 0xc6, "DlgAnswer")
 	// BypassUserCmd (0xb3): пользовательская bypass-команда.
