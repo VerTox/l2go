@@ -36,6 +36,19 @@ func (cr *ConnectionRegistry) Unregister(accountName string) {
 	delete(cr.connections, accountName)
 }
 
+// UnregisterIf removes the connection for accountName only if the currently
+// registered connection is conn. This makes disconnect cleanup safe when a
+// newer login for the same account has already replaced the registration:
+// the old connection's deferred cleanup must not clobber the new one.
+func (cr *ConnectionRegistry) UnregisterIf(accountName string, conn *client.ClientConn) {
+	cr.mutex.Lock()
+	defer cr.mutex.Unlock()
+
+	if cr.connections[accountName] == conn {
+		delete(cr.connections, accountName)
+	}
+}
+
 // GetConnection retrieves a client connection by account name
 func (cr *ConnectionRegistry) GetConnection(accountName string) *client.ClientConn {
 	cr.mutex.RLock()
