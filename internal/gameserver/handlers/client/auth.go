@@ -41,6 +41,9 @@ func (h *Handler) handleAuthLogin(ctx context.Context, c *client.ClientConn, pay
 		LoginKeys:   [2]uint32{uint32(packet.LoginKey1), uint32(packet.LoginKey2)},
 		PlayKeys:    [2]uint32{uint32(packet.PlayKey1), uint32(packet.PlayKey2)},
 	}
+	// Kick any existing session for this account before registering the new one.
+	h.kickExistingSession(ctx, account, c)
+
 	h.setSession(c, session)
 
 	// Load real characters from database

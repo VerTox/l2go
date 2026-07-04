@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"sync"
 
 	"github.com/rs/zerolog/log"
 
@@ -47,6 +48,8 @@ type Handler struct {
 	skillData SkillTemplateSource
 	// Simple in-memory session storage (TODO: use proper session management)
 	sessions map[*client.ClientConn]*ClientSession
+	// sessions map is written/read from every connection goroutine; guard it.
+	sessionsMu sync.Mutex
 }
 
 // SkillTemplateSource looks up a skill template by (id, level). Implemented by
@@ -191,26 +194,33 @@ func (h *Handler) Handle(ctx context.Context, c *client.ClientConn) {
 
 // getSession retrieves the session for a client connection
 func (h *Handler) getSession(c *client.ClientConn) *ClientSession {
+	h.sessionsMu.Lock()
+	defer h.sessionsMu.Unlock()
 	return h.sessions[c]
 }
 
 // setSession stores a session for a client connection
 func (h *Handler) setSession(c *client.ClientConn, session *ClientSession) {
+	h.sessionsMu.Lock()
 	h.sessions[c] = session
+	h.sessionsMu.Unlock()
 	// Register connection for broadcasting
 	h.connections.Register(session.AccountName, c)
 }
 
 // removeSession removes a session for a client connection and cleans up player from world
 func (h *Handler) removeSession(c *client.ClientConn) {
+	h.sessionsMu.Lock()
 	session := h.sessions[c]
+	h.sessionsMu.Unlock()
 	if session != nil {
 		log.Info().
 			Str("account", session.AccountName).
 			Msg("Client disconnected, cleaning up session and world state")
 
-		// Unregister connection from broadcasting
-		h.connections.Unregister(session.AccountName)
+		// Unregister connection from broadcasting. Conn-aware: if a newer login
+		// for this account has already replaced the registration, leave it be.
+		h.connections.UnregisterIf(session.AccountName, c)
 
 		// Remove player from world registry if they were in game
 		if playerState, exists := h.world.GetPlayerByAccount(session.AccountName); exists {
@@ -245,8 +255,46 @@ func (h *Handler) removeSession(c *client.ClientConn) {
 	}
 
 	// Remove session from memory
+	h.sessionsMu.Lock()
 	delete(h.sessions, c)
-	
+	h.sessionsMu.Unlock()
+
 	log.Debug().Msg("Session cleanup completed")
+}
+
+// kickExistingSession force-disconnects any connection already logged in under
+// account before a new connection for the same account is registered. This
+// prevents two live sessions (and two world copies of a character) for one
+// account: the new login kicks the old (L2J default behaviour).
+func (h *Handler) kickExistingSession(ctx context.Context, account string, newConn *client.ClientConn) {
+	old := h.connections.GetConnection(account)
+	if old == nil || old == newConn {
+		return
+	}
+
+	log.Ctx(ctx).Info().Str("account", account).Msg("account already connected — kicking old session")
+
+	// Detach old session synchronously so its deferred removeSession is a no-op.
+	h.sessionsMu.Lock()
+	delete(h.sessions, old)
+	h.sessionsMu.Unlock()
+
+	// If the old session was in the world, tear it down like a logout.
+	if playerState, exists := h.world.GetPlayerByAccount(account); exists {
+		charID := playerState.CharID
+		h.gameLoopCmd <- gameloop.CmdPlayerDisconnected{CharID: charID}
+		h.world.RemovePlayer(ctx, charID)
+		if h.logoutUseCase != nil {
+			if err := h.logoutUseCase.PerformLogout(ctx, account, charID); err != nil {
+				log.Ctx(ctx).Warn().Err(err).Str("account", account).Msg("kick: logout cleanup failed")
+			}
+		}
+	}
+
+	h.connections.Unregister(account)
+
+	// Graceful client exit, then close the socket.
+	_ = old.Send(outclient.NewLeaveWorld().GetData())
+	old.Close()
 }
 
