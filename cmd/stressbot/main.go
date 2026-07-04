@@ -40,15 +40,23 @@ func main() {
 		start   = flag.Int("start", 1, "first account index for fleet mode")
 		conc    = flag.Int("c", 50, "max concurrent entries during ramp")
 		hold    = flag.Duration("hold", 0, "with -enter: hold the fleet online this long after ramp (0 = until Ctrl+C)")
-		walk    = flag.Duration("walk", 0, "with -enter: each bot random-walks every N (0 = stand still)")
-		talk    = flag.Duration("talk", 0, "with -enter: each bot says a random chat line every N (0 = silent)")
-		radius  = flag.Int("radius", 200, "random-walk radius in game units")
-		timeout = flag.Duration("timeout", 15*time.Second, "per-step timeout")
+		walk     = flag.Duration("walk", 0, "with -enter: each bot random-walks every N (0 = stand still)")
+		talk     = flag.Duration("talk", 0, "with -enter: each bot says a random chat line every N (0 = silent)")
+		radius   = flag.Int("radius", 200, "random-walk radius in game units")
+		timeout  = flag.Duration("timeout", 15*time.Second, "per-step timeout")
+		prom     = flag.String("prom", "http://localhost:9090", "Prometheus base URL for the tick-health summary after a fleet run (empty = off)")
+		promsnap = flag.Bool("promsnap", false, "just print the tick-health summary over -window and exit (no fleet run)")
+		window   = flag.Duration("window", 3*time.Minute, "look-back window for -promsnap")
 	)
 	flag.Parse()
 
+	if *promsnap {
+		printPromSummary(*prom, time.Now().Add(-*window), time.Now())
+		return
+	}
+
 	cfg := runCfg{ls: *addr, gs: *gsAddr, enter: *enter, slot: *slot, timeout: *timeout,
-		walk: *walk, talk: *talk, radius: *radius}
+		walk: *walk, talk: *talk, radius: *radius, prom: *prom}
 	switch {
 	case *n <= 0:
 		runSingle(cfg, *user, pw(*pass, *user))
@@ -67,6 +75,7 @@ type runCfg struct {
 	timeout    time.Duration
 	walk, talk time.Duration
 	radius     int
+	prom       string
 }
 
 // chatLines are short, generic messages bots pick from when -talk is on.
@@ -264,6 +273,12 @@ func runFleetWorld(cfg runCfg, prefix string, start, n, conc int, hold time.Dura
 	mu.Unlock()
 	time.Sleep(500 * time.Millisecond)
 	fmt.Printf("final online=%d\n", atomic.LoadInt64(&online))
+
+	// One combined report: pull the loop's tick health over the whole run from
+	// Prometheus, right next to the fleet stats above.
+	if cfg.prom != "" {
+		printPromSummary(cfg.prom, begin, time.Now())
+	}
 }
 
 func printLatency(latencies []time.Duration) {
