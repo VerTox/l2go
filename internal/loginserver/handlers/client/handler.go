@@ -20,8 +20,9 @@ type Handler struct {
 	gameServerUseCase     *usecase.GameServerUseCase
 	gameServerCommUseCase *usecase.GameServerCommUseCase
 
-	clients map[*transport.Client]bool
-	mu      sync.RWMutex
+	clients  map[*transport.Client]bool
+	accounts map[string]*transport.Client // username -> authed client (kick-on-relogin)
+	mu       sync.RWMutex
 }
 
 func New(listener net.Listener, usc *usecase.ClientUseCase, gameServerUseCase *usecase.GameServerUseCase, gameServerCommUseCase *usecase.GameServerCommUseCase) *Handler {
@@ -31,6 +32,7 @@ func New(listener net.Listener, usc *usecase.ClientUseCase, gameServerUseCase *u
 		gameServerUseCase:     gameServerUseCase,
 		gameServerCommUseCase: gameServerCommUseCase,
 		clients:               make(map[*transport.Client]bool),
+		accounts:              make(map[string]*transport.Client),
 	}
 }
 
@@ -52,6 +54,29 @@ func (h *Handler) removeClient(client *transport.Client) {
 		delete(h.clients, client)
 		log.Info().Msgf("Client removed: %s", client.Socket.RemoteAddr().String())
 	}
+
+	// Conn-aware account cleanup: only drop the index entry if it still points
+	// at this client. A newer login for the same account may already own it.
+	if client.Account != nil {
+		username := client.Account.Username
+		if h.accounts[username] == client {
+			delete(h.accounts, username)
+		}
+	}
+}
+
+// registerAccount records c as the active client for username, returning any
+// previously-registered *different* client that must now be kicked (AccountInUse).
+func (h *Handler) registerAccount(username string, c *transport.Client) *transport.Client {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	old := h.accounts[username]
+	h.accounts[username] = c
+	if old == c {
+		return nil
+	}
+	return old
 }
 
 func (h *Handler) ListenAndServe(ctx context.Context) {

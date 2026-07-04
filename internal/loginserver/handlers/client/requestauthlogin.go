@@ -36,6 +36,15 @@ func (h *Handler) handleRequestAuthLogin(ctx context.Context, client *transport.
 
 	client.Account = account
 
+	// Enforce single active session per account: a new login kicks the old
+	// client with AccountInUse (L2J LoginController behaviour).
+	if old := h.registerAccount(account.Username, client); old != nil && old != client {
+		old.Send(outclient.NewLoginFailPacket(outclient.REASON_ACCOUNT_IN_USE))
+		if old.Socket != nil {
+			old.Socket.Close()
+		}
+	}
+
 	client.AccessLevel = int(account.AccessLevel)
 	client.LastServer = account.LastServer
 	client.LoginOkID1 = binary.LittleEndian.Uint32(client.SessionID[:4])
