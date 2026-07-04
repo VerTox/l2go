@@ -154,6 +154,12 @@ func (gl *GameLoop) Run(ctx context.Context) error {
 	lastRegen := time.Now()
 	lastBuffService := time.Now()
 
+	// Tick-health instrumentation: how well the single loop goroutine keeps the
+	// 100ms cadence under load (scheduling gap, work time, command backlog). Owned
+	// by this goroutine; reported every tickMetricsReportInterval. (l2go-rqc)
+	metrics := newTickMetrics(time.Now())
+	lastTickStart := time.Now()
+
 	log.Info().Msg("Game loop started")
 
 	for {
@@ -164,6 +170,11 @@ func (gl *GameLoop) Run(ctx context.Context) error {
 		case cmd := <-gl.commands:
 			gl.processCommand(cmd)
 		case <-ticker.C:
+			tickStart := time.Now()
+			gap := tickStart.Sub(lastTickStart)
+			lastTickStart = tickStart
+			cmdDepth := len(gl.commands) // backlog seen before draining
+
 			gl.tick()
 
 			// Periodic region cleanup
@@ -190,6 +201,15 @@ func (gl *GameLoop) Run(ctx context.Context) error {
 			if time.Since(lastBuffService) > buffInterval {
 				gl.serviceBuffs()
 				lastBuffService = time.Now()
+			}
+
+			// Record this tick's health and periodically report the window. work
+			// covers the whole iteration (tick + periodic subsystems above) so the
+			// report reflects the real per-tick budget against the 100ms deadline.
+			metrics.record(gap, time.Since(tickStart), cmdDepth)
+			if tickStart.Sub(metrics.windowStart) >= tickMetricsReportInterval {
+				metrics.report(tickStart, gl.world.GetOnlinePlayerCount())
+				metrics.reset(tickStart)
 			}
 		}
 	}
@@ -224,9 +244,23 @@ executeEvents:
 // advancePlayerMovement moves every in-progress player along its path using
 // server-side interpolation, so the loop and combat checks always see a fresh
 // position instead of the stale value between client ValidatePosition packets.
+// serverDrivenMovement reports whether the loop should interpolate this player's
+// position server-side. Only combat/interact approach is server-authoritative (the
+// loop needs the live distance to the target). Plain ground walking is client-
+// authoritative — interpolating it here fought the client's own interpolation
+// (dual authority + speed mismatch) and produced rubber-band snaps for observers. (l2go-2ax)
+func serverDrivenMovement(i Intention) bool {
+	return i == IntentionAttack || i == IntentionInteract
+}
+
 func (gl *GameLoop) advancePlayerMovement(now time.Time) {
 	for charID, player := range gl.world.GetAllPlayers() {
 		if !player.IsMoving {
+			continue
+		}
+		// Skip client-authoritative ground walking (l2go-2ax): its position is synced
+		// from the client's ValidatePosition packets, not interpolated here.
+		if st, ok := gl.aiState[charID]; !ok || !serverDrivenMovement(st.Intention) {
 			continue
 		}
 		speed := usecase.PlayerMoveSpeed(gl.computePlayerStats(player), player.IsRunning)
@@ -442,11 +476,26 @@ func (gl *GameLoop) handlePlayerEnteredWorld(cmd CmdPlayerEnteredWorld) {
 	gl.reconcilePlayerVisibility(cmd.CharID)
 }
 
-// handlePlayerMoved updates active regions when a player moves.
+// handlePlayerMoved updates active regions and player-to-player visibility when a
+// player moves. For client-authoritative ground walking the tick no longer
+// interpolates the position (l2go-2ax), so visibility must be reconciled here off
+// the client's ValidatePosition updates (the handler syncs the client position into
+// the registry before sending this command, so the read below is fresh).
 func (gl *GameLoop) handlePlayerMoved(cmd CmdPlayerMoved) {
 	// Re-activate regions around the new position
 	// (simple approach: always activate, deactivation handled by timeout)
 	gl.activateRegions(cmd.Position.X, cmd.Position.Y)
+
+	// Ground walking is client-authoritative (l2go-2ax): sync the client-reported
+	// position into the registry here (loop is the single writer for it). Combat/
+	// interact approach is server-interpolated in the tick, so don't clobber it.
+	if st, ok := gl.aiState[cmd.CharID]; !ok || !serverDrivenMovement(st.Intention) {
+		if p, exists := gl.world.GetPlayer(cmd.CharID); exists {
+			_ = gl.world.UpdatePlayerPosition(context.Background(), cmd.CharID, cmd.Position, p.Heading)
+		}
+	}
+
+	gl.reconcilePlayerVisibility(cmd.CharID)
 }
 
 // enterCombatStance puts a player into the weapon-drawn combat stance on the first

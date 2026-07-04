@@ -183,10 +183,11 @@ func (h *Handler) handleValidatePosition(ctx context.Context, c *client.ClientCo
 		Z: int(validatePacket.Z),
 	}
 
-	// While the server tick is the position authority during movement, skip
-	// drift correction entirely — the interpolation uses a hardcoded speed so
-	// any real speed delta would accumulate and trigger rubber-band.
-	// Only validate + sync position when the player is standing still.
+	// Drift correction is applied only while standing. During movement the position
+	// is client-authoritative for ground walking (l2go-2ax): the registry sync +
+	// player-visibility reconcile happen on the game loop (handlePlayerMoved), gated
+	// by intention so combat/interact approach stays server-authoritative. Correcting
+	// a moving client here is exactly what caused rubber-band.
 	if !playerState.IsMoving {
 		// Validate client position against server expectation
 		correctionResult, err := h.movementUseCase.ValidateClientPosition(
@@ -221,8 +222,6 @@ func (h *Handler) handleValidatePosition(ctx context.Context, c *client.ClientCo
 		logger.Debug().
 			Float64("deviation", correctionResult.Deviation).
 			Msg("position validation passed")
-	} else {
-		logger.Debug().Msg("skip drift validation while moving — tick is position authority")
 	}
 
 	// Notify game loop about position change (for active region tracking)
@@ -231,8 +230,8 @@ func (h *Handler) handleValidatePosition(ctx context.Context, c *client.ClientCo
 		Position: clientPos,
 	}
 
-	// Update NPC visibility as player moves
-	h.updateNPCVisibility(ctx, c, playerState)
+	// Update NPC visibility as player moves (use the client position directly).
+	h.updateNPCVisibility(ctx, c, playerState, clientPos)
 
 	return nil
 }
@@ -404,18 +403,21 @@ func (h *Handler) calculateDistance(pos1, pos2 models.Position) float64 {
 
 // updateNPCVisibility sends NpcInfo for newly visible NPCs and DeleteObject
 // for NPCs that left the visibility range. Called during position updates.
-func (h *Handler) updateNPCVisibility(ctx context.Context, c *client.ClientConn, playerState *registry.PlayerWorldState) {
+func (h *Handler) updateNPCVisibility(ctx context.Context, c *client.ClientConn, playerState *registry.PlayerWorldState, pos models.Position) {
 	// Keep-set: NPCs within the forget radius stay spawned (hysteresis band). NpcInfo
 	// is only sent for NPCs within the smaller watch radius. Same watch/forget radii
 	// as player visibility (gameloop), so players and NPCs appear at the same distance.
+	// pos is the client-reported position (l2go-2ax): during ground walking the
+	// registry Position is synced by the loop, so we use the packet position directly
+	// to keep NPC visibility exact on the connection goroutine.
 	keep := make(map[int32]bool)
-	for _, npc := range h.world.GetNPCsInRange(playerState.Position, registry.VisibilityForgetRadius) {
+	for _, npc := range h.world.GetNPCsInRange(pos, registry.VisibilityForgetRadius) {
 		keep[npc.ObjectID] = true
 	}
 
 	// Send NpcInfo for NPCs entering the watch radius
 	newCount := 0
-	for _, npc := range h.world.GetNPCsInRange(playerState.Position, registry.VisibilityWatchRadius) {
+	for _, npc := range h.world.GetNPCsInRange(pos, registry.VisibilityWatchRadius) {
 		if !playerState.KnownNPCs[npc.ObjectID] {
 			npcInfoData := outclient.BuildNpcInfo(npc)
 			if err := c.Send(npcInfoData); err != nil {
