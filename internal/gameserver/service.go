@@ -937,6 +937,14 @@ func (g *GameServer) run(ctx context.Context) error {
 	}()
 	g.gameLoop.SetSkillLearnSink(learnCh)
 
+	// Expose the async persistence sinks' backlog as Prometheus gauges (l2go-f9j).
+	// Read via len() at scrape time — no sampler goroutine. A filling queue means DB
+	// latency is outpacing the loop and about to stall the tick; the earliest scalable
+	// warning sign under load.
+	g.promMetrics.RegisterQueueDepth("l2go_sink_save_queue_depth", "Pending character-persistence snapshots queued for the async saver.", func() int { return len(saveCh) })
+	g.promMetrics.RegisterQueueDepth("l2go_sink_recharge_queue_depth", "Pending auto-soulshot recharge requests queued off the loop.", func() int { return len(rechargeCh) })
+	g.promMetrics.RegisterQueueDepth("l2go_sink_learn_queue_depth", "Pending learned-skill writes queued for async persistence.", func() int { return len(learnCh) })
+
 	eg, egctx := errgroup.WithContext(ctx)
 
 	// Start heartbeat routine

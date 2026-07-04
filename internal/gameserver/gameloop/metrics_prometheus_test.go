@@ -69,6 +69,53 @@ func TestPromMetricsNilSafe(t *testing.T) {
 	var pm *PromMetrics
 	pm.recordTick(100*time.Millisecond, 10*time.Millisecond, 3, true)
 	pm.setPlayers(9)
+	pm.RegisterQueueDepth("l2go_test_nil", "no-op", func() int { return 1 })
+}
+
+// TestPromMetricsQueueDepthGauge verifies a registered queue-depth gauge reads
+// the live channel length at scrape time (no sampler goroutine needed).
+func TestPromMetricsQueueDepthGauge(t *testing.T) {
+	pm := NewPromMetrics()
+	ch := make(chan int, 8)
+	pm.RegisterQueueDepth("l2go_sink_save_queue_depth", "test sink depth", func() int { return len(ch) })
+
+	if got := gaugeValue(t, pm, "l2go_sink_save_queue_depth"); got != 0 {
+		t.Errorf("empty channel depth = %v, want 0", got)
+	}
+
+	ch <- 1
+	ch <- 2
+	ch <- 3
+	if got := gaugeValue(t, pm, "l2go_sink_save_queue_depth"); got != 3 {
+		t.Errorf("depth after 3 enqueues = %v, want 3 (must reflect live len at scrape)", got)
+	}
+
+	<-ch
+	if got := gaugeValue(t, pm, "l2go_sink_save_queue_depth"); got != 2 {
+		t.Errorf("depth after 1 dequeue = %v, want 2", got)
+	}
+}
+
+// gaugeValue gathers the named gauge from the metrics' registry and returns its
+// current value.
+func gaugeValue(t *testing.T, pm *PromMetrics, name string) float64 {
+	t.Helper()
+	families, err := pm.reg.Gather()
+	if err != nil {
+		t.Fatalf("gather: %v", err)
+	}
+	for _, mf := range families {
+		if mf.GetName() != name {
+			continue
+		}
+		metrics := mf.GetMetric()
+		if len(metrics) == 0 {
+			t.Fatalf("no metric samples for %q", name)
+		}
+		return metrics[0].GetGauge().GetValue()
+	}
+	t.Fatalf("metric family %q not found", name)
+	return 0
 }
 
 // histogramSampleCount gathers the named histogram from the metrics' registry

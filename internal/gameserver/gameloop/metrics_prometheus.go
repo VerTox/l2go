@@ -92,6 +92,22 @@ func (pm *PromMetrics) setPlayers(n int) {
 	pm.players.Set(float64(n))
 }
 
+// RegisterQueueDepth registers a gauge that reports the current length of an
+// async queue, read via length() at scrape time — no sampler goroutine, always
+// fresh. Used for the persistence sinks (save/recharge/learn) whose backlog is
+// an early warning that DB latency is stalling the loop under load. length() is
+// called on the scrape goroutine; len(chan) is safe to read concurrently.
+// nil-safe so a loop without Prometheus wiring is a no-op.
+func (pm *PromMetrics) RegisterQueueDepth(name, help string, length func() int) {
+	if pm == nil {
+		return
+	}
+	pm.reg.MustRegister(prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Name: name,
+		Help: help,
+	}, func() float64 { return float64(length()) }))
+}
+
 // Handler serves the Prometheus text exposition for these collectors.
 func (pm *PromMetrics) Handler() http.Handler {
 	return promhttp.HandlerFor(pm.reg, promhttp.HandlerOpts{})
