@@ -39,7 +39,7 @@ func (gl *GameLoop) persistPlayer(player *registry.PlayerWorldState) {
 // autosaveOnlinePlayers snapshots every online player to the async saver. Runs on
 // the game-loop goroutine (driven by the autosave timer in Run).
 func (gl *GameLoop) autosaveOnlinePlayers() {
-	players := gl.world.GetAllPlayers()
+	players := gl.world.SnapshotPlayers(nil) // every 5 min; a fresh slice is fine (l2go-3rx)
 	if len(players) == 0 {
 		return
 	}

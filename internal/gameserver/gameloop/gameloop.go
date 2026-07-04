@@ -92,6 +92,14 @@ type GameLoop struct {
 	// nil until SetPromMetrics is called; every update is nil-safe so the loop runs
 	// unchanged without it.
 	prom *PromMetrics
+
+	// playerScratch is a reusable buffer for the loop's whole-world sweeps
+	// (advancePlayerMovement, regen, buffs, pvp expiry, despawn, autosave), so they
+	// no longer allocate a fresh player map every call. Loop-goroutine only and NOT
+	// reentrant: a sweep iterating this buffer must not call another routine that
+	// snapshots into it. All current sweeps are sequential and none nests a
+	// SnapshotPlayers call, so this holds. (l2go-3rx)
+	playerScratch []*registry.PlayerWorldState
 }
 
 // New creates a new GameLoop. expRate and spRate control experience/SP multipliers (default 1.0).
@@ -269,7 +277,9 @@ func serverDrivenMovement(i Intention) bool {
 }
 
 func (gl *GameLoop) advancePlayerMovement(now time.Time) {
-	for charID, player := range gl.world.GetAllPlayers() {
+	gl.playerScratch = gl.world.SnapshotPlayers(gl.playerScratch)
+	for _, player := range gl.playerScratch {
+		charID := player.CharID
 		if !player.IsMoving {
 			continue
 		}

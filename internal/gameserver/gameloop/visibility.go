@@ -94,7 +94,9 @@ func (gl *GameLoop) reconcilePlayerVisibility(charID int32) {
 // suppressed as "already known". (l2go-23g)
 func (gl *GameLoop) despawnPlayerFromAll(charID int32) {
 	data := outclient.BuildDeleteObject(charID)
-	for _, p := range gl.world.GetAllPlayers() {
+	// Fresh slice (not the shared scratch): this runs during disconnect handling,
+	// not a tick sweep, and is not hot enough to warrant buffer reuse. (l2go-3rx)
+	for _, p := range gl.world.SnapshotPlayers(nil) {
 		if p.CharID == charID {
 			continue
 		}

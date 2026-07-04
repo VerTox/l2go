@@ -153,8 +153,11 @@ func (gl *GameLoop) sendUserInfo(player *registry.PlayerWorldState) {
 func (gl *GameLoop) serviceBuffs() {
 	now := time.Now()
 	// Expire PvP flags (independent of buffs) before servicing effects. (l2go-fgz)
+	// Note: expirePvPFlags returns before this loop starts, so both may share the
+	// loop's playerScratch buffer without overlap. (l2go-3rx)
 	gl.expirePvPFlags()
-	for _, player := range gl.world.GetAllPlayers() {
+	gl.playerScratch = gl.world.SnapshotPlayers(gl.playerScratch)
+	for _, player := range gl.playerScratch {
 		if player.Character == nil || player.Effects.Len() == 0 {
 			continue
 		}

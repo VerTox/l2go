@@ -72,7 +72,8 @@ func (gl *GameLoop) setPvPFlag(player *registry.PlayerWorldState) {
 // (name back to white) and the player's own UserInfo. Called from serviceBuffs.
 func (gl *GameLoop) expirePvPFlags() {
 	now := time.Now()
-	for _, player := range gl.world.GetAllPlayers() {
+	gl.playerScratch = gl.world.SnapshotPlayers(gl.playerScratch)
+	for _, player := range gl.playerScratch {
 		if player.PvPFlagUntil.IsZero() {
 			continue
 		}

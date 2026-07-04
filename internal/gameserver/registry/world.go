@@ -564,14 +564,38 @@ func (wr *WorldRegistry) GetOnlinePlayerCount() int {
 func (wr *WorldRegistry) GetAllPlayers() map[int32]*PlayerWorldState {
 	wr.mu.RLock()
 	defer wr.mu.RUnlock()
-	
+
 	// Return a copy to avoid race conditions
 	players := make(map[int32]*PlayerWorldState)
 	for k, v := range wr.players {
 		players[k] = v
 	}
-	
+
 	return players
+}
+
+// SnapshotPlayers collects all player-state pointers into buf[:0] under RLock and
+// returns the (possibly regrown) slice — an allocation-free alternative to
+// GetAllPlayers for the loop's per-tick/per-sweep passes, which iterate every
+// player and would otherwise allocate a fresh map each call (O(N) garbage per
+// sweep → GC pressure on the loop goroutine). Pass a reusable buffer to amortize
+// the allocation to zero after warm-up; pass nil for a fresh slice. (l2go-3rx)
+//
+// Only the pointers are snapshotted, not the states, so callers see live data —
+// same semantics as GetAllPlayers. Iterate the result AFTER this returns: the
+// world lock is already released, so the body may safely Send or call methods that
+// take the write lock (UpdatePlayerPosition, reconcile…). The states themselves
+// are loop-owned, so a loop-goroutine caller reads/mutates them without further
+// locking, exactly as before.
+func (wr *WorldRegistry) SnapshotPlayers(buf []*PlayerWorldState) []*PlayerWorldState {
+	wr.mu.RLock()
+	defer wr.mu.RUnlock()
+
+	buf = buf[:0]
+	for _, state := range wr.players {
+		buf = append(buf, state)
+	}
+	return buf
 }
 
 // Cleanup

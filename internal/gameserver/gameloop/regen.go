@@ -16,7 +16,9 @@ import (
 // are a follow-up (l2go-y93). This exists so MP actually replenishes, making
 // MP-consuming skills viable (epic l2go-z36).
 func (gl *GameLoop) regenPlayers() {
-	for charID, player := range gl.world.GetAllPlayers() {
+	gl.playerScratch = gl.world.SnapshotPlayers(gl.playerScratch)
+	for _, player := range gl.playerScratch {
+		charID := player.CharID
 		char := player.Character
 		if char == nil || char.CurrentHP <= 0 {
 			continue // missing or dead — no regen
