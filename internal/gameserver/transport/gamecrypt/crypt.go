@@ -2,10 +2,20 @@ package gamecrypt
 
 // Crypt implements L2J GameCrypt (16-byte key, direction-specific state).
 // Algorithm mirrors l2jserver GameCrypt.java.
+//
+// The enable flag is split per direction (inEnabled/outEnabled) so the two
+// directions can be driven by different goroutines without sharing a field: with
+// the async send path (l2go-e9q) Encrypt runs on a per-connection writer goroutine
+// while Decrypt runs on the read loop. inEnabled is flipped explicitly via
+// EnableDecrypt on the read-loop goroutine; outEnabled self-flips on the first
+// Encrypt (first packet in clear, L2J behavior) on the writer goroutine. inKey is
+// only ever touched by Decrypt, outKey only by Encrypt, so no direction shares
+// mutable state across goroutines.
 type Crypt struct {
-    inKey   [16]byte
-    outKey  [16]byte
-    enabled bool
+    inKey      [16]byte
+    outKey     [16]byte
+    inEnabled  bool
+    outEnabled bool
 }
 
 func New() *Crypt { return &Crypt{} }
@@ -18,9 +28,15 @@ func (c *Crypt) SetKey(key []byte) {
     }
 }
 
+// EnableDecrypt turns on inbound decryption. Call once, after SetKey, on the same
+// goroutine that calls Decrypt. Kept separate from the outbound enable (which the
+// first Encrypt flips) so the read loop and the send-writer goroutine never share
+// an enable flag. (l2go-e9q)
+func (c *Crypt) EnableDecrypt() { c.inEnabled = true }
+
 // Decrypt in-place (no-op if not enabled).
 func (c *Crypt) Decrypt(raw []byte) {
-    if !c.enabled {
+    if !c.inEnabled {
         return
     }
     temp := 0
@@ -43,8 +59,8 @@ func (c *Crypt) Decrypt(raw []byte) {
 
 // Encrypt in-place; first call only enables and returns without encrypting (matches L2J behavior).
 func (c *Crypt) Encrypt(raw []byte) {
-    if !c.enabled {
-        c.enabled = true
+    if !c.outEnabled {
+        c.outEnabled = true
         return
     }
     temp := 0

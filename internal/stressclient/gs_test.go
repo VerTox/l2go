@@ -21,9 +21,13 @@ func TestGameCryptStreamSync(t *testing.T) {
 	client.SetKey(key)
 
 	// Server enables its crypt by "sending" the KeyPacket (first Encrypt is a
-	// no-op that just flips enabled). The client received that raw, then primes.
+	// no-op that just flips the outbound enable). The client received that raw, then
+	// primes. Inbound decryption is a separate flag now (l2go-e9q), so each side also
+	// enables Decrypt for the direction it receives.
 	server.Encrypt(nil)
+	server.EnableDecrypt()
 	client.Encrypt(nil)
+	client.EnableDecrypt()
 
 	// A few server->client packets of differing lengths (key advances by size).
 	for _, msg := range [][]byte{

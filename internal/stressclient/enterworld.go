@@ -69,7 +69,8 @@ func EnterWorld(gsAddr, account string, slot int, keys *SessionKeys, timeout tim
 	key = append(key, body[1:9]...) // body[0] is the id byte, key follows
 	key = append(key, gameStaticKeyTail...)
 	c.crypt.SetKey(key)
-	c.crypt.Encrypt(nil) // prime: flips GameCrypt enabled without advancing the key
+	c.crypt.Encrypt(nil)     // prime outbound: flips enabled without advancing the key
+	c.crypt.EnableDecrypt()  // enable inbound (split from the outbound flag, l2go-e9q)
 	c.active = true
 
 	// 3. AuthLogin: account + play/login session keys (order per server's Read:

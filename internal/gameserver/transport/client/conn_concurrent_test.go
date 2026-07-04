@@ -30,6 +30,7 @@ func TestConcurrentSendKeepsStreamInSync(t *testing.T) {
 	}
 
 	sc := NewClientConn(srv)
+	defer sc.Close() // stop the async writer goroutine
 	if err := sc.EnableCrypt(key); err != nil {
 		t.Fatalf("enable server crypt: %v", err)
 	}
@@ -37,12 +38,12 @@ func TestConcurrentSendKeepsStreamInSync(t *testing.T) {
 	// Receiver decrypts with an independent cipher seeded with the same key.
 	// If the server's encrypt order matches the wire order, every frame decodes
 	// to one of the payloads we sent; otherwise we get garbage.
-	// Mirror the ClientConn cipher lifecycle: the first Encrypt call only flips
-	// the cipher on (first packet goes in clear, key does not advance), so we
-	// enable rxCrypt the same way and skip decrypting the first wire frame.
+	// Mirror the ClientConn cipher lifecycle: the server's first Encrypt sends the
+	// first packet in clear (key does not advance), so enable inbound decryption on
+	// rxCrypt and skip decrypting the first wire frame.
 	rxCrypt := gamecrypt.New()
 	rxCrypt.SetKey(key)
-	rxCrypt.Encrypt(nil) // flip enabled without advancing the key
+	rxCrypt.EnableDecrypt()
 
 	total := senders * perSender
 	payloads := make(map[string]bool, total)
