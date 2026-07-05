@@ -31,11 +31,15 @@ WORKDIR /app
 # Copy the binary from builder stage
 COPY --from=builder /app/gameserver .
 
+# Bake the L2J datapack (NPC/item/skill XML, spawnlist.sql, etc.) into the image
+# so the container is self-contained — no host bind-mount required at runtime.
+COPY datapack ./datapack
+
 RUN chown -R l2go:l2go /app
 
 USER l2go
 
-# Defaults (overridden by docker-compose). Runtime data dirs are bind-mounted, not baked in.
+# Defaults (overridden by docker-compose). Datapack is baked in above (COPY datapack).
 ENV POSTGRES_HOST=postgres \
     POSTGRES_PORT=5432 \
     POSTGRES_USERNAME=postgres \

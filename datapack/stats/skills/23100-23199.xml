@@ -1,0 +1,2124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/skills.xsd">
+	<skill id="23100" levels="1" name="4th Consecutive Win">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-1" />
+		<set name="effectRange" val="550" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+	</skill>
+	<skill id="23101" levels="1" name="5th Consecutive Win">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-1" />
+		<set name="effectRange" val="550" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+	</skill>
+	<skill id="23102" levels="1" name="6th Consecutive Win">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-1" />
+		<set name="effectRange" val="550" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+	</skill>
+	<skill id="23103" levels="1" name="7th Consecutive Win">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-1" />
+		<set name="effectRange" val="550" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+	</skill>
+	<skill id="23104" levels="1" name="8th Consecutive Win">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-1" />
+		<set name="effectRange" val="550" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+	</skill>
+	<skill id="23105" levels="1" name="9th Consecutive Win">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-1" />
+		<set name="effectRange" val="550" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+	</skill>
+	<skill id="23106" levels="1" name="10th Consecutive Win">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-1" />
+		<set name="effectRange" val="550" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+	</skill>
+	<skill id="23107" levels="1" name="11th Consecutive Win">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-1" />
+		<set name="effectRange" val="550" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+	</skill>
+	<skill id="23108" levels="1" name="12th Consecutive Win">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-1" />
+		<set name="effectRange" val="550" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+	</skill>
+	<skill id="23109" levels="1" name="13th Consecutive Win">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-1" />
+		<set name="effectRange" val="550" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+	</skill>
+	<skill id="23110" levels="1" name="14th Consecutive Win">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-1" />
+		<set name="effectRange" val="550" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+	</skill>
+	<skill id="23111" levels="1" name="15th Consecutive Win">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-1" />
+		<set name="effectRange" val="550" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+	</skill>
+	<skill id="23112" levels="1" name="16th Consecutive Win">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-1" />
+		<set name="effectRange" val="550" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+	</skill>
+	<skill id="23113" levels="1" name="17th Consecutive Win">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-1" />
+		<set name="effectRange" val="550" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+	</skill>
+	<skill id="23114" levels="1" name="18th Consecutive Win">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-1" />
+		<set name="effectRange" val="550" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+	</skill>
+	<skill id="23115" levels="1" name="19th Consecutive Win">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-1" />
+		<set name="effectRange" val="550" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+	</skill>
+	<skill id="23116" levels="1" name="20th Consecutive Win">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-1" />
+		<set name="effectRange" val="550" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+	</skill>
+	<skill id="23117" levels="1" name="Frozen Corpse Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player agathionId="1535" />
+		</cond>
+	</skill>
+	<skill id="23118" levels="1" name="Frozen Corpse Agathion Special Skill - Narrow Escape">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="300" />
+		<set name="abnormalType" val="MULTI_BUFF" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="3600000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player agathionId="1535" />
+		</cond>
+	</skill>
+	<skill id="23119" levels="1" name="Bluebird Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player agathionId="1536" />
+		</cond>
+	</skill>
+	<skill id="23120" levels="1" name="Hatbird Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player agathionId="1537" />
+		</cond>
+	</skill>
+	<skill id="23121" levels="1" name="Jack's game - Gauge">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-1" />
+		<set name="effectRange" val="500" />
+		<set name="icon" val="BranchSys.icon.br_jack_ghost_i00" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+	</skill>
+	<skill id="23122" levels="1" name="Jack's game - Target">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="600" />
+		<set name="effectPoint" val="-1" />
+		<set name="effectRange" val="600" />
+		<set name="hitTime" val="500" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+		<effects>
+			<effect name="TargetMeProbability">
+				<param chance="100" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23123" levels="1" name="Gwangong Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player agathionId="1551" />
+		</cond>
+	</skill>
+	<skill id="23124" levels="1" name="Gwangong Agathion Special Skill - Aura of Fury">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="30" />
+		<set name="abnormalType" val="TARGET_LOCK" />
+		<set name="activateRate" val="0" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="castRange" val="800" />
+		<set name="coolTime" val="200" />
+		<set name="effectPoint" val="-1" />
+		<set name="effectRange" val="1300" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="700" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isDebuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="60000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY_ONLY" />
+		<cond msgId="2292">
+			<player agathionId="1551" />
+		</cond>
+		<effects>
+			<effect name="GetAgro" />
+			<effect name="TargetMe" />
+		</effects>
+	</skill>
+	<skill id="23125" levels="1" name="Gwanseum Nyang Nyang Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player agathionId="1552" />
+		</cond>
+	</skill>
+	<skill id="23126" levels="1" name="Gwanseum Nyang Nyang Agathion Special Skill - Blessing of Mercy">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="600" />
+		<set name="effectRange" val="1100" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+		<cond msgId="2292">
+			<player agathionId="1552" />
+		</cond>
+		<effects>
+			<effect name="Heal">
+				<param power="201" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23127" levels="1" name="Blue Opera Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player agathionId="1553" />
+		</cond>
+	</skill>
+	<skill id="23128" levels="1" name="Blue Opera Agathion Special Skill - Sword of Recovery">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="600" />
+		<set name="effectPoint" val="1" />
+		<set name="effectRange" val="1100" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+		<cond msgId="2292">
+			<player agathionId="1553" />
+		</cond>
+		<effects>
+			<effect name="Heal">
+				<param power="201" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23129" levels="1" name="Blue Opera Agathion Special Skill - Sword of Water">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="effectPoint" val="-1" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<cond msgId="2292">
+			<player agathionId="1553" />
+		</cond>
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="236" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23130" levels="1" name="Red Opera Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player agathionId="1554" />
+		</cond>
+	</skill>
+	<skill id="23131" levels="1" name="Red Opera Agathion Special Skill - Spear of Flames">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="effectPoint" val="-1" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<cond msgId="2292">
+			<player agathionId="1554" />
+		</cond>
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="236" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23132" levels="1" name="Opera Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player agathionId="1555" />
+		</cond>
+	</skill>
+	<skill id="23133" levels="1" name="Miss Chipao Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player agathionId="1556" />
+		</cond>
+	</skill>
+	<skill id="23134" levels="1" name="Miss Chipao Agathion Special Skill - Decrease Weight">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="3600" />
+		<set name="abnormalType" val="DECREASE_WEIGHT_PENALTY" />
+		<set name="activateRate" val="0" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="hitTime" val="4000" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="14400000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player agathionId="1556" />
+		</cond>
+		<effects>
+			<effect name="Buff">
+				<add stat="weightPenalty" val="9000" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23135" levels="1" name="Nepal Snow Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player agathionId="1557" />
+		</cond>
+	</skill>
+	<skill id="23136" levels="1" name="Nepal Snow Agathion Special Skill - Snow's Haste">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="1200" />
+		<set name="abnormalType" val="ATTACK_TIME_DOWN" />
+		<set name="activateRate" val="0" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="3600000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player agathionId="1557" />
+		</cond>
+		<effects>
+			<effect name="Buff">
+				<mul stat="pAtkSpd" val="1.33" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23137" levels="1" name="Round Ball Snow Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player agathionId="1558" />
+		</cond>
+	</skill>
+	<skill id="23138" levels="1" name="Round Ball Snow Agathion Special Skill - Snow's Acumen">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="1200" />
+		<set name="abnormalType" val="CASTING_TIME_DOWN" />
+		<set name="activateRate" val="0" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="3600000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player agathionId="1558" />
+		</cond>
+		<effects>
+			<effect name="Buff">
+				<mul stat="mAtkSpd" val="1.3" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23139" levels="1" name="Ladder Snow Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player agathionId="1559" />
+		</cond>
+	</skill>
+	<skill id="23140" levels="1" name="Ladder Snow Agathion Special Skill - Snow's Wind Walk">
+		<!-- Increases moving speed by 20 for 20 minutes. Reuse delay is 1 hour. -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="1200" />
+		<set name="abnormalType" val="SPEED_UP" />
+		<set name="activateRate" val="0" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="3600000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<set name="trait" val="ETC" />
+		<cond msgId="2292">
+			<player agathionId="1559" />
+		</cond>
+		<effects>
+			<effect name="Buff">
+				<add stat="runSpd" val="20" />
+			</effect>
+		</effects>
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="23141" levels="1" name="Iken Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+	</skill>
+	<skill id="23142" levels="1" name="Lana Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+	</skill>
+	<skill id="23143" levels="1" name="Gnocian Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+	</skill>
+	<skill id="23144" levels="1" name="Orodriel Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+	</skill>
+	<skill id="23145" levels="1" name="Lakinos Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+	</skill>
+	<skill id="23146" levels="1" name="Mortia Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+	</skill>
+	<skill id="23147" levels="1" name="Heintz Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+	</skill>
+	<skill id="23148" levels="1" name="Meruril Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+	</skill>
+	<skill id="23149" levels="1" name="Taman Zu Rapatui Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+	</skill>
+	<skill id="23150" levels="1" name="Kaurin Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+	</skill>
+	<skill id="23151" levels="1" name="Ahertbein Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+	</skill>
+	<skill id="23152" levels="1" name="Naonin Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+	</skill>
+	<skill id="23153" levels="1" name="Prominent Outsider Adventurer's Ability">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="1200" />
+		<set name="abnormalType" val="MULTI_BUFF" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="14400000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+		<effects>
+			<effect name="Buff">
+				<mul stat="regHp" val="1.2" />
+			</effect>
+			<effect name="MaxHp">
+				<param power="20" />
+				<param type="PER" />
+			</effect>
+			<effect name="MaxMp">
+				<param power="20" />
+				<param type="PER" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="regMp" val="1.2" />
+			</effect>
+			<effect name="Debuff">
+				<mul stat="debuffVuln" val="0.9" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="runSpd" val="1.2" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23154" levels="1" name="Kadomas Special Skill - Fireworks">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="6300" />
+		<set name="icon" val="BranchSys.icon.br_kadomatsu_i00" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="60000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+	</skill>
+	<skill id="23155" levels="1" name="Hand of Warmth">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="600" />
+		<set name="abnormalType" val="BR_EVENT_BUF3" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="castRange" val="600" />
+		<set name="effectRange" val="600" />
+		<set name="hitTime" val="500" />
+		<set name="icon" val="icon.skill0436" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="Buff">
+				<mul stat="critRate" val="1.3" />
+			</effect>
+			<effect name="Buff">
+				<add stat="mCritRate" val="2" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23156" levels="1" name="Gift of Thanks">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="600" />
+		<set name="abnormalType" val="VP_UP" />
+		<set name="abnormalVisualEffect" val="VP_UP" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="castRange" val="400" />
+		<set name="effectRange" val="900" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="icon" val="icon.skill1086" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="7200000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+		<effects>
+			<effect name="Buff">
+				<mul stat="vitalityConsumeRate" val="0" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23157" levels="1" name="Donateloph's Blessing">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="3600" />
+		<set name="abnormalType" val="BR_EVENT_BUF1" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="castRange" val="600" />
+		<set name="effectRange" val="600" />
+		<set name="hitTime" val="500" />
+		<set name="icon" val="BranchSys.icon.br_xmas_present_luck_i00" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="Buff">
+				<mul stat="pAtkSpd" val="1.2" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="mDef" val="1.2" />
+			</effect>
+			<effect name="MaxCp">
+				<param power="40" />
+				<param type="PER" />
+			</effect>
+			<effect name="MaxHp">
+				<param power="40" />
+				<param type="PER" />
+			</effect>
+			<effect name="MaxMp">
+				<param power="40" />
+				<param type="PER" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="pAtk" val="1.1" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="pDef" val="1.2" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="runSpd" val="1.2" />
+			</effect>
+			<effect name="Buff">
+				<add stat="absorbDam" val="10" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23158" levels="1" name="Raphaeloph's Blessing">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="3600" />
+		<set name="abnormalType" val="BR_EVENT_BUF1" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="castRange" val="600" />
+		<set name="effectRange" val="600" />
+		<set name="hitTime" val="500" />
+		<set name="icon" val="BranchSys.icon.br_xmas_present_joy_i00" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="Buff">
+				<mul stat="critDmg" val="1.1" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="critRate" val="1.3" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="mDef" val="1.2" />
+			</effect>
+			<effect name="MaxCp">
+				<param power="40" />
+				<param type="PER" />
+			</effect>
+			<effect name="MaxHp">
+				<param power="40" />
+				<param type="PER" />
+			</effect>
+			<effect name="MaxMp">
+				<param power="40" />
+				<param type="PER" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="pAtk" val="1.1" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="pDef" val="1.2" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="runSpd" val="1.2" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23159" levels="1" name="Leonardoph's Blessing">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="3600" />
+		<set name="abnormalType" val="BR_EVENT_BUF1" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="castRange" val="600" />
+		<set name="effectRange" val="600" />
+		<set name="hitTime" val="500" />
+		<set name="icon" val="BranchSys.icon.br_xmas_reward_buff_i00" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="Buff">
+				<mul stat="mAtkSpd" val="1.2" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="mAtk" val="1.1" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="mDef" val="1.2" />
+			</effect>
+			<effect name="MaxCp">
+				<param power="40" />
+				<param type="PER" />
+			</effect>
+			<effect name="MaxHp">
+				<param power="40" />
+				<param type="PER" />
+			</effect>
+			<effect name="MaxMp">
+				<param power="40" />
+				<param type="PER" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="pDef" val="1.2" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="runSpd" val="1.2" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23160" levels="1" name="Michelangeloph's Blessing">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="3600" />
+		<set name="abnormalType" val="BR_EVENT_BUF1" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="castRange" val="600" />
+		<set name="effectRange" val="600" />
+		<set name="hitTime" val="500" />
+		<set name="icon" val="BranchSys.icon.br_xmas_weapon_i00" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="Buff">
+				<mul stat="mCritPower" val="1.2" />
+			</effect>
+			<effect name="Buff">
+				<add stat="mCritRate" val="2" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="mDef" val="1.2" />
+			</effect>
+			<effect name="MaxCp">
+				<param power="40" />
+				<param type="PER" />
+			</effect>
+			<effect name="MaxHp">
+				<param power="40" />
+				<param type="PER" />
+			</effect>
+			<effect name="MaxMp">
+				<param power="40" />
+				<param type="PER" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="pDef" val="1.2" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="runSpd" val="1.2" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23161" levels="1" name="Rudolph Girl's Blessing - Maintain Vitality">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="3600" />
+		<set name="abnormalType" val="VP_UP" />
+		<set name="abnormalVisualEffect" val="VP_UP" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="castRange" val="600" />
+		<set name="effectRange" val="600" />
+		<set name="hitTime" val="500" />
+		<set name="icon" val="BranchSys.icon.br_xmas_miracle_i00" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="Buff">
+				<mul stat="vitalityConsumeRate" val="0" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23162" levels="1" name="Rudolph Girl's Blessing - Replenish Energy">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="600" />
+		<set name="effectRange" val="600" />
+		<set name="hitTime" val="500" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="VitalityPointUp">
+				<param value="20000" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23163" levels="1" name="Turkey's Big Mistake">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="3600" />
+		<set name="abnormalType" val="BR_EVENT_BUF1" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="castRange" val="600" />
+		<set name="effectRange" val="600" />
+		<set name="hitTime" val="500" />
+		<set name="icon" val="BranchSys.icon.br_turkey_buff_i00" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="Buff">
+				<mul stat="mAtk" val="1.2" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="mDef" val="1.2" />
+			</effect>
+			<effect name="MaxCp">
+				<param power="50" />
+				<param type="PER" />
+			</effect>
+			<effect name="MaxHp">
+				<param power="50" />
+				<param type="PER" />
+			</effect>
+			<effect name="MaxMp">
+				<param power="50" />
+				<param type="PER" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="pAtk" val="1.2" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="pDef" val="1.2" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="runSpd" val="1.3" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23164" levels="1" name="Opera Agathion Special Skill - Sword of Life">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="400" />
+		<set name="effectPoint" val="1" />
+		<set name="effectRange" val="600" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="43200000" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="PC_BODY" />
+		<cond msgId="2292">
+			<and>
+				<player canResurrect="true" />
+				<player agathionId="1555" />
+			</and>
+		</cond>
+		<effects>
+			<effect name="Resurrection">
+				<param power="200" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23165" levels="1" name="Inadequate Affection">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="10" />
+		<set name="abnormalType" val="BIG_HEAD" />
+		<set name="abnormalVisualEffect" val="BIG_HEAD" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="castRange" val="600" />
+		<set name="effectRange" val="600" />
+		<set name="hitTime" val="500" />
+		<set name="icon" val="icon.skill4443" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<set name="trait" val="ETC" />
+		<effects>
+			<effect name="Debuff">
+				<mul stat="runSpd" val="0.98" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23166" levels="1" name="Energized Rose Spirit">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="1" />
+		<set name="effectRange" val="1400" />
+		<set name="hitTime" val="6000" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+		<effects>
+			<effect name="InstantDispelByName">
+				<param id="22158" />
+			</effect>
+			<effect name="VitalityPointUp">
+				<param value="5000" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23167" levels="1" name="Rosy Seduction">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="300" />
+		<set name="abnormalType" val="BR_EVENT_BUF5" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="1" />
+		<set name="effectRange" val="1400" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="BranchSys2.icon.br_rosalia_rose_red_i00" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="itemConsumeCount" val="3" />
+		<set name="itemConsumeId" val="20904" />
+		<set name="magicLvl" val="-3" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="600000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+		<effects>
+			<effect name="CallSkill">
+				<param skillId="23170" />
+			</effect>
+			<effect name="MaxHp">
+				<param power="20" />
+				<param type="PER" />
+			</effect>
+			<effect name="MaxMp">
+				<param power="20" />
+				<param type="PER" />
+			</effect>
+			<effect name="Debuff">
+				<mul stat="debuffVuln" val="0.9" />
+			</effect>
+			<effect name="Buff">
+				<add stat="runSpd" val="20" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23168" levels="1" name="Critical Seduction">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="2" />
+		<set name="abnormalTime" val="1200" />
+		<set name="abnormalType" val="BR_EVENT_BUF5" />
+		<set name="affectObject" val="FRIEND" />
+		<set name="affectRange" val="1000" />
+		<set name="affectScope" val="PARTY" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="1" />
+		<set name="effectRange" val="1400" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="BranchSys2.icon.br_rosalia_rose_red_i00" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="itemConsumeCount" val="10" />
+		<set name="itemConsumeId" val="20904" />
+		<set name="magicLvl" val="-3" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="2400000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+		<set name="trait" val="ETC" />
+		<effects>
+			<effect name="CallSkill">
+				<param skillId="23169" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="physicalMpConsumeRate" val="0.85" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="magicalMpConsumeRate" val="0.85" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="danceMpConsumeRate" val="0.85" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="mAtk" val="1.2" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="mDef" val="1.3" />
+			</effect>
+			<effect name="MaxCp">
+				<param power="30" />
+				<param type="PER" />
+			</effect>
+			<effect name="MaxHp">
+				<param power="30" />
+				<param type="PER" />
+			</effect>
+			<effect name="MaxMp">
+				<param power="30" />
+				<param type="PER" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="pAtk" val="1.1" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="pDef" val="1.3" />
+			</effect>
+			<effect name="Buff">
+				<add stat="runSpd" val="20" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23169" levels="1" name="Mesmerization">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="2400" />
+		<set name="abnormalType" val="BR_EVENT_BUF6" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="buffProtectLevel" val="2" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="1" />
+		<set name="effectRange" val="1400" />
+		<set name="icon" val="BranchSys2.icon.br_rosalia_rose_blue_i00" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isDebuff" val="true" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="-2" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+		<set name="trait" val="ETC" />
+	</skill>
+	<skill id="23170" levels="1" name="Mesmerization">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="600" />
+		<set name="abnormalType" val="BR_EVENT_BUF7" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="buffProtectLevel" val="2" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="1" />
+		<set name="effectRange" val="1400" />
+		<set name="icon" val="BranchSys2.icon.br_rosalia_rose_white_i00" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isDebuff" val="true" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="-2" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+		<set name="trait" val="ETC" />
+	</skill>
+	<skill id="23171" levels="1" name="Phoenix Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player agathionId="1574" />
+		</cond>
+	</skill>
+	<skill id="23172" levels="1" name="Phoenix Agathion Special Skill - Nirvana Cycle">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="5" />
+		<set name="abnormalType" val="INVINCIBILITY" />
+		<set name="abnormalVisualEffect" val="INVINCIBILITY" />
+		<set name="activateRate" val="0" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="hitTime" val="500" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="43200000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="113" addName="1">
+			<and>
+				<player agathionId="1574" />
+				<player hp="30" />
+			</and>
+		</cond>
+		<effects>
+			<effect name="Cp">
+				<param amount="9000" />
+			</effect>
+			<effect name="HpPerMax">
+				<param power="100" />
+			</effect>
+			<effect name="MpPerMax">
+				<param power="100" />
+			</effect>
+			<effect name="BlockDebuff" />
+			<effect name="BlockDamage">
+				<param block="HP" />
+			</effect>
+			<effect name="BlockDamage">
+				<param block="MP" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23173" levels="1" name="Phoenix Agathion Special Skill - Mountain Echoes">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="effectPoint" val="1" />
+		<set name="hitTime" val="500" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="14400000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player agathionId="1574" />
+		</cond>
+		<effects>
+			<effect name="DispelByCategory">
+				<param slot="DEBUFF" rate="100" max="10" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23174" levels="1" name="Narrow Escape">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="1800" />
+		<set name="abnormalType" val="RESURRECTION_SPECIAL" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="castRange" val="600" />
+		<set name="effectPoint" val="1" />
+		<set name="effectRange" val="600" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="43200000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+		<effects>
+			<effect name="ResurrectionSpecial">
+				<param resPower="100" />
+				<param resRecovery="100" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23175" levels="1" name="Soul Stealth">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="5" />
+		<set name="abnormalType" val="HIDE" />
+		<set name="abnormalVisualEffect" val="STEALTH" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="castRange" val="600" />
+		<set name="effectPoint" val="1" />
+		<set name="effectRange" val="600" />
+		<set name="hitTime" val="500" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="43200000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="SilentMove" />
+			<effect name="Hide" />
+			<effect name="Buff">
+				<mul stat="runSpd" val="0.5" />
+			</effect>
+		</effects>
+		<endEffects>
+			<effect name="CallSkill">
+				<param skillId="23177" skillLevel="1" />
+			</effect>
+		</endEffects>
+	</skill>
+	<skill id="23176" levels="1" name="Hide">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="5" />
+		<set name="abnormalType" val="HIDE" />
+		<set name="abnormalVisualEffect" val="STEALTH" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="castRange" val="600" />
+		<set name="effectPoint" val="1" />
+		<set name="effectRange" val="600" />
+		<set name="hitTime" val="500" />
+		<set name="icon" val="icon.skill0922" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="10000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="SilentMove" />
+			<effect name="Hide" />
+		</effects>
+		<endEffects>
+			<effect name="CallSkill">
+				<param skillId="23178" skillLevel="1" />
+			</effect>
+		</endEffects>
+	</skill>
+	<skill id="23177" levels="1" name="Soul Stealth">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="120" />
+		<set name="abnormalType" val="STEALTH" />
+		<set name="abnormalVisualEffect" val="STEALTH" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="castRange" val="600" />
+		<set name="effectPoint" val="1" />
+		<set name="effectRange" val="600" />
+		<set name="hitTime" val="500" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="5000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="SilentMove" />
+			<effect name="Buff">
+				<mul stat="runSpd" val="0.5" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23178" levels="1" name="Soul Stealth">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="120" />
+		<set name="abnormalType" val="STEALTH" />
+		<set name="abnormalVisualEffect" val="STEALTH" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="castRange" val="600" />
+		<set name="effectPoint" val="1" />
+		<set name="effectRange" val="600" />
+		<set name="hitTime" val="500" />
+		<set name="icon" val="icon.skill0411" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="5000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+		<effects>
+			<effect name="SilentMove" />
+			<effect name="Debuff">
+				<mul stat="runSpd" val="0.5" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23179" levels="1" name="Blessing of Vitality">
+		<!-- Confirmed CT2.5 -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="7200" />
+		<set name="abnormalType" val="VP_KEEP" />
+		<set name="castRange" val="600" />
+		<set name="effectRange" val="600" />
+		<set name="hitTime" val="500" />
+		<set name="icon" val="BranchSys2.icon.br_vitality_day_i00" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="Buff">
+				<mul stat="vitalityConsumeRate" val="0" />
+			</effect>
+		</effects>
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="23180" levels="1" name="Joy of Vitality">
+		<!-- Confirmed CT2.5 -->
+		<set name="blockedInOlympiad" val="true" />
+		<set name="castRange" val="600" />
+		<set name="effectRange" val="600" />
+		<set name="hitTime" val="500" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="VitalityPointUp">
+				<param value="20000" />
+			</effect>
+		</effects>
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="23181" levels="1" name="Three-headed Dragon Agathion Cute Trick">
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player agathionId="1575" />
+		</cond>
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="23182" levels="1" name="Three-headed Dragon Agathion Special Skill - Wind Walk">
+		<!-- Increases moving speed by 20 for 20 minutes. Reuse delay is 1 hours. -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="1200" />
+		<set name="abnormalType" val="SPEED_UP" />
+		<set name="activateRate" val="0" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="3600000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player agathionId="1575" />
+		</cond>
+		<effects>
+			<effect name="Buff">
+				<add stat="runSpd" val="20" />
+			</effect>
+		</effects>
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="23183" levels="1" name="Ball Trapping Gnosian Agathion Special Skill - Buff of Cheers">
+		<!-- With the power of cheers, for 1 hour, increases Max MP, MP Recovery Bonus, HP Recovery Bonus, Critical Attack Power, P. Def., Atk. Spd., M. Atk., M. Def., Casting Spd. by 20%, the occurrence rate of Prominent Damage through damage magic by 2, P. Atk. by 10%, and resistance to de-buffs by 10%. Also decreases MP consumption needed for skill use by 5% and moving speed by 20%. Reuse Delay 1 hour. Consumes 30 energy. -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="3600" />
+		<set name="abnormalType" val="MULTI_BUFF" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="3600000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="NONE" />
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="23184" levels="1" name="Ball Trapping Gnosian Agathion Special Skill - Soccer Ball of Cheers">
+		<!-- Confirmed CT2.5 -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="10000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="129">
+			<and>
+				<player invSize="10" />
+				<player weight="80" />
+			</and>
+		</cond>
+		<cond msgId="2292">
+			<player agathionId="20983" />
+		</cond>
+		<effects>
+			<effect name="Restoration">
+				<param itemId="20993" itemCount="1" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23185" levels="1" name="Ball Trapping Orodriel Agathion Special Skill - Buff of Cheers">
+		<!-- With the power of cheers, for 1 hour, increases Max MP, MP Recovery Bonus, HP Recovery Bonus, Critical Attack Power, P. Def., Atk. Spd., M. Atk., M. Def., Casting Spd. by 20%, the occurrence rate of Prominent Damage through damage magic by 2, P. Atk. by 10%, and resistance to de-buffs by 10%. Also decreases MP consumption needed for skill use by 5% and moving speed by 20%. Reuse Delay 1 hour. Consumes 250 energy. -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="3600" />
+		<set name="abnormalType" val="MULTI_BUFF" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="3600000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="NONE" />
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="23186" levels="1" name="Ball Trapping Orodriel Agathion Special Skill - Soccer Ball of Cheers">
+		<!-- Confirmed CT2.5 -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="10000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="129">
+			<and>
+				<player invSize="10" />
+				<player weight="80" />
+			</and>
+		</cond>
+		<cond msgId="2292">
+			<player agathionId="20984" />
+		</cond>
+		<effects>
+			<effect name="Restoration">
+				<param itemId="20993" itemCount="1" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23187" levels="1" name="Ball Trapping Penalty Kick Agathion Special Skill - Buff of Cheers">
+		<!-- With the power of cheers, for 1 hour, increases Max MP, MP Recovery Bonus, HP Recovery Bonus, Critical Attack Power, P. Def., Atk. Spd., M. Atk., M. Def., Casting Spd. by 20%, the occurrence rate of Prominent Damage through damage magic by 2, P. Atk. by 10%, and resistance to de-buffs by 10%. Also decreases MP consumption needed for skill use by 5% and moving speed by 20%. Reuse Delay 1 hour. Consumes 250 energy. -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="3600" />
+		<set name="abnormalType" val="MULTI_BUFF" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="3600000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="NONE" />
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="23188" levels="1" name="Ball Trapping Penalty Kick Agathion Special Skill - Soccer Ball of Cheers">
+		<!-- Confirmed CT2.5 -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="10000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="129">
+			<and>
+				<player invSize="10" />
+				<player weight="80" />
+			</and>
+		</cond>
+		<cond msgId="2292">
+			<player agathionId="20985" />
+		</cond>
+		<effects>
+			<effect name="Restoration">
+				<param itemId="20993" itemCount="1" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23189" levels="1" name="Ball Trapping Gnosian Agathion Special Skill - Buff of Cheers">
+		<!-- With the power of cheers, for 1 hour, increases Max MP, MP Recovery Bonus, HP Recovery Bonus, Critical Attack Power, P. Def., Atk. Spd., M. Atk., M. Def., Casting Spd. by 20%, the occurrence rate of Prominent Damage through damage magic by 2, P. Atk. by 10%, and resistance to de-buffs by 10%. Also decreases MP consumption needed for skill use by 5% and moving speed by 20%. Reuse Delay 1 hour. Consumes 250 energy. -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="3600" />
+		<set name="abnormalType" val="MULTI_BUFF" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="3600000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="NONE" />
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="23190" levels="1" name="Ball Trapping Gnosian Agathion Special Skill - Soccer Ball of Cheers">
+		<!-- Confirmed CT2.5 -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="10000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="129">
+			<and>
+				<player invSize="10" />
+				<player weight="80" />
+			</and>
+		</cond>
+		<cond msgId="2292">
+			<player agathionId="20986" />
+		</cond>
+		<effects>
+			<effect name="Restoration">
+				<param itemId="20993" itemCount="1" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23191" levels="1" name="Ball Trapping Orodriel Agathion Special Skill - Buff of Cheers">
+		<!-- With the power of cheers, for 1 hour, increases Max MP, MP Recovery Bonus, HP Recovery Bonus, Critical Attack Power, P. Def., Atk. Spd., M. Atk., M. Def., Casting Spd. by 20%, the occurrence rate of Prominent Damage through damage magic by 2, P. Atk. by 10%, and resistance to de-buffs by 10%. Also decreases MP consumption needed for skill use by 5% and moving speed by 20%. Reuse Delay 1 hour. Consumes 250 energy. -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="3600" />
+		<set name="abnormalType" val="MULTI_BUFF" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="3600000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="NONE" />
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="23192" levels="1" name="Ball Trapping Orodriel Agathion Special Skill - Soccer Ball of Cheers">
+		<!-- Confirmed CT2.5 -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="10000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="129">
+			<and>
+				<player invSize="10" />
+				<player weight="80" />
+			</and>
+		</cond>
+		<cond msgId="2292">
+			<player agathionId="20987" />
+		</cond>
+		<effects>
+			<effect name="Restoration">
+				<param itemId="20993" itemCount="1" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23193" levels="1" name="Ball Trapping Penalty Kick Agathion Special Skill - Buff of Cheers">
+		<!-- With the power of cheers, for 1 hour, increases Max MP, MP Recovery Bonus, HP Recovery Bonus, Critical Attack Power, P. Def., Atk. Spd., M. Atk., M. Def., Casting Spd. by 20%, the occurrence rate of Prominent Damage through damage magic by 2, P. Atk. by 10%, and resistance to de-buffs by 10%. Also decreases MP consumption needed for skill use by 5% and moving speed by 20%. Reuse Delay 1 hour. Consumes 250 energy. -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="3600" />
+		<set name="abnormalType" val="MULTI_BUFF" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="3600000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="NONE" />
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="23194" levels="1" name="Ball Trapping Penalty Kick Agathion Special Skill - Soccer Ball of Cheers">
+		<!-- Confirmed CT2.5 -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="10000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="129">
+			<and>
+				<player invSize="10" />
+				<player weight="80" />
+			</and>
+		</cond>
+		<cond msgId="2292">
+			<player agathionId="20988" />
+		</cond>
+		<effects>
+			<effect name="Restoration">
+				<param itemId="20993" itemCount="1" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23195" levels="1" name="Ball Trapping Gnosian Agathion Special Skill - Buff of Cheers">
+		<!-- With the power of cheers, for 1 hour, increases Max MP, MP Recovery Bonus, HP Recovery Bonus, Critical Attack Power, P. Def., Atk. Spd., M. Atk., M. Def., Casting Spd. by 20%, the occurrence rate of Prominent Damage through damage magic by 2, P. Atk. by 10%, and resistance to de-buffs by 10%. Also decreases MP consumption needed for skill use by 5% and moving speed by 20%. Reuse Delay 1 hour. Consumes 250 energy. -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="3600" />
+		<set name="abnormalType" val="MULTI_BUFF" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="3600000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="NONE" />
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="23196" levels="1" name="Ball Trapping Gnosian Agathion Special Skill - Soccer Ball of Cheers">
+		<!-- Confirmed CT2.5 -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="10000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="129">
+			<and>
+				<player invSize="10" />
+				<player weight="80" />
+			</and>
+		</cond>
+		<cond msgId="2292">
+			<player agathionId="20989" />
+		</cond>
+		<effects>
+			<effect name="Restoration">
+				<param itemId="20993" itemCount="1" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23197" levels="1" name="Ball Trapping Orodriel Agathion Special Skill - Buff of Cheers">
+		<!-- With the power of cheers, for 1 hour, increases Max MP, MP Recovery Bonus, HP Recovery Bonus, Critical Attack Power, P. Def., Atk. Spd., M. Atk., M. Def., Casting Spd. by 20%, the occurrence rate of Prominent Damage through damage magic by 2, P. Atk. by 10%, and resistance to de-buffs by 10%. Also decreases MP consumption needed for skill use by 5% and moving speed by 20%. Reuse Delay 1 hour. Consumes 250 energy. -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="3600" />
+		<set name="abnormalType" val="MULTI_BUFF" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="3600000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="NONE" />
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="23198" levels="1" name="Ball Trapping Orodriel Agathion Special Skill - Soccer Ball of Cheers">
+		<!-- Confirmed CT2.5 -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="10000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="129">
+			<and>
+				<player invSize="10" />
+				<player weight="80" />
+			</and>
+		</cond>
+		<cond msgId="2292">
+			<player agathionId="20990" />
+		</cond>
+		<effects>
+			<effect name="Restoration">
+				<param itemId="20993" itemCount="1" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23199" levels="1" name="Ball Trapping Penalty Kick Agathion Special Skill - Buff of Cheers">
+		<!-- With the power of cheers, for 1 hour, increases Max MP, MP Recovery Bonus, HP Recovery Bonus, Critical Attack Power, P. Def., Atk. Spd., M. Atk., M. Def., Casting Spd. by 20%, the occurrence rate of Prominent Damage through damage magic by 2, P. Atk. by 10%, and resistance to de-buffs by 10%. Also decreases MP consumption needed for skill use by 5% and moving speed by 20%. Reuse Delay 1 hour. Consumes 250 energy. -->
+		<set name="abnormalLvl" val="26" />
+		<set name="abnormalTime" val="3600" />
+		<set name="abnormalType" val="MULTI_BUFF" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="3600000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="NONE" />
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+</list>

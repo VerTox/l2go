@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/skills.xsd">
+	<skill id="22400" levels="1" name="Transformation Scroll - Zaken">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="1800" />
+		<set name="abnormalType" val="TRANSFORM" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="effectPoint" val="1" />
+		<set name="icon" val="icon.skilltransform1" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="itemConsumeCount" val="1" />
+		<set name="itemConsumeId" val="22325" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond>
+			<player canTransform="true" />
+		</cond>
+		<effects>
+			<effect name="Transformation">
+				<param id="305" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="22401" levels="1" name="Transformation Scroll - Ranku">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="1800" />
+		<set name="abnormalType" val="TRANSFORM" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="effectPoint" val="1" />
+		<set name="icon" val="icon.skilltransform1" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="itemConsumeCount" val="1" />
+		<set name="itemConsumeId" val="22324" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond>
+			<player canTransform="true" />
+		</cond>
+		<effects>
+			<effect name="Transformation">
+				<param id="309" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="22402" levels="1" name="Juju Agathion's Gift">
+		<!-- There is no available description. -->
+		<set name="operateType" val="P" />
+		<set name="targetType" val="NONE" />
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="22403" levels="1" name="Extra Entrance Pass - Kamaloka (Hall of the Abyss)">
+		<!-- There is no available description. -->
+		<set name="operateType" val="P" />
+		<set name="targetType" val="NONE" />
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="22404" levels="1" name="Pathfinder's Reward">
+		<!-- There is no available description. -->
+		<set name="operateType" val="P" />
+		<set name="targetType" val="NONE" />
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="22405" levels="1" name="S84 Top-Grade Weapon Box">
+		<!-- There is no available description. -->
+		<set name="operateType" val="P" />
+		<set name="targetType" val="NONE" />
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="22406" levels="1" name="Ellegia Armor Box">
+		<!-- There is no available description. -->
+		<set name="operateType" val="P" />
+		<set name="targetType" val="NONE" />
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="22407" levels="1" name="PC Cafe Energy">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="4" />
+		<set name="abnormalTime" val="3600" />
+		<set name="abnormalType" val="VP_UP" />
+		<set name="abnormalVisualEffect" val="VP_UP" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="buffProtectLevel" val="2" />
+		<set name="effectPoint" val="100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="100" />
+		<set name="icon" val="icon.etc_pccafe_point_i00" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="itemConsumeCount" val="1" />
+		<set name="itemConsumeId" val="22279" />
+		<set name="magicLvl" val="-2" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="3600000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="113" addName="1">
+			<player levelRange="1;85" />
+		</cond>
+		<effects>
+			<effect name="Buff">
+				<add stat="vitalityConsumeRate" val="1" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="22408" levels="1" name="Enchantment Tool Box">
+		<!-- There is no available description. -->
+		<set name="operateType" val="P" />
+		<set name="targetType" val="NONE" />
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="22409" levels="1" name="Rune of Fate">
+		<!-- Increases acquired XP and SP by 200%. -->
+		<set name="operateType" val="P" />
+		<set name="targetType" val="NONE" />
+	</skill>
+</list>

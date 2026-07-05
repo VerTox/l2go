@@ -213,9 +213,8 @@ func (g *GameServer) initDatabase(ctx context.Context) error {
 	// Load item templates from XML data files
 	// Try multiple paths for flexibility in different environments
 	itemTemplatePaths := []string{
-		"data/stats/items",       // Relative from project root
-		"../../data/stats/items", // Relative from cmd/gameserver
-		"./data/stats/items",     // Explicit current directory
+		"datapack/stats/items",       // Relative from project root
+		"../../datapack/stats/items", // Relative from cmd/gameserver
 	}
 
 	templateLoaded := false
@@ -236,10 +235,8 @@ func (g *GameServer) initDatabase(ctx context.Context) error {
 
 	// Load NPC templates from XML data files
 	npcTemplatePaths := []string{
-		"data/stats/npcs",
-		"../../data/stats/npcs",
-		"references/data/stats/npcs",
-		"../../references/data/stats/npcs",
+		"datapack/stats/npcs",
+		"../../datapack/stats/npcs",
 	}
 
 	npcTemplatesLoaded := false
@@ -260,10 +257,8 @@ func (g *GameServer) initDatabase(ctx context.Context) error {
 
 	// Load map-region respawn data (nearest-town lookup for revive/teleport). (l2go-3xh.3)
 	mapRegionPaths := []string{
-		"data/mapregion",
-		"../../data/mapregion",
-		"references/data/mapregion",
-		"../../references/data/mapregion",
+		"datapack/mapregion",
+		"../../datapack/mapregion",
 	}
 	for _, dir := range mapRegionPaths {
 		if err := registry.GetMapRegionRegistry().LoadFromDirectory(dir); err == nil {
@@ -280,10 +275,8 @@ func (g *GameServer) initDatabase(ctx context.Context) error {
 
 	// Load class skill trees (auto-get skills granted per class/level). (l2go-3ih)
 	for _, path := range []string{
-		"data/skillTrees/classSkillTree.xml",
-		"../../data/skillTrees/classSkillTree.xml",
-		"references/data/skillTrees/classSkillTree.xml",
-		"../../references/data/skillTrees/classSkillTree.xml",
+		"datapack/skillTrees/classSkillTree.xml",
+		"../../datapack/skillTrees/classSkillTree.xml",
 	} {
 		if err := registry.GetSkillTreeRegistry().LoadFromFile(path); err == nil {
 			log.Ctx(ctx).Info().Str("path", path).Msg("Class skill trees loaded successfully")
@@ -296,10 +289,8 @@ func (g *GameServer) initDatabase(ctx context.Context) error {
 
 	// Load class category data (gates NPC-trainer skill learning by class category). (l2go-hv9)
 	for _, path := range []string{
-		"data/categoryData.xml",
-		"../../data/categoryData.xml",
-		"references/data/categoryData.xml",
-		"../../references/data/categoryData.xml",
+		"datapack/categoryData.xml",
+		"../../datapack/categoryData.xml",
 	} {
 		if err := registry.GetCategoryRegistry().LoadFromFile(path); err == nil {
 			log.Ctx(ctx).Info().Str("path", path).Msg("Category data loaded successfully")
@@ -371,8 +362,8 @@ func (g *GameServer) seedSpawnlist(ctx context.Context) {
 
 	// 1. Primary source: L2J datapack SQL file (~42K entries with town NPCs + field mobs)
 	sqlSpawnPaths := []string{
-		"references/l2jserver-l2j-server-datapack-f39d964439a9/src/main/resources/sql/spawnlist.sql",
-		"../../references/l2jserver-l2j-server-datapack-f39d964439a9/src/main/resources/sql/spawnlist.sql",
+		"datapack/sql/spawnlist.sql",
+		"../../datapack/sql/spawnlist.sql",
 	}
 	for _, sqlPath := range sqlSpawnPaths {
 		spawns, err := registry.LoadSpawnsFromSQL(sqlPath)
@@ -389,10 +380,8 @@ func (g *GameServer) seedSpawnlist(ctx context.Context) {
 
 	// 2. Additional source: XML spawn files
 	xmlSpawnPaths := []string{
-		"data/spawnlist",
-		"../../data/spawnlist",
-		"references/data/spawnlist",
-		"../../references/data/spawnlist",
+		"datapack/spawnlist",
+		"../../datapack/spawnlist",
 	}
 	for _, spawnDir := range xmlSpawnPaths {
 		spawns, err := registry.LoadSpawnsFromDirectory(spawnDir)
@@ -506,10 +495,8 @@ func (g *GameServer) prepareHandlers() {
 	// linked restore skill (HP/MP/CP + amount) from the skill data and restore
 	// immediately via the game loop, until a real skill engine replaces this.
 	skillRoots := []string{
-		"data/stats/skills",
-		"../../data/stats/skills",
-		"references/data/stats/skills",
-		"../../references/data/stats/skills",
+		"datapack/stats/skills",
+		"../../datapack/stats/skills",
 	}
 	// Skill engine template registry (epic l2go-z36). Lazily parses the skill
 	// datapack into per-(id,level) templates. Wired into the client handler so the
@@ -536,10 +523,8 @@ func (g *GameServer) prepareHandlers() {
 	// item id; the notifier delivers SystemMessage feedback (reusing the shot
 	// notifier, which now also satisfies usecase.RecipeNotifier).
 	recipes := registry.NewRecipeRegistry([]string{
-		"data",
-		"../../data",
-		"references/data",
-		"../../references/data",
+		"datapack",
+		"../../datapack",
 	})
 	recipeNotifier := newShotEffectNotifier(g.world, g.connections)
 	g.usc.inventory.ItemHandlers().Register("Recipes", usecase.NewRecipeHandler(recipes, recipeNotifier))
@@ -550,19 +535,15 @@ func (g *GameServer) prepareHandlers() {
 	// enchantItemData.xml; success chance is data-driven from enchantItemGroups.xml.
 	enchantData := registry.NewEnchantDataRegistry()
 	if err := enchantData.LoadFromFile(
-		"data/enchantItemData.xml",
-		"../../data/enchantItemData.xml",
-		"references/data/enchantItemData.xml",
-		"../../references/data/enchantItemData.xml",
+		"datapack/enchantItemData.xml",
+		"../../datapack/enchantItemData.xml",
 	); err != nil {
 		log.Warn().Err(err).Msg("failed to load enchant item data; enchant scrolls disabled")
 	}
 	enchantGroups := registry.NewEnchantGroupsRegistry()
 	if err := enchantGroups.LoadFromFile(
-		"data/enchantItemGroups.xml",
-		"../../data/enchantItemGroups.xml",
-		"references/data/enchantItemGroups.xml",
-		"../../references/data/enchantItemGroups.xml",
+		"datapack/enchantItemGroups.xml",
+		"../../datapack/enchantItemGroups.xml",
 	); err != nil {
 		log.Warn().Err(err).Msg("failed to load enchant item groups; enchant success chance unavailable")
 	}

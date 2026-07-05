@@ -43,7 +43,8 @@ docker-compose*.yml
 .DS_Store
 Thumbs.db
 
-# Reference Java code + datapack (not needed to compile; data is bind-mounted at runtime)
+# Reference Java code (not needed to compile). The runtime datapack lives in
+# datapack/ (NOT ignored) and is baked into the gameserver image via COPY.
 l2jserver/
 references/
 data/

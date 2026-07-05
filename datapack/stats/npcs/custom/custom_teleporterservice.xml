@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/npcs.xsd">
+    <npc id="60002" displayId="32226" name="Selanta" usingServerSideName="true" title="Teleporter" usingServerSideTitle="true" type="L2Npc">
+        <collision>
+            <radius normal="11" />
+            <height normal="22.25" />
+        </collision>
+    </npc>
+</list>

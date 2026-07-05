@@ -44,7 +44,7 @@ func main() {
 		race      = flag.Int("race", int(models.RaceHuman), "race id")
 		class     = flag.Int("class", int(models.ClassHumanFighter), "class id")
 		sex       = flag.Int("sex", int(models.SexMale), "sex (0=male, 1=female)")
-		skillTree = flag.String("skilltree", "references/data/skillTrees/classSkillTree.xml", "path to classSkillTree.xml (for auto-get skills)")
+		skillTree = flag.String("skilltree", "datapack/skillTrees/classSkillTree.xml", "path to classSkillTree.xml (for auto-get skills)")
 		towns     = flag.String("towns", "", "semicolon-separated x,y,z spawn points to distribute characters across round-robin (empty = single template spawn / clustered)")
 	)
 	flag.Parse()

@@ -1,0 +1,2871 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/skills.xsd">
+	<skill id="5300" levels="9" name="NPC(party) - Physical Range Long Range Attack - Dark">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 227 234 240 246 250 252 254 256 259 </table>
+		<table name="#physicalAttackPower"> 8711 12027 12324 12415 12497 12563 12606 12606 12606 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="150" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="castRange" val="500" />
+		<set name="coolTime" val="800" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="3200" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5301" levels="9" name="Stun">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 13066 18040 18486 18623 18745 18844 18909 18909 18909 </table>
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="9" />
+		<set name="abnormalType" val="STUN" />
+		<set name="abnormalVisualEffect" val="STUN" />
+		<set name="activateRate" val="80" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="basicProperty" val="CON" />
+		<set name="castRange" val="40" />
+		<set name="coolTime" val="660" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="200" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="830" />
+		<set name="icon" val="icon.skill0100" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="nextActionAttack" val="true" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="SHOCK" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+			<effect name="Stun" />
+		</effects>
+	</skill>
+	<skill id="5302" levels="9" name="Poison">
+		<!-- High Five Confirmed -->
+		<table name="#abnormalLvl"> 8 8 9 9 9 10 10 10 10 </table>
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 13066 18040 18486 18623 18745 18844 18909 18909 18909 </table>
+		<table name="#tickHpPower"> -286 -286 -314 -314 -314 -338 -338 -338 -338 </table>
+		<set name="abnormalLvl" val="#abnormalLvl" />
+		<set name="abnormalTime" val="20" />
+		<set name="abnormalType" val="POISON" />
+		<set name="abnormalVisualEffect" val="DOT_POISON" />
+		<set name="activateRate" val="80" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="basicProperty" val="CON" />
+		<set name="castRange" val="40" />
+		<set name="coolTime" val="660" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="200" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="830" />
+		<set name="icon" val="icon.skill4035" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="POISON" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+			<effect name="TickHp">
+				<param power="#tickHpPower" />
+				<param ticks="5" />
+				<param mode="DIFF" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5303" levels="9" name="Bleed">
+		<!-- High Five Confirmed -->
+		<table name="#abnormalLvl"> 8 8 9 9 9 10 10 10 10 </table>
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 13066 18040 18486 18623 18745 18844 18909 18909 18909 </table>
+		<table name="#tickHpPower"> -145 -145 -157 -157 -157 -168 -168 -168 -168 </table>
+		<set name="abnormalLvl" val="#abnormalLvl" />
+		<set name="abnormalTime" val="20" />
+		<set name="abnormalType" val="BLEEDING" />
+		<set name="abnormalVisualEffect" val="DOT_BLEEDING" />
+		<set name="activateRate" val="80" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="basicProperty" val="CON" />
+		<set name="castRange" val="40" />
+		<set name="coolTime" val="660" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="200" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="830" />
+		<set name="icon" val="icon.skill0096" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="BLEED" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+			<effect name="TickHp">
+				<param power="#tickHpPower" />
+				<param ticks="5" />
+				<param mode="DIFF" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5304" levels="9" name="Paralysis">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 13066 18040 18486 18623 18745 18844 18909 18909 18909 </table>
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="30" />
+		<set name="abnormalType" val="PARALYZE" />
+		<set name="abnormalVisualEffect" val="PARALYZE" />
+		<set name="activateRate" val="80" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="basicProperty" val="MEN" />
+		<set name="castRange" val="40" />
+		<set name="coolTime" val="660" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="200" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="830" />
+		<set name="icon" val="icon.skill1170" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="nextActionAttack" val="true" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="PARALYZE" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+			<effect name="Stun" />
+		</effects>
+	</skill>
+	<skill id="5305" levels="9" name="Poison">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 13066 18040 18486 18623 18745 18844 18909 18909 18909 </table>
+		<table name="#tickHpPower"> -381 -381 -418 -418 -418 -450 -450 -450 -450 </table>
+		<set name="abnormalLvl" val="8" />
+		<set name="abnormalTime" val="20" />
+		<set name="abnormalType" val="POISON" />
+		<set name="abnormalVisualEffect" val="DOT_POISON" />
+		<set name="activateRate" val="60" />
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="150" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="basicProperty" val="CON" />
+		<set name="coolTime" val="800" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="1000" />
+		<set name="icon" val="icon.skill4035" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="SELF" />
+		<set name="trait" val="POISON" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+			<effect name="TickHp">
+				<param power="#tickHpPower" />
+				<param ticks="5" />
+				<param mode="DIFF" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5306" levels="9" name="Paralysis">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 13066 18040 18486 18623 18745 18844 18909 18909 18909 </table>
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="30" />
+		<set name="abnormalType" val="PARALYZE" />
+		<set name="abnormalVisualEffect" val="PARALYZE" />
+		<set name="activateRate" val="60" />
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="150" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="basicProperty" val="MEN" />
+		<set name="coolTime" val="800" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="1000" />
+		<set name="icon" val="icon.skill1170" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="SELF" />
+		<set name="trait" val="PARALYZE" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+			<effect name="Stun" />
+		</effects>
+	</skill>
+	<skill id="5307" levels="9" name="Stun">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 13066 18040 18486 18623 18745 18844 18909 18909 18909 </table>
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="9" />
+		<set name="abnormalType" val="STUN" />
+		<set name="abnormalVisualEffect" val="STUN" />
+		<set name="activateRate" val="80" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="basicProperty" val="CON" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4500" />
+		<set name="icon" val="icon.skill0100" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="nextActionAttack" val="true" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="SHOCK" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+			<effect name="Stun" />
+		</effects>
+	</skill>
+	<skill id="5308" levels="9" name="Poison">
+		<!-- High Five Confirmed -->
+		<table name="#abnormalLvl"> 8 8 9 9 9 10 10 10 10 </table>
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 13066 18040 18486 18623 18745 18844 18909 18909 18909 </table>
+		<table name="#tickHpPower"> -286 -286 -314 -314 -314 -338 -338 -338 -338 </table>
+		<set name="abnormalLvl" val="#abnormalLvl" />
+		<set name="abnormalTime" val="20" />
+		<set name="abnormalType" val="POISON" />
+		<set name="abnormalVisualEffect" val="DOT_POISON" />
+		<set name="activateRate" val="80" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="basicProperty" val="CON" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4500" />
+		<set name="icon" val="icon.skill4035" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="POISON" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+			<effect name="TickHp">
+				<param power="#tickHpPower" />
+				<param ticks="5" />
+				<param mode="DIFF" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5309" levels="9" name="Bleed">
+		<!-- High Five Confirmed -->
+		<table name="#abnormalLvl"> 8 8 9 9 9 10 10 10 10 </table>
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 13066 18040 18486 18623 18745 18844 18909 18909 18909 </table>
+		<table name="#tickHpPower"> -145 -145 -157 -157 -157 -168 -168 -168 -168 </table>
+		<set name="abnormalLvl" val="#abnormalLvl" />
+		<set name="abnormalTime" val="20" />
+		<set name="abnormalType" val="BLEEDING" />
+		<set name="abnormalVisualEffect" val="DOT_BLEEDING" />
+		<set name="activateRate" val="80" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="basicProperty" val="CON" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4500" />
+		<set name="icon" val="icon.skill0096" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="BLEED" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+			<effect name="TickHp">
+				<param power="#tickHpPower" />
+				<param ticks="5" />
+				<param mode="DIFF" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5310" levels="9" name="NPC(party) - Magic Close Range DD - less powerful">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 124 128 131 133 135 137 138 138 138 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="castRange" val="150" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="650" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="1500" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5311" levels="9" name="NPC(party) - Magic Close Range DD - less powerful">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 75 77 79 80 81 82 83 83 83 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="1000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5312" levels="9" name="NPC(party) -Magic Single Long Range DD - Fire">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackRangePower"> 124 128 131 133 135 137 138 138 138 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="FIRE" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttackRange">
+				<param power="#magicalAttackRangePower" />
+				<param shieldDefensePercent="40" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5313" levels="9" name="NPC(party) -Magic Range Long Range DD - Fire">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 75 77 79 80 81 82 83 83 83 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="FIRE" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="5000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5314" levels="9" name="NPC(party) -Magic Range Close Range DD - Fire">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 75 77 79 80 81 82 83 83 83 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="FIRE" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="2500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5315" levels="9" name="NPC(party) -Magic Range Close Range DD - Fire(Self-Destruction)">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 75 77 79 80 81 82 83 83 83 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="FIRE" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5316" levels="9" name="NPC(party) -Magic Single Long Range DD - Water">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackRangePower"> 124 128 131 133 135 137 138 138 138 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WATER" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttackRange">
+				<param power="#magicalAttackRangePower" />
+				<param shieldDefensePercent="40" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5317" levels="9" name="NPC(party) -Magic Range Long Range DD - Water">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 75 77 79 80 81 82 83 83 83 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WATER" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5318" levels="9" name="NPC(party) -Magic Range Close Range DD - Water">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 75 77 79 80 81 82 83 83 83 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WATER" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="2500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5319" levels="9" name="NPC(party) -Magic Single Long Range DD - Wind">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackRangePower"> 124 128 131 133 135 137 138 138 138 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WIND" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttackRange">
+				<param power="#magicalAttackRangePower" />
+				<param shieldDefensePercent="40" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5320" levels="9" name="NPC(party) -Magic Range Long Range DD - Wind">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 75 77 79 80 81 82 83 83 83 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WIND" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5321" levels="9" name="NPC(party) -Magic Range Close Range DD - Wind">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 75 77 79 80 81 82 83 83 83 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WIND" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="2500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5322" levels="9" name="NPC(party) -Magic Single Long Range DD - Earth">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackRangePower"> 124 128 131 133 135 137 138 138 138 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="EARTH" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttackRange">
+				<param power="#magicalAttackRangePower" />
+				<param shieldDefensePercent="40" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5323" levels="9" name="NPC(party) -Magic Range Long Range DD - Earth">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 75 77 79 80 81 82 83 83 83 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="EARTH" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5324" levels="9" name="NPC(party) -Magic Range Close Range DD - Earth">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 75 77 79 80 81 82 83 83 83 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="EARTH" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="2500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5325" levels="9" name="NPC(party) -Magic Single Long Range DD - Holy">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackRangePower"> 124 128 131 133 135 137 138 138 138 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="HOLY" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttackRange">
+				<param power="#magicalAttackRangePower" />
+				<param shieldDefensePercent="40" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5326" levels="9" name="NPC(party) -Magic Range Long Range DD - Holy">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 75 77 79 80 81 82 83 83 83 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="HOLY" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5327" levels="9" name="NPC(party) -Magic Range Close Range DD - Holy">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 75 77 79 80 81 82 83 83 83 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="HOLY" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="2500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5328" levels="9" name="NPC(party) -Magic Single Long Range DD - Dark">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackRangePower"> 124 128 131 133 135 137 138 138 138 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttackRange">
+				<param power="#magicalAttackRangePower" />
+				<param shieldDefensePercent="40" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5329" levels="9" name="NPC(party) -Magic Range Long Range DD - Holy">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 75 77 79 80 81 82 83 83 83 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5330" levels="9" name="NPC(party) -Magic Range Close Range DD - Holy">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 75 77 79 80 81 82 83 83 83 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="2500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5331" levels="9" name="NPC HP Drain">
+		<!-- High Five Confirmed -->
+		<table name="#hpDrainPower"> 124 128 131 133 135 137 138 138 138 </table>
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="castRange" val="600" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="HpDrain">
+				<param power="#hpDrainPower" />
+				<param drain="0.9" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5332" levels="9" name="NPC MP Burn">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackMpPower"> 186 192 196 199 202 205 207 207 207 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="castRange" val="600" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttackMp">
+				<param power="#magicalAttackMpPower" />
+				<param critical="true" />
+				<param criticalLimit="1450" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5333" levels="9" name="Poison">
+		<!-- High Five Confirmed -->
+		<table name="#abnormalLvl"> 8 8 9 9 9 10 10 10 10 </table>
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 75 77 79 80 81 82 83 83 83 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="abnormalLvl" val="#abnormalLvl" />
+		<set name="abnormalTime" val="20" />
+		<set name="abnormalType" val="POISON" />
+		<set name="abnormalVisualEffect" val="DOT_POISON" />
+		<set name="activateRate" val="80" />
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WATER" />
+		<set name="basicProperty" val="CON" />
+		<set name="castRange" val="600" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="icon" val="icon.skill4035" />
+		<set name="isDebuff" val="true" />
+		<set name="isMagic" val="1" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="POISON" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5334" levels="9" name="NPC(party) - Physical Single Close Range Attack">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 12777 17637 18051 18163 18259 18333 18380 18380 18380 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="castRange" val="40" />
+		<set name="coolTime" val="660" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="200" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="830" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5335" levels="9" name="NPC(party) - Physical Single Long Range Attack">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 151 156 160 164 167 168 169 171 173 </table>
+		<table name="#physicalAttackPower"> 34070 47031 48135 48433 48691 48886 49012 49012 49012 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4500" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5336" levels="9" name="NPC(party) - Physical Range Close Range Attack">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="150" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="coolTime" val="800" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="1000" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="12777" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5337" levels="9" name="NPC(party) - Physical Range Long Range Attack">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 227 234 240 246 250 252 254 256 259 </table>
+		<table name="#physicalAttackPower"> 8518 11758 12034 12109 12173 12222 12253 12253 12253 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="150" />
+		<set name="affectScope" val="RANGE" />
+		<set name="castRange" val="500" />
+		<set name="coolTime" val="800" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="3200" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5338" levels="9" name="NPC(party) - Physical Single Close Range Attack - Fire">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 12777 17637 18051 18163 18259 18333 18380 18380 18380 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="FIRE" />
+		<set name="castRange" val="40" />
+		<set name="coolTime" val="660" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="200" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="830" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5339" levels="9" name="NPC(party) - Physical Single Long Range Attack - Fire">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 151 156 160 164 167 168 169 171 173 </table>
+		<table name="#physicalAttackPower"> 34070 47031 48135 48433 48691 48886 49012 49012 49012 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="FIRE" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4500" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5340" levels="9" name="NPC(party) - Physical Range Close Range Attack - Fire">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="150" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="FIRE" />
+		<set name="coolTime" val="800" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="1000" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="12777" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5341" levels="9" name="NPC(party) - Physical Range Long Range Attack - Fire">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 227 234 240 246 250 252 254 256 259 </table>
+		<table name="#physicalAttackPower"> 8518 11758 12034 12109 12173 12222 12253 12253 12253 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="150" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="FIRE" />
+		<set name="castRange" val="500" />
+		<set name="coolTime" val="800" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="3200" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5342" levels="9" name="NPC(party) - Physical Single Close Range Attack - Water">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 12777 17637 18051 18163 18259 18333 18380 18380 18380 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WATER" />
+		<set name="castRange" val="40" />
+		<set name="coolTime" val="660" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="200" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="830" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5343" levels="9" name="NPC(party) - Physical Single Long Range Attack - Water">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 151 156 160 164 167 168 169 171 173 </table>
+		<table name="#physicalAttackPower"> 34070 47031 48135 48433 48691 48886 49012 49012 49012 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WATER" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4500" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5344" levels="9" name="NPC(party) - Physical Range Close Range Attack - Water">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="150" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WATER" />
+		<set name="coolTime" val="800" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="1000" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="12777" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5345" levels="9" name="NPC(party) - Physical Range Long Range Attack - Water">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 227 234 240 246 250 252 254 256 259 </table>
+		<table name="#physicalAttackPower"> 8518 11758 12034 12109 12173 12222 12253 12253 12253 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="150" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WATER" />
+		<set name="castRange" val="500" />
+		<set name="coolTime" val="800" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="3200" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5346" levels="9" name="NPC(party) - Physical Single Close Range Attack - Wind">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 12777 17637 18051 18163 18259 18333 18380 18380 18380 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WIND" />
+		<set name="castRange" val="40" />
+		<set name="coolTime" val="660" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="200" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="830" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5347" levels="9" name="NPC(party) - Physical Single Long Range Attack - Wind">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 151 156 160 164 167 168 169 171 173 </table>
+		<table name="#physicalAttackPower"> 34070 47031 48135 48433 48691 48886 49012 49012 49012 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WIND" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4500" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5348" levels="9" name="NPC(party) - Physical Range Close Range Attack - Wind">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="150" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WIND" />
+		<set name="coolTime" val="800" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="1000" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="12777" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5349" levels="9" name="NPC(party) - Physical Range Long Range Attack - Wind">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 227 234 240 246 250 252 254 256 259 </table>
+		<table name="#physicalAttackPower"> 8518 11758 12034 12109 12173 12222 12253 12253 12253 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="150" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WIND" />
+		<set name="castRange" val="500" />
+		<set name="coolTime" val="800" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="3200" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5350" levels="9" name="NPC(party) - Physical Single Close Range Attack - Earth">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 12777 17637 18051 18163 18259 18333 18380 18380 18380 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="EARTH" />
+		<set name="castRange" val="40" />
+		<set name="coolTime" val="660" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="200" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="830" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5351" levels="9" name="NPC(party) - Physical Single Long Range Attack - Earth">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 151 156 160 164 167 168 169 171 173 </table>
+		<table name="#physicalAttackPower"> 34070 47031 48135 48433 48691 48886 49012 49012 49012 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="EARTH" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4500" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5352" levels="9" name="NPC(party) - Physical Range Close Range Attack - Earth">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="150" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="EARTH" />
+		<set name="coolTime" val="800" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="1000" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="12777" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5353" levels="9" name="NPC(party) - Physical Range Long Range Attack - Earth">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 227 234 240 246 250 252 254 256 259 </table>
+		<table name="#physicalAttackPower"> 8518 11758 12034 12109 12173 12222 12253 12253 12253 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="150" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="EARTH" />
+		<set name="castRange" val="500" />
+		<set name="coolTime" val="800" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="3200" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5354" levels="9" name="NPC(party) - Physical Single Close Range Attack - Holy">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 12777 17637 18051 18163 18259 18333 18380 18380 18380 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="HOLY" />
+		<set name="castRange" val="40" />
+		<set name="coolTime" val="660" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="200" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="830" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5355" levels="9" name="NPC(party) - Physical Single Long Range Attack - Holy">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 151 156 160 164 167 168 169 171 173 </table>
+		<table name="#physicalAttackPower"> 34070 47031 48135 48433 48691 48886 49012 49012 49012 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="HOLY" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4500" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5356" levels="9" name="NPC(party) - Physical Range Close Range Attack - Holy">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="150" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="HOLY" />
+		<set name="coolTime" val="800" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="1000" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="12777" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5357" levels="9" name="NPC(party) - Physical Range Long Range Attack - Holy">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 227 234 240 246 250 252 254 256 259 </table>
+		<table name="#physicalAttackPower"> 8518 11758 12034 12109 12173 12222 12253 12253 12253 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="150" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="HOLY" />
+		<set name="castRange" val="500" />
+		<set name="coolTime" val="800" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="3200" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5358" levels="9" name="NPC(party) - Physical Single Close Range Attack - Dark">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 12777 17637 18051 18163 18259 18333 18380 18380 18380 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="castRange" val="40" />
+		<set name="coolTime" val="660" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="200" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="830" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5359" levels="9" name="NPC(party) - Physical Single Long Range Attack - Dark">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 151 156 160 164 167 168 169 171 173 </table>
+		<table name="#physicalAttackPower"> 34070 47031 48135 48433 48691 48886 49012 49012 49012 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4500" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5360" levels="9" name="NPC(party) - Physical Range Close Range Attack - Dark">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="150" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="coolTime" val="800" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="1000" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="12777" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5361" levels="9" name="NPC(party) - Physical Range Long Range Attack - Dark">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 227 234 240 246 250 252 254 256 259 </table>
+		<table name="#physicalAttackPower"> 8518 11758 12034 12109 12173 12222 12253 12253 12253 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="150" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="castRange" val="500" />
+		<set name="coolTime" val="800" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="3200" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5362" levels="9" name="Stun">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 12777 17637 18051 18163 18259 18333 18380 18380 18380 </table>
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="9" />
+		<set name="abnormalType" val="STUN" />
+		<set name="abnormalVisualEffect" val="STUN" />
+		<set name="activateRate" val="80" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="basicProperty" val="CON" />
+		<set name="castRange" val="40" />
+		<set name="coolTime" val="660" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="200" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="830" />
+		<set name="icon" val="icon.skill0100" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="nextActionAttack" val="true" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="SHOCK" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+			<effect name="Stun" />
+		</effects>
+	</skill>
+	<skill id="5363" levels="9" name="Poison">
+		<!-- High Five Confirmed -->
+		<table name="#abnormalLvl"> 8 8 9 9 9 10 10 10 10 </table>
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 12777 17637 18051 18163 18259 18333 18380 18380 18380 </table>
+		<table name="#tickHpPower"> -286 -286 -314 -314 -314 -338 -338 -338 -338 </table>
+		<set name="abnormalLvl" val="#abnormalLvl" />
+		<set name="abnormalTime" val="20" />
+		<set name="abnormalType" val="POISON" />
+		<set name="abnormalVisualEffect" val="DOT_POISON" />
+		<set name="activateRate" val="80" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="basicProperty" val="CON" />
+		<set name="castRange" val="40" />
+		<set name="coolTime" val="660" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="200" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="830" />
+		<set name="icon" val="icon.skill4035" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="POISON" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+			<effect name="TickHp">
+				<param power="#tickHpPower" />
+				<param ticks="5" />
+				<param mode="DIFF" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5364" levels="9" name="Bleed">
+		<!-- High Five Confirmed -->
+		<table name="#abnormalLvl"> 8 8 9 9 9 10 10 10 10 </table>
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 12777 17637 18051 18163 18259 18333 18380 18380 18380 </table>
+		<table name="#tickHpPower"> -145 -145 -157 -157 -157 -168 -168 -168 -168 </table>
+		<set name="abnormalLvl" val="#abnormalLvl" />
+		<set name="abnormalTime" val="20" />
+		<set name="abnormalType" val="BLEEDING" />
+		<set name="abnormalVisualEffect" val="DOT_BLEEDING" />
+		<set name="activateRate" val="80" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="basicProperty" val="CON" />
+		<set name="castRange" val="40" />
+		<set name="coolTime" val="660" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="200" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="830" />
+		<set name="icon" val="icon.skill0096" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="BLEED" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+			<effect name="TickHp">
+				<param power="#tickHpPower" />
+				<param ticks="5" />
+				<param mode="DIFF" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5365" levels="9" name="Paralysis">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 12777 17637 18051 18163 18259 18333 18380 18380 18380 </table>
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="30" />
+		<set name="abnormalType" val="PARALYZE" />
+		<set name="abnormalVisualEffect" val="PARALYZE" />
+		<set name="activateRate" val="80" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="basicProperty" val="MEN" />
+		<set name="castRange" val="40" />
+		<set name="coolTime" val="660" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="200" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="830" />
+		<set name="icon" val="icon.skill1170" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="nextActionAttack" val="true" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="PARALYZE" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+			<effect name="Stun" />
+		</effects>
+	</skill>
+	<skill id="5366" levels="9" name="Poison">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 12777 17637 18051 18163 18259 18333 18380 18380 18380 </table>
+		<table name="#tickHpPower"> -381 -381 -418 -418 -418 -450 -450 -450 -450 </table>
+		<set name="abnormalLvl" val="8" />
+		<set name="abnormalTime" val="20" />
+		<set name="abnormalType" val="POISON" />
+		<set name="abnormalVisualEffect" val="DOT_POISON" />
+		<set name="activateRate" val="60" />
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="150" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="basicProperty" val="CON" />
+		<set name="coolTime" val="800" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="1000" />
+		<set name="icon" val="icon.skill4035" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="SELF" />
+		<set name="trait" val="POISON" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+			<effect name="TickHp">
+				<param power="#tickHpPower" />
+				<param ticks="5" />
+				<param mode="DIFF" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5367" levels="9" name="Paralysis">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 12777 17637 18051 18163 18259 18333 18380 18380 18380 </table>
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="30" />
+		<set name="abnormalType" val="PARALYZE" />
+		<set name="abnormalVisualEffect" val="PARALYZE" />
+		<set name="activateRate" val="60" />
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="150" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="basicProperty" val="MEN" />
+		<set name="coolTime" val="800" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="1000" />
+		<set name="icon" val="icon.skill1170" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="SELF" />
+		<set name="trait" val="PARALYZE" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+			<effect name="Stun" />
+		</effects>
+	</skill>
+	<skill id="5368" levels="9" name="Stun">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 12777 17637 18051 18163 18259 18333 18380 18380 18380 </table>
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="9" />
+		<set name="abnormalType" val="STUN" />
+		<set name="abnormalVisualEffect" val="STUN" />
+		<set name="activateRate" val="80" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="basicProperty" val="CON" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4500" />
+		<set name="icon" val="icon.skill0100" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="nextActionAttack" val="true" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="SHOCK" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+			<effect name="Stun" />
+		</effects>
+	</skill>
+	<skill id="5369" levels="9" name="Poison">
+		<!-- High Five Confirmed -->
+		<table name="#abnormalLvl"> 8 8 9 9 9 10 10 10 10 </table>
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 12777 17637 18051 18163 18259 18333 18380 18380 18380 </table>
+		<table name="#tickHpPower"> -286 -286 -314 -314 -314 -338 -338 -338 -338 </table>
+		<set name="abnormalLvl" val="#abnormalLvl" />
+		<set name="abnormalTime" val="20" />
+		<set name="abnormalType" val="POISON" />
+		<set name="abnormalVisualEffect" val="DOT_POISON" />
+		<set name="activateRate" val="80" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="basicProperty" val="CON" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4500" />
+		<set name="icon" val="icon.skill4035" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="POISON" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+			<effect name="TickHp">
+				<param power="#tickHpPower" />
+				<param ticks="5" />
+				<param mode="DIFF" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5370" levels="9" name="Bleed">
+		<!-- High Five Confirmed -->
+		<table name="#abnormalLvl"> 8 8 9 9 9 10 10 10 10 </table>
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume2"> 76 78 80 82 84 84 85 86 87 </table>
+		<table name="#physicalAttackPower"> 12777 17637 18051 18163 18259 18333 18380 18380 18380 </table>
+		<table name="#tickHpPower"> -145 -145 -157 -157 -157 -168 -168 -168 -168 </table>
+		<set name="abnormalLvl" val="#abnormalLvl" />
+		<set name="abnormalTime" val="20" />
+		<set name="abnormalType" val="BLEEDING" />
+		<set name="abnormalVisualEffect" val="DOT_BLEEDING" />
+		<set name="activateRate" val="80" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="basicProperty" val="CON" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4500" />
+		<set name="icon" val="icon.skill0096" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="BLEED" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="#physicalAttackPower" />
+			</effect>
+			<effect name="TickHp">
+				<param power="#tickHpPower" />
+				<param ticks="5" />
+				<param mode="DIFF" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5371" levels="9" name="NPC(party) - Magic Close Range DD - less powerful">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 160 165 169 171 174 176 178 178 178 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="castRange" val="150" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="650" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="1500" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5372" levels="9" name="NPC(party) - Magic Close Range DD - less powerful">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 96 99 101 103 104 106 107 107 107 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="1000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5373" levels="9" name="NPC(party) -Magic Single Long Range DD - Fire">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackRangePower"> 160 165 169 171 174 176 178 178 178 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="FIRE" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttackRange">
+				<param power="#magicalAttackRangePower" />
+				<param shieldDefensePercent="40" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5374" levels="9" name="NPC(party) -Magic Range Long Range DD - Fire">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 96 99 101 103 104 106 107 107 107 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="FIRE" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="5000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5375" levels="9" name="NPC(party) -Magic Range Close Range DD - Fire">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 96 99 101 103 104 106 107 107 107 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="FIRE" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="2500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5376" levels="9" name="NPC(party) -Magic Range Close Range DD - Fire(Self-Destruction)">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 96 99 101 103 104 106 107 107 107 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="FIRE" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="isMagic" val="1" />
+		<set name="isSuicideAttack" val="true" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5377" levels="9" name="NPC(party) -Magic Single Long Range DD - Water">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackRangePower"> 160 165 169 171 174 176 178 178 178 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WATER" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttackRange">
+				<param power="#magicalAttackRangePower" />
+				<param shieldDefensePercent="40" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5378" levels="9" name="NPC(party) -Magic Range Long Range DD - Water">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 96 99 101 103 104 106 107 107 107 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WATER" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5379" levels="9" name="NPC(party) -Magic Range Close Range DD - Water">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 96 99 101 103 104 106 107 107 107 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WATER" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="2500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5380" levels="9" name="NPC(party) -Magic Single Long Range DD - Wind">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackRangePower"> 160 165 169 171 174 176 178 178 178 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WIND" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttackRange">
+				<param power="#magicalAttackRangePower" />
+				<param shieldDefensePercent="40" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5381" levels="9" name="NPC(party) -Magic Range Long Range DD - Wind">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 96 99 101 103 104 106 107 107 107 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WIND" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5382" levels="9" name="NPC(party) -Magic Range Close Range DD - Wind">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 96 99 101 103 104 106 107 107 107 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WIND" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="2500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5383" levels="9" name="NPC(party) -Magic Single Long Range DD - Earth">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackRangePower"> 160 165 169 171 174 176 178 178 178 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="EARTH" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttackRange">
+				<param power="#magicalAttackRangePower" />
+				<param shieldDefensePercent="40" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5384" levels="9" name="NPC(party) -Magic Range Long Range DD - Earth">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 96 99 101 103 104 106 107 107 107 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="EARTH" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5385" levels="9" name="NPC(party) -Magic Range Close Range DD - Earth">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 96 99 101 103 104 106 107 107 107 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="EARTH" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="2500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5386" levels="9" name="NPC(party) -Magic Single Long Range DD - Holy">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackRangePower"> 160 165 169 171 174 176 178 178 178 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="HOLY" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttackRange">
+				<param power="#magicalAttackRangePower" />
+				<param shieldDefensePercent="40" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5387" levels="9" name="NPC(party) -Magic Range Long Range DD - Holy">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 96 99 101 103 104 106 107 107 107 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="HOLY" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5388" levels="9" name="NPC(party) -Magic Range Close Range DD - Holy">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 96 99 101 103 104 106 107 107 107 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="HOLY" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="2500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5389" levels="9" name="NPC(party) -Magic Single Long Range DD - Dark">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackRangePower"> 160 165 169 171 174 176 178 178 178 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttackRange">
+				<param power="#magicalAttackRangePower" />
+				<param shieldDefensePercent="40" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5390" levels="9" name="NPC(party) -Magic Range Long Range DD - Holy">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 96 99 101 103 104 106 107 107 107 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5391" levels="9" name="NPC(party) -Magic Range Close Range DD - Holy">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 96 99 101 103 104 106 107 107 107 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="effectPoint" val="-100" />
+		<set name="hitCancelTime" val="2500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5392" levels="9" name="NPC HP Drain">
+		<!-- High Five Confirmed -->
+		<table name="#hpDrainPower"> 160 165 169 171 174 176 178 178 178 </table>
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="castRange" val="600" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="HpDrain">
+				<param power="#hpDrainPower" />
+				<param drain="0.9" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5393" levels="9" name="NPC MP Burn">
+		<!-- High Five Confirmed -->
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackMpPower"> 240 247 253 256 260 264 267 267 267 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="castRange" val="600" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttackMp">
+				<param power="#magicalAttackMpPower" />
+				<param critical="true" />
+				<param criticalLimit="1450" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5394" levels="9" name="Poison">
+		<!-- High Five Confirmed -->
+		<table name="#abnormalLvl"> 8 8 9 9 9 10 10 10 10 </table>
+		<table name="#magicLvl"> 75 78 81 84 87 90 93 96 99 </table>
+		<table name="#magicalAttackPower"> 96 99 101 103 104 106 107 107 107 </table>
+		<table name="#mpConsume1"> 14 15 15 15 16 16 16 16 16 </table>
+		<table name="#mpConsume2"> 55 57 58 60 61 61 62 62 63 </table>
+		<set name="abnormalLvl" val="#abnormalLvl" />
+		<set name="abnormalTime" val="20" />
+		<set name="abnormalType" val="POISON" />
+		<set name="abnormalVisualEffect" val="DOT_POISON" />
+		<set name="activateRate" val="80" />
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="WATER" />
+		<set name="basicProperty" val="CON" />
+		<set name="castRange" val="600" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="icon" val="icon.skill4035" />
+		<set name="isDebuff" val="true" />
+		<set name="isMagic" val="1" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="POISON" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="#magicalAttackPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5395" levels="3" name="NPC Clan Buff - Super Might Haste">
+		<!-- High Five Confirmed -->
+		<table name="#abnormalLvl"> 1 2 3 </table>
+		<table name="#magicLvl"> 20 40 70 </table>
+		<table name="#mpConsume1"> 6 11 20 </table>
+		<table name="#mpConsume2"> 23 42 78 </table>
+		<table name="#pAtk"> 1.5 2 3 </table>
+		<table name="#pAtkSpd"> 1.33 1.33 1.5 </table>
+		<set name="abnormalLvl" val="#abnormalLvl" />
+		<set name="abnormalTime" val="10" />
+		<set name="abnormalType" val="MULTI_BUFF" />
+		<set name="abnormalVisualEffect" val="BIG_BODY" />
+		<set name="affectObject" val="CLAN" />
+		<set name="affectRange" val="900" />
+		<set name="affectScope" val="RANGE" />
+		<set name="effectPoint" val="100" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="2000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="#magicLvl" />
+		<set name="mpConsume1" val="#mpConsume1" />
+		<set name="mpConsume2" val="#mpConsume2" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="8000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="Buff">
+				<mul stat="pAtkSpd" val="#pAtkSpd" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="pAtk" val="#pAtk" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5396" levels="1" name="NPC - Spell Stance">
+		<!-- High Five Confirmed -->
+		<set name="abnormalVisualEffect" val="NONE" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="castRange" val="400" />
+		<set name="channelingSkillId" val="5397" />
+		<set name="channelingTickInterval" val="2" />
+		<set name="effectRange" val="600" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="15000" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="77" />
+		<set name="operateType" val="CA5" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="OTHERS" />
+	</skill>
+	<skill id="5397" levels="3" name="NPC - Spell Force">
+		<!-- High Five Confirmed -->
+		<table name="#abnormalLvl"> 1 2 3 </table>
+		<set name="abnormalLvl" val="#abnormalLvl" />
+		<set name="abnormalTime" val="15" />
+		<set name="abnormalType" val="MAGICAL_STANCE" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="effectPoint" val="100" />
+		<set name="icon" val="icon.skill0427" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="77" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+	</skill>
+	<skill id="5398" levels="1" name="NPC - Combination Force">
+		<!-- High Five Confirmed -->
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectRange" val="300" />
+		<set name="affectScope" val="RANGE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="FIRE" />
+		<set name="castRange" val="500" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="5000" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="99" />
+		<set name="mpConsume1" val="16" />
+		<set name="mpConsume2" val="63" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="MagicalAttack">
+				<param power="657" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="5399" levels="1" name="Heat of Desert">
+		<!-- High Five Confirmed -->
+		<!-- Zone Skill -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="5" />
+		<set name="abnormalType" val="HOT_GROUND" />
+		<set name="activateRate" val="10" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="basicProperty" val="MEN" />
+		<set name="effectPoint" val="-100" />
+		<set name="icon" val="icon.skill1230" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="1" />
+		<set name="magicLvl" val="1" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="TARGET" />
+		<cond>
+			<and>
+				<game night="false" />
+				<not>
+					<target active_effect_id="2341" />
+				</not>
+			</and>
+		</cond>
+		<effects>
+			<effect name="TickHp">
+				<param power="-75" />
+				<param ticks="5" />
+				<param mode="DIFF" />
+			</effect>
+		</effects>
+	</skill>
+</list>

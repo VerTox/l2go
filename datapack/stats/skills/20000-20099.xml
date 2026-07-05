@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/skills.xsd">
+ 	<skill id="20000" levels="1" name="Treasure Hunter Search">
+		<!-- High Five Confirmed -->
+		<set name="affectLimit" val="6-12" />
+		<set name="affectRange" val="200" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="effectPoint" val="1000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="1500" />
+		<set name="icon" val="BranchSys2.icon.br_s_search_treasure1_i00" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="5000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="113" addName="1">
+			<target npcId="13097" />
+		</cond>
+	</skill>
+	<skill id="20001" levels="1" name="Block Checker Hammer Punch">
+		<!-- Slams down on the treasure chest with a hammer to open it. -->
+		<set name="operateType" val="P" />
+		<set name="targetType" val="NONE" />
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="20002" levels="1" name="Dragon Kick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="castRange" val="20" />
+		<set name="coolTime" val="167" />
+		<set name="effectPoint" val="-347" />
+		<set name="effectRange" val="400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="2000" />
+		<set name="icon" val="icon.skill_transform_s_attack" />
+		<set name="magicLvl" val="85" />
+		<set name="mpConsume2" val="55" />
+		<set name="nextActionAttack" val="attack" />
+		<set name="operateType" val="A1" />
+		<set name="overHit" val="true" />
+		<set name="reuseDelay" val="7000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="3420" />
+				<param criticalChance="5" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="20003" levels="1" name="Dragon Slash">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="castRange" val="20" />
+		<set name="coolTime" val="167" />
+		<set name="effectPoint" val="-348" />
+		<set name="effectRange" val="400" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="2000" />
+		<set name="icon" val="icon.skill_transform_s_attack" />
+		<set name="magicLvl" val="85" />
+		<set name="mpConsume2" val="55" />
+		<set name="nextActionAttack" val="attack" />
+		<set name="operateType" val="A1" />
+		<set name="overHit" val="true" />
+		<set name="reuseDelay" val="7000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="3420" />
+				<param criticalChance="5" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="20004" levels="1" name="Dragon Dash">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="2" />
+		<set name="abnormalTime" val="5" />
+		<set name="abnormalType" val="SPEED_UP_SPECIAL" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="effectPoint" val="689" />
+		<set name="hitCancelTime" val="500" />
+		<set name="icon" val="icon.skill_transform_buff" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="85" />
+		<set name="mpConsume1" val="8" />
+		<set name="mpConsume2" val="30" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="25000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="Buff">
+				<mul stat="runSpd" val="2" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="20005" levels="1" name="Dragon Aura">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="3" />
+		<set name="abnormalTime" val="1200" />
+		<set name="abnormalType" val="IMPROVE_CRT_RATE_DMG_UP" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="castRange" val="400" />
+		<set name="effectPoint" val="635" />
+		<set name="effectRange" val="900" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="4000" />
+		<set name="icon" val="icon.skill_transform_buff" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="70" />
+		<set name="mpConsume1" val="7" />
+		<set name="mpConsume2" val="40" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="1800000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+		<effects>
+			<effect name="DispelBySlot">
+				<param dispel="CRITICAL_PROB_UP,9" />
+			</effect>
+			<effect name="DispelBySlot">
+				<param dispel="CRITICAL_DMG_UP,9" />
+			</effect>
+			<effect name="BlockBuffSlot">
+				<param slot="CRITICAL_PROB_UP;CRITICAL_DMG_UP" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="critDmg" val="1.35" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="critRate" val="1.3" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="20006" levels="1" name="Soul Roar">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="600" />
+		<set name="abnormalType" val="MAX_HP_UP_K" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="effectPoint" val="635" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="1500" />
+		<set name="icon" val="BranchSys2.icon.skill20006" />
+		<set name="magicLvl" val="62" />
+		<set name="mpConsume2" val="58" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="240000" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="MaxCp">
+				<param power="15" />
+				<param type="PER" />
+				<param heal="true" />
+			</effect>
+			<effect name="MaxHp">
+				<param power="15" />
+				<param type="PER" />
+				<param heal="true" />
+			</effect>
+		</effects>
+	</skill>
+</list>

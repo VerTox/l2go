@@ -1,0 +1,917 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/skills.xsd">
+	<skill id="23300" levels="1" name="Ghost Piercing">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="10" />
+		<set name="abnormalType" val="DOT_ATTR" />
+		<set name="abnormalVisualEffect" val="DOT_BLEEDING" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="20" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="basicProperty" val="MEN" />
+		<set name="effectPoint" val="-1000" />
+		<set name="icon" val="icon.skill0773" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="1" />
+		<set name="magicLvl" val="83" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<effects>
+			<effect name="TickHp">
+				<param power="-300" />
+				<param ticks="5" />
+				<param mode="DIFF" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23301" levels="1" name="Dimensional Door A">
+		<!-- Summons a dimensional door that moves the PC to the Dimensional Door B. -->
+		<set name="operateType" val="P" />
+		<set name="targetType" val="NONE" />
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="23302" levels="1" name="Dimensional Door B">
+		<!-- Summons a dimensional door that moves the PC to the Dimensional Door A. -->
+		<set name="operateType" val="P" />
+		<set name="targetType" val="NONE" />
+		<set name="affectScope" val="SINGLE" />
+	</skill>
+	<skill id="23303" levels="1" name="Move">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="castRange" val="2000" />
+		<set name="effectPoint" val="1" />
+		<set name="effectRange" val="2000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="1500" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="mpConsume2" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="1000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+	</skill>
+	<skill id="23304" levels="1" name="Move">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="castRange" val="2000" />
+		<set name="effectPoint" val="1" />
+		<set name="effectRange" val="2000" />
+		<set name="hitCancelTime" val="500" />
+		<set name="hitTime" val="1500" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="mpConsume2" val="1" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="1000" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+	</skill>
+	<skill id="23305" levels="1" name="Zinenze Agathion - Yunbokhwan">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="82" />
+		<set name="abnormalTime" val="5" />
+		<set name="abnormalType" val="INVINCIBILITY" />
+		<set name="activateRate" val="0" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="blockedInOlympiad" val="true" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="hitTime" val="200" />
+		<set name="icon" val="icon.skill_agathion_special" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="43200000" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<and>
+				<player hasAgathion="true" />
+				<player hp="30" />
+			</and>
+		</cond>
+		<effects>
+			<effect name="Cp">
+				<param amount="100000" />
+				<param mode="DIFF" />
+			</effect>
+			<effect name="HpPerMax">
+				<param power="100" />
+			</effect>
+			<effect name="MpPerMax">
+				<param power="100" />
+			</effect>
+			<effect name="BlockDebuff" />
+			<effect name="BlockDamage">
+				<param block="HP" />
+			</effect>
+			<effect name="BlockDamage">
+				<param block="MP" />
+			</effect>
+			<effect name="Debuff">
+				<mul stat="cancelVuln" val="0" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23306" levels="1" name="Zinenze Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+	</skill>
+	<skill id="23307" levels="1" name="Enze Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+	</skill>
+	<skill id="23308" levels="1" name="Totem's Energy - Body">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="300" />
+		<set name="abnormalType" val="ENERGY_OF_TOTEM_1" />
+		<set name="affectObject" val="FRIEND" />
+		<set name="affectRange" val="400" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="icon" val="BranchSys2.icon.totem_of_body" />
+		<set name="isMagic" val="4" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="Buff">
+				<mul stat="damageZoneVuln" val="80" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="regHp" val="1.3" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23309" levels="1" name="Totem's Energy - Spirit">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="300" />
+		<set name="abnormalType" val="ENERGY_OF_TOTEM_2" />
+		<set name="affectObject" val="FRIEND" />
+		<set name="affectRange" val="400" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="icon" val="BranchSys2.icon.totem_of_mind" />
+		<set name="isMagic" val="4" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="Buff">
+				<mul stat="regMp" val="1.3" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23310" levels="1" name="Totem's Energy - Courage">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="300" />
+		<set name="abnormalType" val="ENERGY_OF_TOTEM_3" />
+		<set name="affectObject" val="FRIEND" />
+		<set name="affectRange" val="400" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="icon" val="BranchSys2.icon.totem_of_bravery" />
+		<set name="isMagic" val="4" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="DispelBySlot">
+				<param dispel="TURN_FLEE,1" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="pDef" val="1.15" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23311" levels="1" name="Totem's Energy - Fortitude">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="300" />
+		<set name="abnormalType" val="ENERGY_OF_TOTEM_4" />
+		<set name="affectObject" val="FRIEND" />
+		<set name="affectRange" val="400" />
+		<set name="affectScope" val="POINT_BLANK" />
+		<set name="icon" val="BranchSys2.icon.totem_of_fortitude" />
+		<set name="isMagic" val="4" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="DispelBySlot">
+				<param dispel="TURN_STONE,1" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="mDef" val="1.25" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23312" levels="1" name="Fall of the Dragon">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="10800" />
+		<set name="abnormalType" val="VOTE" />
+		<set name="abnormalVisualEffect" val="VP_KEEP" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="buffProtectLevel" val="2" />
+		<set name="castRange" val="1200" />
+		<set name="effectRange" val="1500" />
+		<set name="hitCancelTime" val="500" />
+		<set name="icon" val="BranchSys2.icon.the_fall_of_dragon" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-2" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+		<effects>
+			<effect name="BonusTimeLimitUp">
+				<param time="10800" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23313" levels="5" name="Action Prohibit Immunity">
+		<!-- High Five Confirmed -->
+		<table name="#abnormalLvl"> 1 2 3 4 0 </table>
+		<table name="#abnormalTime"> 8 6 5 4 4 </table>
+		<table name="#defenceTraitPower"> 20 20 20 20 40 </table>
+		<set name="abnormalLvl" val="#abnormalLvl" />
+		<set name="abnormalTime" val="#abnormalTime" />
+		<set name="abnormalType" val="RESIST_SHOCK" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="icon" val="icon.skill0386" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="-3" />
+		<set name="operateType" val="A4" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+		<effects>
+			<effect name="DefenceTrait">
+				<param SHOCK="#defenceTraitPower" />
+			</effect>
+			<effect name="DefenceTrait">
+				<param SLEEP="#defenceTraitPower" />
+			</effect>
+			<effect name="DefenceTrait">
+				<param PARALYZE="#defenceTraitPower" />
+			</effect>
+			<effect name="DefenceTrait">
+				<param TURN_STONE="#defenceTraitPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23314" levels="5" name="Control Prohibit Immunity">
+		<!-- High Five Confirmed -->
+		<table name="#abnormalTime"> 8 6 5 4 4 </table>
+		<table name="#defenceTraitPower"> 20 40 60 80 100 </table>
+		<set name="abnormalLvl" val="0" />
+		<set name="abnormalTime" val="#abnormalTime" />
+		<set name="abnormalType" val="RESIST_SHOCK" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="icon" val="icon.skill0388" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="-3" />
+		<set name="operateType" val="A4" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+		<effects>
+			<effect name="DefenceTrait">
+				<param DERANGEMENT="#defenceTraitPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23315" levels="5" name="Paralysis Immunity Enhance">
+		<!-- High Five Confirmed -->
+		<table name="#defenceTraitPower"> 20 40 60 80 100 </table>
+		<set name="abnormalLvl" val="0" />
+		<set name="abnormalTime" val="2" />
+		<set name="abnormalType" val="RESIST_SHOCK" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="-3" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+		<effects>
+			<effect name="DefenceTrait">
+				<param PARALYZE="#defenceTraitPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23316" levels="5" name="Petrification Immunity Enhance">
+		<!-- High Five Confirmed -->
+		<table name="#defenceTraitPower"> 20 40 60 80 100 </table>
+		<set name="abnormalLvl" val="0" />
+		<set name="abnormalTime" val="2" />
+		<set name="abnormalType" val="RESIST_SHOCK" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="-3" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+		<effects>
+			<effect name="DefenceTrait">
+				<param TURN_STONE="#defenceTraitPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23317" levels="5" name="Fear Immunity Enhance">
+		<!-- High Five Confirmed -->
+		<table name="#defenceTraitPower"> 20 40 60 80 100 </table>
+		<set name="abnormalLvl" val="0" />
+		<set name="abnormalTime" val="2" />
+		<set name="abnormalType" val="RESIST_SHOCK" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="-3" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+		<effects>
+			<effect name="DefenceTrait">
+				<param DERANGEMENT="#defenceTraitPower" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23318" levels="1" name="Cat the Ranger Boots">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="60" />
+		<set name="abnormalType" val="MULTI_BUFF" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="buffProtectLevel" val="1" />
+		<set name="castRange" val="900" />
+		<set name="effectPoint" val="1" />
+		<set name="effectRange" val="1400" />
+		<set name="icon" val="BranchSys2.icon.action5016" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="600000" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="TARGET" />
+		<effects>
+			<effect name="HpPerMax">
+				<param power="10" />
+			</effect>
+			<effect name="SilentMove">
+				<param power="100" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="mDef" val="1.2" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="pDef" val="1.2" />
+			</effect>
+			<effect name="Debuff">
+				<mul stat="debuffVuln" val="0.2" />
+			</effect>
+			<effect name="Debuff">
+				<mul stat="cancelVuln" val="0.6" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="runSpd" val="1.1" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23319" levels="1" name="Blood Seeker">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="10" />
+		<set name="abnormalTime" val="20" />
+		<set name="abnormalType" val="BLEEDING" />
+		<set name="abnormalVisualEffect" val="DOT_BLEEDING" />
+		<set name="activateRate" val="90" />
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="180" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="basicProperty" val="CON" />
+		<set name="castRange" val="80" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="200" />
+		<set name="icon" val="BranchSys2.icon.br_wp_Caladbulg_i00" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="1" />
+		<set name="magicLvl" val="84" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="BLEED" />
+		<effects>
+			<effect name="PhysicalAttack">
+				<param power="2616" />
+			</effect>
+			<effect name="TickHp">
+				<param power="-52" />
+				<param ticks="5" />
+				<param mode="DIFF" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23320" levels="1" name="Greedy Throat">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="10" />
+		<set name="abnormalTime" val="20" />
+		<set name="abnormalType" val="BLEEDING" />
+		<set name="abnormalVisualEffect" val="DOT_BLEEDING" />
+		<set name="activateRate" val="90" />
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="attributePower" val="180" />
+		<set name="attributeType" val="UNHOLY" />
+		<set name="basicProperty" val="CON" />
+		<set name="castRange" val="80" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="200" />
+		<set name="icon" val="BranchSys2.icon.br_wp_habus_knife_i00" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="1" />
+		<set name="magicLvl" val="83" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="BLEED" />
+		<effects>
+			<effect name="TickHp">
+				<param power="-67" />
+				<param ticks="5" />
+				<param mode="DIFF" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23321" levels="1" name="Draconic Evolver">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="10" />
+		<set name="abnormalType" val="TURN_FLEE" />
+		<set name="abnormalVisualEffect" val="TURN_FLEE" />
+		<set name="activateRate" val="60" />
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="basicProperty" val="MEN" />
+		<set name="castRange" val="80" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="200" />
+		<set name="icon" val="BranchSys2.icon.br_wp_tiatenon_i00" />
+		<set name="isDebuff" val="true" />
+		<set name="isMagic" val="1" />
+		<set name="lvlBonusRate" val="1" />
+		<set name="magicLvl" val="82" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="DERANGEMENT" />
+		<effects>
+			<effect name="Fear" />
+		</effects>
+	</skill>
+	<skill id="23322" levels="10" name="Demonic Desire">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="13" />
+		<set name="abnormalTime" val="9" />
+		<set name="abnormalType" val="PD_DOWN" />
+		<set name="activateRate" val="80" />
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="basicProperty" val="CON" />
+		<set name="castRange" val="80" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="200" />
+		<set name="icon" val="BranchSys2.icon.br_wp_astarot_i00" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="82" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="SHOCK" />
+		<effects>
+			<effect name="Debuff">
+				<mul stat="pDef" val="0.77" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23323" levels="10" name="Fury of Darkness">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="13" />
+		<set name="abnormalTime" val="9" />
+		<set name="abnormalType" val="STUN" />
+		<set name="abnormalVisualEffect" val="STUN" />
+		<set name="activateRate" val="80" />
+		<set name="affectObject" val="NOT_FRIEND" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="basicProperty" val="CON" />
+		<set name="castRange" val="80" />
+		<set name="effectPoint" val="-100" />
+		<set name="effectRange" val="200" />
+		<set name="icon" val="BranchSys2.icon.br_wp_tirbing_i00" />
+		<set name="isDebuff" val="true" />
+		<set name="lvlBonusRate" val="2" />
+		<set name="magicLvl" val="82" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<set name="trait" val="SHOCK" />
+		<effects>
+			<effect name="Stun" />
+			<effect name="Debuff">
+				<mul stat="pDef" val="0.77" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23324" levels="1" name="Jet Black Typhoon">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="15" />
+		<set name="abnormalType" val="CASTING_TIME_DOWN" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="icon" val="BranchSys2.icon.br_wp_wind_of_mardil_i00" />
+		<set name="isMagic" val="1" />
+		<set name="magicLvl" val="71" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="Buff">
+				<add stat="windPower" val="30" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="mAtkSpd" val="1.15" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23325" levels="1" name="Enlarge - Luckpy">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="2000" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="SELF" />
+	</skill>
+	<skill id="23326" levels="1" name="Reduce - Luckpy">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="2000" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="SELF" />
+	</skill>
+	<skill id="23327" levels="1" name="Boss Test - Weaken">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="648000" />
+		<set name="abnormalType" val="PUBLIC_SLOT" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="castRange" val="1500" />
+		<set name="effectRange" val="2000" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<cond msgId="109">
+			<target npcId="29028,29068" />
+		</cond>
+		<effects>
+			<effect name="Debuff">
+				<mul stat="regHp" val="0.6" />
+			</effect>
+			<effect name="Debuff">
+				<mul stat="mAtk" val="0.6" />
+			</effect>
+			<effect name="Debuff">
+				<mul stat="mDef" val="0.68" />
+			</effect>
+			<effect name="Debuff">
+				<mul stat="pAtk" val="0.6" />
+			</effect>
+			<effect name="Debuff">
+				<mul stat="pDef" val="0.68" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23328" levels="1" name="Boss Test - Strengthen">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="1" />
+		<set name="abnormalTime" val="648000" />
+		<set name="abnormalType" val="PUBLIC_SLOT" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="castRange" val="1500" />
+		<set name="effectRange" val="2000" />
+		<set name="magicLvl" val="-1" />
+		<set name="operateType" val="A2" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="ENEMY" />
+		<cond msgId="109">
+			<target npcId="29028,29068" />
+		</cond>
+		<effects>
+			<effect name="Buff">
+				<mul stat="regHp" val="1.6" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="mAtk" val="1.4" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="mDef" val="1.6" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="pAtk" val="1.4" />
+			</effect>
+			<effect name="Buff">
+				<mul stat="pDef" val="1.8" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23329" levels="1" name="Lantern Agathion's Gift1">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="coolTime" val="1000" />
+		<set name="hitTime" val="2700" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="55" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="-1000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+		<effects>
+			<effect name="Restoration">
+				<param itemId="22220" itemCount="1" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23330" levels="1" name="Lantern Agathion's Gift2">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="coolTime" val="1000" />
+		<set name="hitTime" val="2700" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="55" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="-1000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+		<effects>
+			<effect name="Restoration">
+				<param itemId="22220" itemCount="1" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23331" levels="1" name="Lantern Agathion's Gift3">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="coolTime" val="1000" />
+		<set name="hitTime" val="2700" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="55" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="-1000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+		<effects>
+			<effect name="Restoration">
+				<param itemId="22220" itemCount="1" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23332" levels="1" name="Lantern Agathion's Gift4">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="coolTime" val="1000" />
+		<set name="hitTime" val="2700" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="55" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="-1000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+		<effects>
+			<effect name="Restoration">
+				<param itemId="22220" itemCount="1" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23333" levels="1" name="Agathion's New Year's Wish">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="2" />
+		<set name="abnormalTime" val="3600" />
+		<set name="abnormalType" val="VP_KEEP" />
+		<set name="abnormalVisualEffect" val="VP_KEEP" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="buffProtectLevel" val="2" />
+		<set name="coolTime" val="1000" />
+		<set name="hitTime" val="2000" />
+		<set name="icon" val="icon.etc_pi_gift_box_i03" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-2" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="-1000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="Debuff">
+				<mul stat="vitalityConsumeRate" val="0" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23334" levels="1" name="Lantern Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+	</skill>
+	<skill id="23335" levels="1" name="Agathion's New Year's Wish">
+		<!-- High Five Confirmed -->
+		<set name="abnormalLvl" val="2" />
+		<set name="abnormalTime" val="3600" />
+		<set name="abnormalType" val="VP_KEEP" />
+		<set name="abnormalVisualEffect" val="VP_KEEP" />
+		<set name="affectScope" val="SINGLE" />
+		<set name="buffProtectLevel" val="2" />
+		<set name="coolTime" val="1000" />
+		<set name="hitTime" val="2000" />
+		<set name="icon" val="icon.etc_pi_gift_box_i03" />
+		<set name="irreplaceableBuff" val="true" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="-2" />
+		<set name="operateType" val="A2" />
+		<set name="reuseDelay" val="-1000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<effects>
+			<effect name="Debuff">
+				<mul stat="vitalityConsumeRate" val="0" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23336" levels="1" name="Juju Agathion Cute Trick">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="hitTime" val="3000" />
+		<set name="icon" val="icon.skill_agathion_cute" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="85" />
+		<set name="operateType" val="A1" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+	</skill>
+	<skill id="23337" levels="1" name="Juju Agathion's Gift 1">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="coolTime" val="1000" />
+		<set name="hitTime" val="2700" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="55" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="-1000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+		<effects>
+			<effect name="Restoration">
+				<param itemId="22289" itemCount="1" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23338" levels="1" name="Juju Agathion's Gift 2">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="coolTime" val="1000" />
+		<set name="hitTime" val="2700" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="55" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="-1000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+		<effects>
+			<effect name="Restoration">
+				<param itemId="22289" itemCount="1" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23339" levels="1" name="Juju Agathion's Gift 3">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="coolTime" val="1000" />
+		<set name="hitTime" val="2700" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="55" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="-1000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+		<effects>
+			<effect name="Restoration">
+				<param itemId="22289" itemCount="1" />
+			</effect>
+		</effects>
+	</skill>
+	<skill id="23340" levels="1" name="Juju Agathion's Gift 4">
+		<!-- High Five Confirmed -->
+		<set name="affectScope" val="SINGLE" />
+		<set name="coolTime" val="1000" />
+		<set name="hitTime" val="2700" />
+		<set name="isMagic" val="2" />
+		<set name="magicLvl" val="55" />
+		<set name="operateType" val="A1" />
+		<set name="reuseDelay" val="-1000" />
+		<set name="reuseDelayLock" val="true" />
+		<set name="reuseDelayType" val="S" />
+		<set name="rideState" val="NONE;STRIDER;WYVERN;WOLF" />
+		<set name="targetType" val="SELF" />
+		<cond msgId="2292">
+			<player hasAgathion="true" />
+		</cond>
+		<effects>
+			<effect name="Restoration">
+				<param itemId="22289" itemCount="1" />
+			</effect>
+		</effects>
+	</skill>
+</list>
