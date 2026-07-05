@@ -17,6 +17,7 @@ l2go.exe
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+coverage.txt
 
 # Go workspace file
 go.work

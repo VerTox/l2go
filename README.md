@@ -1,5 +1,10 @@
 # L2Go
 
+[![CI](https://github.com/VerTox/l2go/actions/workflows/ci.yml/badge.svg)](https://github.com/VerTox/l2go/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/VerTox/l2go/branch/master/graph/badge.svg)](https://codecov.io/gh/VerTox/l2go)
+[![Go version](https://img.shields.io/github/go-mod/go-version/VerTox/l2go)](go.mod)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 **An open-source Lineage II server emulator written in Go.**
 
 L2Go implements a full LoginServer + GameServer stack with byte-for-byte protocol
