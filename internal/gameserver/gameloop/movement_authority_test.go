@@ -3,8 +3,9 @@ package gameloop
 import "testing"
 
 // serverDrivenMovement gates which movements the loop interpolates: only combat/
-// interact approach (server needs distance to target). Ground walking (MoveTo) and
-// idle are client-authoritative — interpolating them caused rubber-band. (l2go-2ax)
+// interact/cast approach (server needs distance to target). Ground walking (MoveTo)
+// and idle are client-authoritative — interpolating them caused rubber-band.
+// (l2go-2ax; cast approach added in l2go-bdb)
 func TestServerDrivenMovement(t *testing.T) {
 	cases := []struct {
 		intention Intention
@@ -12,9 +13,9 @@ func TestServerDrivenMovement(t *testing.T) {
 	}{
 		{IntentionAttack, true},
 		{IntentionInteract, true},
+		{IntentionCast, true}, // out-of-range cast runs to the target (l2go-bdb)
 		{IntentionMoveTo, false},
 		{IntentionIdle, false},
-		{IntentionCast, false},
 		{IntentionFollow, false},
 	}
 	for _, tc := range cases {

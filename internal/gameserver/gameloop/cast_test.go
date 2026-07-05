@@ -222,7 +222,10 @@ func TestCast_MPCheckedUpfront(t *testing.T) {
 	}
 }
 
-func TestCast_OutOfRangeRejected(t *testing.T) {
+// TestCast_OutOfRangeApproaches: an out-of-range cast no longer just fails — it
+// starts a server-driven run toward the target (l2go-bdb), leaving the cast itself
+// not yet begun.
+func TestCast_OutOfRangeApproaches(t *testing.T) {
 	gl, player := newTestLoopWithPlayer(t)
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "09900-09999.xml"), []byte(nuke9999XML), 0o644); err != nil {
@@ -232,13 +235,82 @@ func TestCast_OutOfRangeRejected(t *testing.T) {
 	player.KnownSkills = map[int32]int32{9999: 1}
 	player.Character.CurrentMP = 200
 
-	// NPC well beyond castRange (600).
+	npc := addAttackableNPC(gl, 1000, models.Position{X: 5000, Y: 0, Z: 0}) // beyond castRange 600
+	player.TargetID = npc.ObjectID
+
+	gl.handleCastRequest(CmdCastRequest{CasterCharID: 7, SkillID: 9999})
+
+	if player.Casting != nil {
+		t.Error("cast must not begin while out of range — it should approach first")
+	}
+	if _, ok := gl.castPending[7]; !ok {
+		t.Error("out-of-range cast should start an approach (castPending set)")
+	}
+	if st := gl.aiState[7]; st == nil || st.Intention != IntentionCast {
+		t.Errorf("intention should be IntentionCast during approach, got %+v", st)
+	}
+	if !player.IsMoving {
+		t.Error("caster should be moving toward the target")
+	}
+}
+
+// TestCast_ApproachThenCastsOnArrival: once the caster is within range, the approach
+// heartbeat begins the real cast and clears the pending approach.
+func TestCast_ApproachThenCastsOnArrival(t *testing.T) {
+	gl, player := newTestLoopWithPlayer(t)
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "09900-09999.xml"), []byte(nuke9999XML), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gl.SetSkillData(registry.NewSkillData([]string{dir}))
+	player.KnownSkills = map[int32]int32{9999: 1}
+	player.Character.CurrentMP = 200
+
+	npc := addAttackableNPC(gl, 1000, models.Position{X: 5000, Y: 0, Z: 0})
+	player.TargetID = npc.ObjectID
+
+	cmd := CmdCastRequest{CasterCharID: 7, SkillID: 9999}
+	gl.handleCastRequest(cmd) // starts the approach
+	if _, ok := gl.castPending[7]; !ok {
+		t.Fatal("approach not started")
+	}
+
+	// Simulate arrival within cast range (500 < 600) and fire the heartbeat.
+	player.Position = models.Position{X: 4500, Y: 0, Z: 0}
+	player.IsMoving = false
+	(&CastApproachEvent{CharID: 7, TargetObjectID: npc.ObjectID, Cmd: cmd}).Execute(gl)
+
+	if player.Casting == nil {
+		t.Error("cast should begin once the caster arrives in range")
+	}
+	if _, ok := gl.castPending[7]; ok {
+		t.Error("castPending should be cleared when the cast begins")
+	}
+}
+
+// TestCast_GroundMoveCancelsApproach: a deliberate ground move aborts an in-flight
+// cast approach (mirrors the interact-approach cancel).
+func TestCast_GroundMoveCancelsApproach(t *testing.T) {
+	gl, player := newTestLoopWithPlayer(t)
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "09900-09999.xml"), []byte(nuke9999XML), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gl.SetSkillData(registry.NewSkillData([]string{dir}))
+	player.KnownSkills = map[int32]int32{9999: 1}
+	player.Character.CurrentMP = 200
 	npc := addAttackableNPC(gl, 1000, models.Position{X: 5000, Y: 0, Z: 0})
 	player.TargetID = npc.ObjectID
 
 	gl.handleCastRequest(CmdCastRequest{CasterCharID: 7, SkillID: 9999})
-	if player.Casting != nil {
-		t.Error("cast should be rejected when target is out of range")
+	if _, ok := gl.castPending[7]; !ok {
+		t.Fatal("approach not started")
+	}
+
+	gl.handleMoveToLocation(CmdMoveToLocation{CharID: 7})
+
+	if _, ok := gl.castPending[7]; ok {
+		t.Error("ground move should cancel the pending cast approach")
 	}
 }
 

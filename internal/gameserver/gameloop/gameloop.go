@@ -64,6 +64,10 @@ type GameLoop struct {
 	// inflating forever. Loop-owned. (l2go-wdl)
 	playerRegionCenter map[int32][2]int
 	interactPending    map[int32]int32 // charID -> NPC objectID (active approach-to-interact)
+	// castPending holds the cast a player is currently approaching (out-of-range cast
+	// → run to the target, then begin). Mirrors interactPending as the approach's
+	// liveness/cancel key. Loop-owned. (l2go-bdb)
+	castPending map[int32]CmdCastRequest
 
 	// Configurable server rates
 	expRate float64
@@ -136,6 +140,7 @@ func New(world *registry.WorldRegistry, connections *registry.ConnectionRegistry
 		activeRegions:      make(map[string]*ActiveRegion),
 		playerRegionCenter: make(map[int32][2]int),
 		interactPending:    make(map[int32]int32),
+		castPending:        make(map[int32]CmdCastRequest),
 		skillReuse:      make(map[int32]map[int32]time.Time),
 		buffedPlayers:   make(map[int32]struct{}),
 		flaggedPlayers:  make(map[int32]struct{}),
@@ -333,7 +338,7 @@ executeEvents:
 // authoritative — interpolating it here fought the client's own interpolation
 // (dual authority + speed mismatch) and produced rubber-band snaps for observers. (l2go-2ax)
 func serverDrivenMovement(i Intention) bool {
-	return i == IntentionAttack || i == IntentionInteract
+	return i == IntentionAttack || i == IntentionInteract || i == IntentionCast
 }
 
 func (gl *GameLoop) advancePlayerMovement(now time.Time) {
@@ -526,8 +531,10 @@ func (gl *GameLoop) handleMoveToLocation(cmd CmdMoveToLocation) {
 	if cs, ok := gl.combatState[cmd.CharID]; ok && cs.IsAutoAttacking {
 		gl.stopAttacker(cmd.CharID)
 	}
-	// Drop any pending interact approach.
+	// Drop any pending interact / cast approach — a deliberate ground move cancels
+	// the server-driven run-to-target (l2go-bdb mirrors the interact cancel).
 	delete(gl.interactPending, cmd.CharID)
+	delete(gl.castPending, cmd.CharID)
 	// Moving interrupts an in-progress cast (L2J abortCast on move).
 	if player, ok := gl.world.GetPlayer(cmd.CharID); ok {
 		gl.abortCast(player)
@@ -546,6 +553,10 @@ func (gl *GameLoop) handlePlayerDisconnected(cmd CmdPlayerDisconnected) {
 	// player (the sweeps also self-heal a stale entry, but untrack eagerly). (l2go-t2q)
 	delete(gl.buffedPlayers, cmd.CharID)
 	delete(gl.flaggedPlayers, cmd.CharID)
+
+	// Drop any pending interact/cast approach for the gone player. (l2go-bdb)
+	delete(gl.interactPending, cmd.CharID)
+	delete(gl.castPending, cmd.CharID)
 
 	// Stop all NPCs attacking this player
 	gl.stopAllNPCAttacksOnPlayer(cmd.CharID)

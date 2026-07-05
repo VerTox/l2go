@@ -31,8 +31,16 @@ func (gl *GameLoop) handleCastRequest(cmd CmdCastRequest) {
 
 	// Cast funnel metric (l2go-dz5): default to fail; each success path below flips
 	// it to success before returning. Records once per real cast attempt by a player.
+	// When the caster is out of range and starts an approach instead, the metric is
+	// deferred to the re-attempt on arrival (approaching=true skips it here) so one
+	// cast is counted once, not twice. (l2go-bdb)
 	castOutcome := "fail"
-	defer func() { gl.prom.recordSkillCast(castOutcome) }()
+	approaching := false
+	defer func() {
+		if !approaching {
+			gl.prom.recordSkillCast(castOutcome)
+		}
+	}()
 
 	if char.CurrentHP <= 0 {
 		return // dead can't cast
@@ -68,11 +76,16 @@ func (gl *GameLoop) handleCastRequest(cmd CmdCastRequest) {
 		return // nothing valid to cast on
 	}
 
-	// Range check: the target must be within the skill's cast range (L2J validates
-	// this before casting; out of range simply fails here rather than approaching).
+	// Range check: if the target is out of cast range, run toward it and re-attempt
+	// the cast on arrival (L2J AI_INTENTION_CAST → maybeMoveToPawn), instead of just
+	// failing. Mirrors the interact approach. (l2go-bdb)
 	if !gl.targetInCastRange(caster, target, skill) {
+		approaching = true
+		gl.startCastApproach(caster, cmd, target, skill)
 		return
 	}
+	// In range (arrived or already close): drop any pending approach for this caster.
+	delete(gl.castPending, cmd.CasterCharID)
 
 	// PvP gate: an offensive skill on another player must pass checkPvpSkill
 	// (flag/karma/ctrl). Blocked → INCORRECT_TARGET + ActionFailed, no cast.
@@ -182,6 +195,35 @@ func (gl *GameLoop) castTime(caster *registry.PlayerWorldState, skill *models.Sk
 		ms = 500
 	}
 	return time.Duration(ms) * time.Millisecond
+}
+
+// startCastApproach runs the caster toward an out-of-range cast target and schedules
+// a heartbeat (CastApproachEvent) that re-attempts the cast on arrival — mirroring
+// the interact approach. Server-driven movement (IntentionCast), so the tick
+// interpolates the position the heartbeat checks. Deduped on charID+skill so a
+// spammed cast key does not restart the run. (l2go-bdb)
+func (gl *GameLoop) startCastApproach(caster *registry.PlayerWorldState, cmd CmdCastRequest, target int32, skill *models.Skill) {
+	if pend, ok := gl.castPending[cmd.CasterCharID]; ok && pend.SkillID == cmd.SkillID {
+		return // already approaching this cast
+	}
+	// A new cast intention abandons an active attack/interact approach so the
+	// heartbeats don't fight over movement (mirrors handleInteractRequest).
+	if cs, ok := gl.combatState[cmd.CasterCharID]; ok && cs.IsAutoAttacking {
+		gl.stopAttacker(cmd.CasterCharID)
+	}
+	delete(gl.interactPending, cmd.CasterCharID)
+
+	gl.castPending[cmd.CasterCharID] = cmd
+	gl.setIntention(cmd.CasterCharID, IntentionCast, target)
+	tpos := gl.objectPosition(target, caster.Position)
+	gl.startMoveToTargetPos(caster, target, tpos, skill.CastRange)
+
+	gl.events.Schedule(&CastApproachEvent{
+		At:             time.Now().Add(300 * time.Millisecond),
+		CharID:         cmd.CasterCharID,
+		TargetObjectID: target,
+		Cmd:            cmd,
+	})
 }
 
 // targetInCastRange reports whether the target is within the skill's cast range.

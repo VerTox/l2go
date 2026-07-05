@@ -12,6 +12,77 @@ import (
 // interactRange — макс. дистанция открытия диалога NPC (L2J INTERACTION_DISTANCE).
 const interactRange = 150
 
+// CastApproachEvent polls the caster's position while it runs toward an out-of-range
+// cast target, then re-attempts the cast on arrival. Mirrors InteractApproachEvent:
+// castPending[charID] is the liveness/cancel key (a ground move or retarget clears
+// it via handleMoveToLocation, stopping this heartbeat). (l2go-bdb)
+type CastApproachEvent struct {
+	At             time.Time
+	CharID         int32
+	TargetObjectID int32
+	Cmd            CmdCastRequest
+}
+
+func (e *CastApproachEvent) ExecuteAt() time.Time { return e.At }
+
+func (e *CastApproachEvent) Execute(gl *GameLoop) {
+	clearPending := func() {
+		if pend, ok := gl.castPending[e.CharID]; ok && pend.SkillID == e.Cmd.SkillID {
+			delete(gl.castPending, e.CharID)
+		}
+	}
+
+	// Superseded/cancelled: a ground move, retarget, or newer cast cleared/replaced
+	// the pending entry. castPending is the authoritative guard.
+	pend, ok := gl.castPending[e.CharID]
+	if !ok || pend.SkillID != e.Cmd.SkillID {
+		return
+	}
+	caster, ok := gl.world.GetPlayer(e.CharID)
+	if !ok || caster.Character == nil || caster.Character.CurrentHP <= 0 {
+		clearPending()
+		return
+	}
+	if caster.Casting != nil {
+		clearPending() // already casting something — abandon this approach
+		return
+	}
+	// Target changed/deselected (non-self casts) — stop chasing.
+	if e.TargetObjectID != e.CharID && caster.TargetID != e.TargetObjectID {
+		clearPending()
+		return
+	}
+	level := int(caster.KnownSkills[e.Cmd.SkillID])
+	skill := gl.skillData.GetSkill(int(e.Cmd.SkillID), level)
+	if skill == nil {
+		clearPending()
+		return
+	}
+
+	if !gl.targetInCastRange(caster, e.TargetObjectID, skill) {
+		// Still out of range: keep driving server-side movement and re-check. The
+		// server position (interpolated by the tick for IntentionCast) is authoritative.
+		if !caster.IsMoving {
+			tpos := gl.objectPosition(e.TargetObjectID, caster.Position)
+			gl.startMoveToTargetPos(caster, e.TargetObjectID, tpos, skill.CastRange)
+		}
+		gl.events.Schedule(&CastApproachEvent{
+			At:             time.Now().Add(400 * time.Millisecond),
+			CharID:         e.CharID,
+			TargetObjectID: e.TargetObjectID,
+			Cmd:            e.Cmd,
+		})
+		return
+	}
+
+	// Arrived within range: stop the approach and begin the cast. Clear pending first
+	// so the re-run's in-range path is clean; root the caster (cast, not walking).
+	clearPending()
+	caster.IsMoving = false
+	gl.clearIntention(e.CharID)
+	gl.handleCastRequest(e.Cmd)
+}
+
 // InteractApproachEvent опрашивает позицию игрока, пока он не подойдёт к NPC,
 // затем шлёт NpcHtmlMessage. Зеркалит approach-retry из NextAttackEvent.
 type InteractApproachEvent struct {
