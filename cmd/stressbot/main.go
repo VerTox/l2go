@@ -264,6 +264,11 @@ func runFleetWorld(cfg runCfg, prefix string, start, n, conc int, hold time.Dura
 		<-sig
 	}
 
+	// Mark the end of the load window BEFORE teardown: the mass disconnect causes
+	// a one-off despawn spike (a >=1s tick) that would otherwise saturate the
+	// tick_work histogram and mask the ramp/plateau difference between scenarios.
+	loadEnd := time.Now()
+
 	close(stopMon)
 	fmt.Println("tearing down ...")
 	mu.Lock()
@@ -274,10 +279,12 @@ func runFleetWorld(cfg runCfg, prefix string, start, n, conc int, hold time.Dura
 	time.Sleep(500 * time.Millisecond)
 	fmt.Printf("final online=%d\n", atomic.LoadInt64(&online))
 
-	// One combined report: pull the loop's tick health over the whole run from
-	// Prometheus, right next to the fleet stats above.
+	// One combined report: pull the loop's tick health over the load window
+	// (ramp + hold, excluding teardown) from Prometheus. Wait first so the last
+	// 5s scrape covering loadEnd is ingested.
 	if cfg.prom != "" {
-		printPromSummary(cfg.prom, begin, time.Now())
+		time.Sleep(7 * time.Second)
+		printPromSummary(cfg.prom, begin, loadEnd)
 	}
 }
 
