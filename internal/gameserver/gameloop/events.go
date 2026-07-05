@@ -207,6 +207,8 @@ func (e *NextAttackEvent) Execute(gl *GameLoop) {
 		}
 	}
 
+	gl.prom.recordCombatAttack(attackOutcome(miss, crit))
+
 	// Build hit flags (L2J HF Hit.java bits).
 	var flags int32
 	if miss {

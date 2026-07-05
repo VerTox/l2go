@@ -92,6 +92,8 @@ func (gl *GameLoop) awardExpForNPCKill(npc *models.NpcInstance) {
 			gl.persistPlayer(player)
 		}
 
+		gl.prom.recordProgression(earnedExp, earnedSP, leveledUp)
+
 		// Send notifications to the player
 		gl.sendExpRewardNotification(player, earnedExp, int32(earnedSP), leveledUp)
 

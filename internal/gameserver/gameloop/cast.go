@@ -29,6 +29,11 @@ func (gl *GameLoop) handleCastRequest(cmd CmdCastRequest) {
 	}
 	char := caster.Character
 
+	// Cast funnel metric (l2go-dz5): default to fail; each success path below flips
+	// it to success before returning. Records once per real cast attempt by a player.
+	castOutcome := "fail"
+	defer func() { gl.prom.recordSkillCast(castOutcome) }()
+
 	if char.CurrentHP <= 0 {
 		return // dead can't cast
 	}
@@ -47,6 +52,7 @@ func (gl *GameLoop) handleCastRequest(cmd CmdCastRequest) {
 
 	// Toggle already active → recast turns it off instantly (no cast bar).
 	if skill.IsToggle() && caster.Effects.HasSkill(cmd.SkillID) {
+		castOutcome = "success"
 		gl.toggleOff(caster, cmd.SkillID)
 		return
 	}
@@ -102,6 +108,7 @@ func (gl *GameLoop) handleCastRequest(cmd CmdCastRequest) {
 	// Toggles apply instantly — no cast bar (SetupGauge). Send the animation with
 	// zero hit time, apply the effect immediately, and arm the reuse.
 	if skill.IsToggle() {
+		castOutcome = "success"
 		msu := outclient.BuildMagicSkillUse(cmd.CasterCharID, target, cmd.SkillID, int32(level), 0, reuse,
 			int32(caster.Position.X), int32(caster.Position.Y), int32(caster.Position.Z),
 			int32(tpos.X), int32(tpos.Y), int32(tpos.Z))
@@ -112,6 +119,7 @@ func (gl *GameLoop) handleCastRequest(cmd CmdCastRequest) {
 		return
 	}
 
+	castOutcome = "success"
 	hitTime := gl.castTime(caster, skill)
 
 	// Assign a unique id so a stale hit event (aborted/superseded) is ignored.
@@ -214,6 +222,7 @@ func (gl *GameLoop) abortCast(player *registry.PlayerWorldState) {
 	if player == nil || player.Casting == nil {
 		return
 	}
+	gl.prom.recordSkillCast("interrupted")
 	player.Casting = nil
 	gl.broadcastToNearby(player.Position, outclient.BuildMagicSkillCanceled(player.CharID))
 }

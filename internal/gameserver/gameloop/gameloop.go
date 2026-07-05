@@ -2,6 +2,7 @@ package gameloop
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -269,14 +270,23 @@ func (gl *GameLoop) Run(ctx context.Context) error {
 				// Only KnownPlayers — KnownNPCs is owned by each connection goroutine and
 				// reading it here would race.
 				maxFanOut := 0
+				byLevel := map[string]int{}
+				byClass := map[string]int{}
 				for _, p := range gl.world.SnapshotPlayers(nil) {
 					n := len(p.KnownPlayers)
 					gl.prom.observeKnownPlayers(n)
 					if n > maxFanOut {
 						maxFanOut = n
 					}
+					if p.Character != nil {
+						byLevel[levelBucket(p.Character.Level)]++
+						byClass[strconv.Itoa(p.Character.ClassID)]++
+					}
 				}
 				gl.prom.setKnownPlayersMax(maxFanOut)
+				// Population distribution + active-buff count (l2go-cnn). buffedPlayers is
+				// the loop-owned active-effect subset, read race-free here.
+				gl.prom.setPopulation(byLevel, byClass, len(gl.buffedPlayers))
 			}
 		}
 	}
@@ -613,6 +623,7 @@ func (gl *GameLoop) stopAttacker(charID int32) {
 
 // handleNPCDeath processes an NPC death: broadcasts Die, stops all attackers, schedules respawn.
 func (gl *GameLoop) handleNPCDeath(npc *models.NpcInstance) {
+	gl.prom.recordNPCKill()
 	npc.IsDead = true
 	npc.CurrentHP = 0
 

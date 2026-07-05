@@ -82,6 +82,10 @@ func (h *Handler) handleEnterWorld(ctx context.Context, c *client.ClientConn, pa
 	}
 
 	h.prom.RecordWorldEntry("ok", time.Since(entryStart))
+	// Session begins now (l2go-18n): stamp entry time for the duration measured at
+	// disconnect, and count the session start.
+	session.LoginAt = time.Now()
+	h.prom.RecordSessionStart()
 
 	log.Ctx(ctx).Info().
 		Int32("char_id", playerState.CharID).

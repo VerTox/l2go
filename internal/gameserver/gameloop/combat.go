@@ -50,6 +50,19 @@ func calcPhysDamage(pAtk, pDef int) int32 {
 	return int32(damage)
 }
 
+// attackOutcome maps a resolved swing's miss/crit flags to the combat-metric
+// label (miss / crit / hit) — non-overlapping, so the three sum to total swings.
+func attackOutcome(miss, crit bool) string {
+	switch {
+	case miss:
+		return "miss"
+	case crit:
+		return "crit"
+	default:
+		return "hit"
+	}
+}
+
 // calcCrit returns true if the attack is a critical hit.
 func calcCrit(critRate int) bool {
 	// critRate is typically 1-100 (L2J: critRate/10 gives percent)

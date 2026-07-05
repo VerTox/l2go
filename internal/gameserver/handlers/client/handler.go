@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"sync"
+	"time"
 
 	"github.com/rs/zerolog/log"
 
@@ -24,6 +25,10 @@ type ClientSession struct {
 	SessionID   uint32
 	LoginKeys   [2]uint32 // LoginOkID1, LoginOkID2
 	PlayKeys    [2]uint32 // PlayOkID1, PlayOkID2
+
+	// LoginAt is when the character fully entered the world; zero until then. Used
+	// to measure session duration on disconnect (l2go-18n).
+	LoginAt time.Time
 
 	// pendingState — запрос смены состояния соединения от обработчика, который
 	// меняет состояние УСЛОВНО (напр. RequestRestart только при успешном рестарте).
@@ -224,6 +229,12 @@ func (h *Handler) removeSession(c *client.ClientConn) {
 		log.Info().
 			Str("account", session.AccountName).
 			Msg("Client disconnected, cleaning up session and world state")
+
+		// Session-end metric (l2go-18n): only for sessions that actually entered the
+		// world (LoginAt set) — handshake-only connections are not sessions.
+		if !session.LoginAt.IsZero() {
+			h.prom.RecordSessionEnd(time.Since(session.LoginAt))
+		}
 
 		// Unregister connection from broadcasting. Conn-aware: if a newer login
 		// for this account has already replaced the registration, leave it be.

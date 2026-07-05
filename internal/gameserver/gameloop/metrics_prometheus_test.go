@@ -96,6 +96,118 @@ func TestPromMetricsQueueDepthGauge(t *testing.T) {
 	}
 }
 
+// TestPromMetricsSessions verifies session start/end counters and the duration
+// histogram.
+func TestPromMetricsSessions(t *testing.T) {
+	pm := NewPromMetrics()
+	pm.RecordSessionStart()
+	pm.RecordSessionStart()
+	pm.RecordSessionEnd(42 * time.Minute)
+
+	if got := testutil.ToFloat64(pm.sessionsStarted); got != 2 {
+		t.Errorf("sessions_started = %v, want 2", got)
+	}
+	if got := testutil.ToFloat64(pm.sessionsEnded); got != 1 {
+		t.Errorf("sessions_ended = %v, want 1", got)
+	}
+	if got := histogramSampleCount(t, pm, "l2go_session_duration_seconds"); got != 1 {
+		t.Errorf("session duration sample count = %d, want 1", got)
+	}
+}
+
+// TestPromMetricsPopulation verifies the population gauges are set per bucket/class
+// and that Reset drops buckets that emptied between windows.
+func TestPromMetricsPopulation(t *testing.T) {
+	pm := NewPromMetrics()
+	pm.setPopulation(map[string]int{"1-9": 3, "20-29": 1}, map[string]int{"0": 2, "10": 2}, 4)
+
+	if got := testutil.ToFloat64(pm.playersByLevel.WithLabelValues("1-9")); got != 3 {
+		t.Errorf("players_by_level{1-9} = %v, want 3", got)
+	}
+	if got := testutil.ToFloat64(pm.playersByClass.WithLabelValues("0")); got != 2 {
+		t.Errorf("players_by_class{0} = %v, want 2", got)
+	}
+	if got := testutil.ToFloat64(pm.buffedPlayers); got != 4 {
+		t.Errorf("buffed_players = %v, want 4", got)
+	}
+
+	// Next window: the 1-9 bucket emptied; Reset must drop it to 0/absent.
+	pm.setPopulation(map[string]int{"20-29": 2}, map[string]int{"10": 1}, 1)
+	if got := testutil.ToFloat64(pm.playersByLevel.WithLabelValues("1-9")); got != 0 {
+		t.Errorf("players_by_level{1-9} after empty = %v, want 0 (Reset)", got)
+	}
+	if got := testutil.ToFloat64(pm.playersByLevel.WithLabelValues("20-29")); got != 2 {
+		t.Errorf("players_by_level{20-29} = %v, want 2", got)
+	}
+}
+
+// TestPromMetricsSkillCasts verifies cast outcomes count per label.
+func TestPromMetricsSkillCasts(t *testing.T) {
+	pm := NewPromMetrics()
+	pm.recordSkillCast("success")
+	pm.recordSkillCast("success")
+	pm.recordSkillCast("fail")
+	pm.recordSkillCast("interrupted")
+
+	if got := testutil.ToFloat64(pm.skillCasts.WithLabelValues("success")); got != 2 {
+		t.Errorf("skill_casts{success} = %v, want 2", got)
+	}
+	if got := testutil.ToFloat64(pm.skillCasts.WithLabelValues("fail")); got != 1 {
+		t.Errorf("skill_casts{fail} = %v, want 1", got)
+	}
+	if got := testutil.ToFloat64(pm.skillCasts.WithLabelValues("interrupted")); got != 1 {
+		t.Errorf("skill_casts{interrupted} = %v, want 1", got)
+	}
+}
+
+// TestPromMetricsProgression verifies EXP/SP accumulate and level-ups count,
+// and that non-positive amounts are ignored (counters stay monotonic).
+func TestPromMetricsProgression(t *testing.T) {
+	pm := NewPromMetrics()
+	pm.recordProgression(1000, 50, false)
+	pm.recordProgression(500, 10, true)
+	pm.recordProgression(0, 0, false) // no-op
+
+	if got := testutil.ToFloat64(pm.expAwarded); got != 1500 {
+		t.Errorf("exp_awarded = %v, want 1500", got)
+	}
+	if got := testutil.ToFloat64(pm.spAwarded); got != 60 {
+		t.Errorf("sp_awarded = %v, want 60", got)
+	}
+	if got := testutil.ToFloat64(pm.levelups); got != 1 {
+		t.Errorf("levelups = %v, want 1", got)
+	}
+}
+
+// TestPromMetricsCombat verifies combat swing outcomes count per label and the
+// kill/death counters increment.
+func TestPromMetricsCombat(t *testing.T) {
+	pm := NewPromMetrics()
+	pm.recordCombatAttack("hit")
+	pm.recordCombatAttack("hit")
+	pm.recordCombatAttack("crit")
+	pm.recordCombatAttack("miss")
+	pm.recordNPCKill()
+	pm.recordNPCKill()
+	pm.recordPlayerDeath()
+
+	if got := testutil.ToFloat64(pm.combatAttacks.WithLabelValues("hit")); got != 2 {
+		t.Errorf("attacks{hit} = %v, want 2", got)
+	}
+	if got := testutil.ToFloat64(pm.combatAttacks.WithLabelValues("crit")); got != 1 {
+		t.Errorf("attacks{crit} = %v, want 1", got)
+	}
+	if got := testutil.ToFloat64(pm.combatAttacks.WithLabelValues("miss")); got != 1 {
+		t.Errorf("attacks{miss} = %v, want 1", got)
+	}
+	if got := testutil.ToFloat64(pm.npcKills); got != 2 {
+		t.Errorf("npc_kills = %v, want 2", got)
+	}
+	if got := testutil.ToFloat64(pm.playerDeaths); got != 1 {
+		t.Errorf("player_deaths = %v, want 1", got)
+	}
+}
+
 // TestPromMetricsWorldEntry verifies the world-entry funnel: outcomes count per
 // result label and every attempt feeds the latency histogram.
 func TestPromMetricsWorldEntry(t *testing.T) {

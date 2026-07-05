@@ -1,0 +1,152 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "time": { "from": "now-1h", "to": "now" },
+  "refresh": "10s",
+  "title": "Game Loop — Live Ops",
+  "uid": "l2go-liveops",
+  "tags": ["l2go", "gameplay", "liveops"],
+  "schemaVersion": 39,
+  "version": 1,
+  "templating": { "list": [] },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Players online",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area" },
+      "targets": [ { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "l2go_gameloop_players" } ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Active connections",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [ { "color": "blue", "value": null } ] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area" },
+      "targets": [ { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "l2go_active_connections" } ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Buffed players",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [ { "color": "purple", "value": null } ] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area" },
+      "targets": [ { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "l2go_active_buffed_players" } ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "NPC kills / min",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 1, "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area" },
+      "targets": [ { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(rate(l2go_combat_npc_kills_total[$__rate_interval])) * 60" } ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Combat swings by outcome (per sec)",
+      "description": "Hit / crit / miss rate across all melee. The mix is a quick sanity check on accuracy/crit balance.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 1, "stacking": { "mode": "normal" } } }, "overrides": [
+        { "matcher": { "id": "byName", "options": "hit" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } } ] },
+        { "matcher": { "id": "byName", "options": "crit" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } } ] },
+        { "matcher": { "id": "byName", "options": "miss" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } } ] }
+      ] },
+      "options": { "legend": { "displayMode": "table", "calcs": ["mean"], "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(rate(l2go_combat_attacks_total[$__rate_interval])) by (outcome)", "legendFormat": "{{outcome}}" }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Kills & deaths (per sec)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 1 } }, "overrides": [
+        { "matcher": { "id": "byName", "options": "npc kills" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } } ] },
+        { "matcher": { "id": "byName", "options": "player deaths" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } } ] }
+      ] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(rate(l2go_combat_npc_kills_total[$__rate_interval]))", "legendFormat": "npc kills" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(rate(l2go_combat_player_deaths_total[$__rate_interval]))", "legendFormat": "player deaths" }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "EXP / SP awarded (per sec) & level-ups",
+      "description": "Farming intensity. EXP/SP on the left axis, level-up rate on the right.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 1 } }, "overrides": [
+        { "matcher": { "id": "byName", "options": "levelups" }, "properties": [ { "id": "custom.axisPlacement", "value": "right" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "yellow" } } ] }
+      ] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(rate(l2go_progression_exp_awarded_total[$__rate_interval]))", "legendFormat": "exp/s" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(rate(l2go_progression_sp_awarded_total[$__rate_interval]))", "legendFormat": "sp/s" },
+        { "refId": "C", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(rate(l2go_progression_levelups_total[$__rate_interval]))", "legendFormat": "levelups" }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Skill casts by outcome (per sec)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 1, "stacking": { "mode": "normal" } } }, "overrides": [
+        { "matcher": { "id": "byName", "options": "success" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } } ] },
+        { "matcher": { "id": "byName", "options": "fail" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } } ] },
+        { "matcher": { "id": "byName", "options": "interrupted" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } } ] }
+      ] },
+      "options": { "legend": { "displayMode": "table", "calcs": ["mean"], "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(rate(l2go_skill_casts_total[$__rate_interval])) by (outcome)", "legendFormat": "{{outcome}}" }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Population by level",
+      "description": "Online players bucketed by level range — where the population sits.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 30, "lineWidth": 1, "stacking": { "mode": "normal" } } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "right" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "l2go_players_by_level", "legendFormat": "{{bucket}}" }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Sessions: starts vs ends (per min) & duration p50/p90",
+      "description": "Churn (starts/ends per minute, left) and typical time in game (session duration quantiles, right).",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 1 } }, "overrides": [
+        { "matcher": { "id": "byRegexp", "options": "duration.*" }, "properties": [ { "id": "custom.axisPlacement", "value": "right" }, { "id": "unit", "value": "s" } ] }
+      ] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(rate(l2go_sessions_started_total[$__rate_interval])) * 60", "legendFormat": "starts/min" },
+        { "refId": "B", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(rate(l2go_sessions_ended_total[$__rate_interval])) * 60", "legendFormat": "ends/min" },
+        { "refId": "C", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.50, sum(rate(l2go_session_duration_seconds_bucket[$__rate_interval])) by (le))", "legendFormat": "duration p50" },
+        { "refId": "D", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.90, sum(rate(l2go_session_duration_seconds_bucket[$__rate_interval])) by (le))", "legendFormat": "duration p90" }
+      ]
+    }
+  ]
+}

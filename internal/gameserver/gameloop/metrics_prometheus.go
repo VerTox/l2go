@@ -32,6 +32,19 @@ type PromMetrics struct {
 	npcTotal      prometheus.Gauge
 	worldEntries  *prometheus.CounterVec
 	entryDuration prometheus.Histogram
+	combatAttacks *prometheus.CounterVec
+	npcKills      prometheus.Counter
+	playerDeaths  prometheus.Counter
+	expAwarded    prometheus.Counter
+	spAwarded     prometheus.Counter
+	levelups       prometheus.Counter
+	skillCasts     *prometheus.CounterVec
+	playersByLevel  *prometheus.GaugeVec
+	playersByClass  *prometheus.GaugeVec
+	buffedPlayers   prometheus.Gauge
+	sessionsStarted prometheus.Counter
+	sessionsEnded   prometheus.Counter
+	sessionDuration prometheus.Histogram
 }
 
 // tickWorkBuckets resolve per-tick work time from well under a millisecond, past
@@ -50,6 +63,10 @@ var fanOutBuckets = []float64{0, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000}
 // several seconds — under mass entry the DB-bound work (skill reconcile, item
 // list) is what stretches, exactly the 0ar failed-entry symptom.
 var entryDurationBuckets = []float64{0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5}
+
+// sessionDurationBuckets resolve how long players stay online, from a quick
+// relog (seconds) to a long play session (hours).
+var sessionDurationBuckets = []float64{10, 30, 60, 300, 900, 1800, 3600, 7200, 14400}
 
 // NewPromMetrics builds the collectors on a fresh private registry.
 func NewPromMetrics() *PromMetrics {
@@ -109,8 +126,61 @@ func NewPromMetrics() *PromMetrics {
 			Help:    "Server-side world-entry handler processing time (skill reconcile, packet build/send).",
 			Buckets: entryDurationBuckets,
 		}),
+		combatAttacks: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "l2go_combat_attacks_total",
+			Help: "Melee swings resolved, by outcome (hit / crit / miss). Both player→NPC and NPC→player.",
+		}, []string{"outcome"}),
+		npcKills: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "l2go_combat_npc_kills_total",
+			Help: "NPCs killed (reached 0 HP).",
+		}),
+		playerDeaths: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "l2go_combat_player_deaths_total",
+			Help: "Players killed (reached 0 HP).",
+		}),
+		expAwarded: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "l2go_progression_exp_awarded_total",
+			Help: "Total EXP awarded to players from kills (after server rate).",
+		}),
+		spAwarded: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "l2go_progression_sp_awarded_total",
+			Help: "Total SP awarded to players from kills (after server rate).",
+		}),
+		levelups: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "l2go_progression_levelups_total",
+			Help: "Player level-up events.",
+		}),
+		skillCasts: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "l2go_skill_casts_total",
+			Help: "Skill cast attempts by outcome (success = started/applied, fail = rejected pre-start, interrupted = aborted mid-cast).",
+		}, []string{"outcome"}),
+		playersByLevel: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "l2go_players_by_level",
+			Help: "Online players bucketed by level range.",
+		}, []string{"bucket"}),
+		playersByClass: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "l2go_players_by_class",
+			Help: "Online players by class id.",
+		}, []string{"class"}),
+		buffedPlayers: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "l2go_active_buffed_players",
+			Help: "Online players carrying at least one active buff/effect.",
+		}),
+		sessionsStarted: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "l2go_sessions_started_total",
+			Help: "Player sessions started (character fully entered the world).",
+		}),
+		sessionsEnded: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "l2go_sessions_ended_total",
+			Help: "Player sessions ended (in-world character disconnected).",
+		}),
+		sessionDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+			Name:    "l2go_session_duration_seconds",
+			Help:    "Time a player stayed online, from world entry to disconnect.",
+			Buckets: sessionDurationBuckets,
+		}),
 	}
-	reg.MustRegister(pm.workSecs, pm.gapSecs, pm.phaseSecs, pm.knownPlayers, pm.knownPlayersMax, pm.behind, pm.players, pm.cmdBacklog, pm.activeRegions, pm.npcTotal, pm.worldEntries, pm.entryDuration)
+	reg.MustRegister(pm.workSecs, pm.gapSecs, pm.phaseSecs, pm.knownPlayers, pm.knownPlayersMax, pm.behind, pm.players, pm.cmdBacklog, pm.activeRegions, pm.npcTotal, pm.worldEntries, pm.entryDuration, pm.combatAttacks, pm.npcKills, pm.playerDeaths, pm.expAwarded, pm.spAwarded, pm.levelups, pm.skillCasts, pm.playersByLevel, pm.playersByClass, pm.buffedPlayers, pm.sessionsStarted, pm.sessionsEnded, pm.sessionDuration)
 	// Go runtime metrics (goroutines/GC/heap) — cheap and valuable under load, where
 	// goroutine-per-connection growth and GC pauses matter as much as tick time.
 	reg.MustRegister(collectors.NewGoCollector())
@@ -195,6 +265,25 @@ func (pm *PromMetrics) setWorldInventory(activeRegions, npcTotal int) {
 	pm.npcTotal.Set(float64(npcTotal))
 }
 
+// RecordSessionStart counts one player session beginning (world entry). Called
+// from the connection goroutine; nil-safe.
+func (pm *PromMetrics) RecordSessionStart() {
+	if pm == nil {
+		return
+	}
+	pm.sessionsStarted.Inc()
+}
+
+// RecordSessionEnd counts one player session ending and records how long it
+// lasted. Called from the connection goroutine on disconnect; nil-safe.
+func (pm *PromMetrics) RecordSessionEnd(dur time.Duration) {
+	if pm == nil {
+		return
+	}
+	pm.sessionsEnded.Inc()
+	pm.sessionDuration.Observe(dur.Seconds())
+}
+
 // RecordWorldEntry records one world-entry attempt: its outcome (bounded result
 // enum) and how long the handler took. Called from the connection goroutine —
 // the counter/histogram are internally goroutine-safe. nil-safe.
@@ -204,6 +293,101 @@ func (pm *PromMetrics) RecordWorldEntry(result string, dur time.Duration) {
 	}
 	pm.worldEntries.WithLabelValues(result).Inc()
 	pm.entryDuration.Observe(dur.Seconds())
+}
+
+// setPopulation refreshes the current online-player distribution gauges. The two
+// vecs are Reset first so buckets that emptied since the last window disappear
+// instead of freezing at a stale count. Called on the loop goroutine; nil-safe.
+func (pm *PromMetrics) setPopulation(byLevel, byClass map[string]int, buffed int) {
+	if pm == nil {
+		return
+	}
+	pm.playersByLevel.Reset()
+	for bucket, n := range byLevel {
+		pm.playersByLevel.WithLabelValues(bucket).Set(float64(n))
+	}
+	pm.playersByClass.Reset()
+	for class, n := range byClass {
+		pm.playersByClass.WithLabelValues(class).Set(float64(n))
+	}
+	pm.buffedPlayers.Set(float64(buffed))
+}
+
+// levelBucket maps a character level to a coarse, bounded range label so the
+// population gauge never explodes to one series per level.
+func levelBucket(level int) string {
+	switch {
+	case level < 10:
+		return "1-9"
+	case level < 20:
+		return "10-19"
+	case level < 30:
+		return "20-29"
+	case level < 40:
+		return "30-39"
+	case level < 50:
+		return "40-49"
+	case level < 60:
+		return "50-59"
+	case level < 70:
+		return "60-69"
+	case level < 80:
+		return "70-79"
+	default:
+		return "80+"
+	}
+}
+
+// recordSkillCast counts one skill-cast attempt by outcome (success/fail/
+// interrupted). Called on the loop goroutine; nil-safe.
+func (pm *PromMetrics) recordSkillCast(outcome string) {
+	if pm == nil {
+		return
+	}
+	pm.skillCasts.WithLabelValues(outcome).Inc()
+}
+
+// recordProgression records EXP/SP awarded from one kill and whether it triggered
+// a level-up. Called on the loop goroutine; nil-safe. Negative amounts are ignored
+// (Prometheus counters must be monotonic).
+func (pm *PromMetrics) recordProgression(exp, sp int64, leveledUp bool) {
+	if pm == nil {
+		return
+	}
+	if exp > 0 {
+		pm.expAwarded.Add(float64(exp))
+	}
+	if sp > 0 {
+		pm.spAwarded.Add(float64(sp))
+	}
+	if leveledUp {
+		pm.levelups.Inc()
+	}
+}
+
+// recordCombatAttack counts one resolved melee swing by outcome (hit/crit/miss).
+// Called on the loop goroutine; nil-safe.
+func (pm *PromMetrics) recordCombatAttack(outcome string) {
+	if pm == nil {
+		return
+	}
+	pm.combatAttacks.WithLabelValues(outcome).Inc()
+}
+
+// recordNPCKill counts one NPC death. Called on the loop goroutine; nil-safe.
+func (pm *PromMetrics) recordNPCKill() {
+	if pm == nil {
+		return
+	}
+	pm.npcKills.Inc()
+}
+
+// recordPlayerDeath counts one player death. Called on the loop goroutine; nil-safe.
+func (pm *PromMetrics) recordPlayerDeath() {
+	if pm == nil {
+		return
+	}
+	pm.playerDeaths.Inc()
 }
 
 // Handler serves the Prometheus text exposition for these collectors.

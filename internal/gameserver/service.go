@@ -945,6 +945,8 @@ func (g *GameServer) run(ctx context.Context) error {
 	g.promMetrics.RegisterQueueDepth("l2go_sink_save_queue_depth", "Pending character-persistence snapshots queued for the async saver.", func() int { return len(saveCh) })
 	g.promMetrics.RegisterQueueDepth("l2go_sink_recharge_queue_depth", "Pending auto-soulshot recharge requests queued off the loop.", func() int { return len(rechargeCh) })
 	g.promMetrics.RegisterQueueDepth("l2go_sink_learn_queue_depth", "Pending learned-skill writes queued for async persistence.", func() int { return len(learnCh) })
+	// Active client connections gauge (l2go-18n) — live count read at scrape time.
+	g.promMetrics.RegisterQueueDepth("l2go_active_connections", "Registered client TCP connections.", func() int { return g.connections.GetConnectionCount() })
 
 	eg, egctx := errgroup.WithContext(ctx)
 

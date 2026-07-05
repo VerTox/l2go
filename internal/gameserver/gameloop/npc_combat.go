@@ -116,6 +116,8 @@ func (e *NPCNextAttackEvent) Execute(gl *GameLoop) {
 		}
 	}
 
+	gl.prom.recordCombatAttack(attackOutcome(miss, crit))
+
 	var flags int32
 	if miss {
 		flags |= outclient.AttackFlagMiss
@@ -207,6 +209,7 @@ func (e *NPCHitEvent) Execute(gl *GameLoop) {
 
 // handlePlayerDeath processes a player death.
 func (gl *GameLoop) handlePlayerDeath(charID int32, player *registry.PlayerWorldState) {
+	gl.prom.recordPlayerDeath()
 	player.Character.CurrentHP = 0
 
 	diePkt := outclient.BuildPlayerDie(charID)
