@@ -21,23 +21,29 @@ type SkillTemplateSource interface {
 	GetSkill(skillID, level int) *models.Skill
 }
 
-// PotionHandler implements ItemHandler for consumable potions whose item_skill
-// points at a skill (handlers "ItemSkills" and "ManaPotion" in HF data). It casts
-// that skill through the real skill engine (restore effects, and buffs/HoT via the
-// continuous-effect engine), then consumes one item. (l2go-849, replaces the interim
-// direct-restore path l2go-diu.)
+// ItemSkillHandler implements ItemHandler for any consumable whose use casts a
+// linked item_skill — the HF datapack handlers "ItemSkills" and "ManaPotion" (not
+// just potions: healing/mana potions, Scroll of Escape, and other skill-consumables
+// all route here). It casts that skill through the real skill engine (restore
+// effects, buffs/HoT via the continuous-effect engine, Escape → teleport), then
+// consumes one item. (l2go-849, replaces the interim direct-restore path l2go-diu;
+// renamed from PotionHandler as its scope was never potion-only.)
 //
 // Item reuse timers / shared reuse groups (ExUseSharedGroupItem) are handled by the
 // inventory use case off item consumption, not here.
-type PotionHandler struct {
+//
+// The escape-in-combat gate here is a stop-gap: the general model is a skill <cond>
+// system (L2J canEscape/insideZone), which the skill engine doesn't parse yet — so
+// this one item-category rule is hardcoded until conditions land (l2go-z36.1).
+type ItemSkillHandler struct {
 	skills SkillTemplateSource
 	caster ItemSkillCaster
 }
 
-// NewPotionHandler builds a potion handler that validates skills via skills and
+// NewItemSkillHandler builds a potion handler that validates skills via skills and
 // casts them through caster.
-func NewPotionHandler(skills SkillTemplateSource, caster ItemSkillCaster) *PotionHandler {
-	return &PotionHandler{skills: skills, caster: caster}
+func NewItemSkillHandler(skills SkillTemplateSource, caster ItemSkillCaster) *ItemSkillHandler {
+	return &ItemSkillHandler{skills: skills, caster: caster}
 }
 
 // skillHasEscapeEffect reports whether the skill teleports the user (Scroll of
@@ -57,7 +63,7 @@ func skillHasEscapeEffect(skill *models.Skill) bool {
 // UseItem casts the item's linked skill(s) through the skill engine and consumes one
 // item. Returns consumed=false (no-op) when the item declares no resolvable skill,
 // so a potion is never consumed without an effect.
-func (p *PotionHandler) UseItem(ctx context.Context, use ItemUseContext) (bool, error) {
+func (p *ItemSkillHandler) UseItem(ctx context.Context, use ItemUseContext) (bool, error) {
 	if use.Template == nil || len(use.Template.ItemSkills) == 0 {
 		return false, nil
 	}
@@ -96,7 +102,7 @@ func (p *PotionHandler) UseItem(ctx context.Context, use ItemUseContext) (bool, 
 // consumeOne removes a single unit of the used item, deleting the row when the last
 // unit is consumed. Mutates use.Item.Count in place so the caller can reflect the
 // new count in an InventoryUpdate.
-func (p *PotionHandler) consumeOne(ctx context.Context, use ItemUseContext) error {
+func (p *ItemSkillHandler) consumeOne(ctx context.Context, use ItemUseContext) error {
 	item := use.Item
 	item.Count--
 	if item.Count <= 0 {

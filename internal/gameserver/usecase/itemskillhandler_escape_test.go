@@ -32,10 +32,10 @@ func TestSkillHasEscapeEffect(t *testing.T) {
 	}
 }
 
-func TestPotionHandler_EscapeBlockedInCombat(t *testing.T) {
+func TestItemSkillHandler_EscapeBlockedInCombat(t *testing.T) {
 	caster := &recordingCaster{}
 	itemRepo := &fakeItemRepo{}
-	h := NewPotionHandler(escapeSkillSource{}, caster)
+	h := NewItemSkillHandler(escapeSkillSource{}, caster)
 	repository := &fakeRepo{item: itemRepo}
 
 	item := &models.CharacterItem{ObjectID: 700, ItemID: 736, OwnerID: 7, Count: 5}
@@ -79,10 +79,10 @@ func TestPotionHandler_EscapeBlockedInCombat(t *testing.T) {
 	}
 }
 
-// TestPotionHandler_PotionUsableInCombat guards that the combat gate is escape-only:
+// TestItemSkillHandler_PotionUsableInCombat guards that the combat gate is escape-only:
 // a healing potion (no Escape effect) still works in combat.
-func TestPotionHandler_PotionUsableInCombat(t *testing.T) {
-	h, caster, itemRepo := newPotionTest(map[[2]int]bool{{2037, 1}: true})
+func TestItemSkillHandler_PotionUsableInCombat(t *testing.T) {
+	h, caster, itemRepo := newItemSkillTest(map[[2]int]bool{{2037, 1}: true})
 	repository := &fakeRepo{item: itemRepo}
 
 	item := &models.CharacterItem{ObjectID: 501, ItemID: 1539, OwnerID: 7, Count: 3}

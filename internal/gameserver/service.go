@@ -521,9 +521,9 @@ func (g *GameServer) prepareHandlers() {
 
 	// Potions cast their linked item skill through the real skill engine (l2go-849):
 	// validate the template via SkillData, cast via the loop's ItemSkillCaster.
-	potionHandler := usecase.NewPotionHandler(g.skillData, g.gameLoop.ItemSkillCaster())
-	g.usc.inventory.ItemHandlers().Register("ItemSkills", potionHandler)
-	g.usc.inventory.ItemHandlers().Register("ManaPotion", potionHandler)
+	itemSkillHandler := usecase.NewItemSkillHandler(g.skillData, g.gameLoop.ItemSkillCaster())
+	g.usc.inventory.ItemHandlers().Register("ItemSkills", itemSkillHandler)
+	g.usc.inventory.ItemHandlers().Register("ManaPotion", itemSkillHandler)
 
 	// Register extractable (lootbox/capsule) item handler (l2go-7j7). Rewards are
 	// rolled per-product and added to inventory; rewards ride the used item's

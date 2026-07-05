@@ -57,15 +57,15 @@ type fakeRepo struct {
 
 func (f *fakeRepo) Item() repo.ItemRepository { return f.item }
 
-func newPotionTest(known map[[2]int]bool) (*PotionHandler, *recordingCaster, *fakeItemRepo) {
+func newItemSkillTest(known map[[2]int]bool) (*ItemSkillHandler, *recordingCaster, *fakeItemRepo) {
 	caster := &recordingCaster{}
 	itemRepo := &fakeItemRepo{}
-	h := NewPotionHandler(&fakeSkillTemplates{known: known}, caster)
+	h := NewItemSkillHandler(&fakeSkillTemplates{known: known}, caster)
 	return h, caster, itemRepo
 }
 
-func TestPotionHandler_CastsAndConsumes(t *testing.T) {
-	h, caster, itemRepo := newPotionTest(map[[2]int]bool{{2037, 1}: true})
+func TestItemSkillHandler_CastsAndConsumes(t *testing.T) {
+	h, caster, itemRepo := newItemSkillTest(map[[2]int]bool{{2037, 1}: true})
 	repository := &fakeRepo{item: itemRepo}
 
 	item := &models.CharacterItem{ObjectID: 500, ItemID: 1539, OwnerID: 7, Count: 3}
@@ -101,8 +101,8 @@ func TestPotionHandler_CastsAndConsumes(t *testing.T) {
 	}
 }
 
-func TestPotionHandler_LastItemDeleted(t *testing.T) {
-	h, _, itemRepo := newPotionTest(map[[2]int]bool{{10001, 1}: true})
+func TestItemSkillHandler_LastItemDeleted(t *testing.T) {
+	h, _, itemRepo := newItemSkillTest(map[[2]int]bool{{10001, 1}: true})
 	repository := &fakeRepo{item: itemRepo}
 
 	item := &models.CharacterItem{ObjectID: 501, ItemID: 728, OwnerID: 7, Count: 1}
@@ -126,8 +126,8 @@ func TestPotionHandler_LastItemDeleted(t *testing.T) {
 	}
 }
 
-func TestPotionHandler_NoSkillsIsNoOp(t *testing.T) {
-	h, caster, itemRepo := newPotionTest(nil)
+func TestItemSkillHandler_NoSkillsIsNoOp(t *testing.T) {
+	h, caster, itemRepo := newItemSkillTest(nil)
 	repository := &fakeRepo{item: itemRepo}
 
 	item := &models.CharacterItem{ObjectID: 502, ItemID: 1, OwnerID: 7, Count: 5}
@@ -148,9 +148,9 @@ func TestPotionHandler_NoSkillsIsNoOp(t *testing.T) {
 	}
 }
 
-func TestPotionHandler_UnknownSkillNotConsumed(t *testing.T) {
+func TestItemSkillHandler_UnknownSkillNotConsumed(t *testing.T) {
 	// Skill declared in the template but not resolvable in the datapack → no-op.
-	h, caster, itemRepo := newPotionTest(map[[2]int]bool{})
+	h, caster, itemRepo := newItemSkillTest(map[[2]int]bool{})
 	repository := &fakeRepo{item: itemRepo}
 
 	item := &models.CharacterItem{ObjectID: 503, ItemID: 99, OwnerID: 7, Count: 2}
