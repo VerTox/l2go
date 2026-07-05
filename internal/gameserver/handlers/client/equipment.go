@@ -35,7 +35,10 @@ func (h *Handler) handleUseItem(ctx context.Context, c *client.ClientConn, paylo
 		Int32("char_id", playerState.CharID).
 		Msg("UseItem request")
 
-	cond := usecase.PlayerCondition{IsDead: !playerState.Character.IsAlive()}
+	cond := usecase.PlayerCondition{
+		IsDead:   !playerState.Character.IsAlive(),
+		InCombat: playerState.InCombat, // gates escape scrolls (l2go-kg9)
+	}
 
 	result, err := h.inventoryUseCase.UseItem(ctx, playerState.CharID, pkt.ObjectID, cond)
 	if err != nil {

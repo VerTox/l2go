@@ -67,7 +67,7 @@ func TestUseNonEquipItem_NoHandlerIsNoOp(t *testing.T) {
 
 	// Handler declared but not registered.
 	tmpl := &registry.ItemTemplate{ID: 1463, Name: "Soulshot", Handler: "SoulShots"}
-	res, err := uc.useNonEquipItem(context.Background(), 7, item, tmpl)
+	res, err := uc.useNonEquipItem(context.Background(), 7, item, tmpl, false)
 	if err != nil {
 		t.Fatalf("unexpected error for unregistered handler: %v", err)
 	}
@@ -77,7 +77,7 @@ func TestUseNonEquipItem_NoHandlerIsNoOp(t *testing.T) {
 
 	// No handler name at all.
 	tmpl2 := &registry.ItemTemplate{ID: 999, Name: "Plain", Handler: ""}
-	res2, err := uc.useNonEquipItem(context.Background(), 7, item, tmpl2)
+	res2, err := uc.useNonEquipItem(context.Background(), 7, item, tmpl2, false)
 	if err != nil {
 		t.Fatalf("unexpected error for empty handler: %v", err)
 	}
@@ -94,7 +94,7 @@ func TestUseNonEquipItem_DispatchesToHandler(t *testing.T) {
 	item := &models.CharacterItem{ObjectID: 100, ItemID: 1463, OwnerID: 7}
 	tmpl := &registry.ItemTemplate{ID: 1463, Name: "Soulshot", Handler: "SoulShots"}
 
-	res, err := uc.useNonEquipItem(context.Background(), 7, item, tmpl)
+	res, err := uc.useNonEquipItem(context.Background(), 7, item, tmpl, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -116,7 +116,7 @@ func TestUseNonEquipItem_NotConsumed(t *testing.T) {
 	item := &models.CharacterItem{ObjectID: 100, ItemID: 1463, OwnerID: 7}
 	tmpl := &registry.ItemTemplate{ID: 1463, Handler: "SoulShots"}
 
-	res, err := uc.useNonEquipItem(context.Background(), 7, item, tmpl)
+	res, err := uc.useNonEquipItem(context.Background(), 7, item, tmpl, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -133,7 +133,7 @@ func TestUseNonEquipItem_PropagatesError(t *testing.T) {
 	item := &models.CharacterItem{ObjectID: 100, ItemID: 1463, OwnerID: 7}
 	tmpl := &registry.ItemTemplate{ID: 1463, Handler: "SoulShots"}
 
-	_, err := uc.useNonEquipItem(context.Background(), 7, item, tmpl)
+	_, err := uc.useNonEquipItem(context.Background(), 7, item, tmpl, false)
 	if err == nil || !errors.Is(err, wantErr) {
 		t.Fatalf("err = %v, want wrapped %v", err, wantErr)
 	}

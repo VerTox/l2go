@@ -5,6 +5,7 @@ import (
 
 	"github.com/VerTox/l2go/internal/gameserver/models"
 	"github.com/VerTox/l2go/internal/gameserver/packets/outclient"
+	"github.com/VerTox/l2go/internal/gameserver/registry"
 )
 
 // teleportZOffset nudges the destination up a little, matching L2J (z += 5) to avoid
@@ -77,4 +78,21 @@ func (gl *GameLoop) handleRevive(cmd CmdRevive) {
 
 	// Relocate to the respawn point (broadcasts TeleportToLocation, decays, moves).
 	gl.handleTeleport(CmdTeleport{CharID: cmd.CharID, Dest: cmd.Dest, Heading: cmd.Heading})
+}
+
+// applyEscape teleports a caster to its escape destination (Scroll of Escape, skill
+// effect "Escape"). Only escapeType TOWN is supported — the same nearest-town lookup
+// death-respawn uses; other destinations (clan hall/castle SoEs) need a dest table
+// and are deferred. The in-combat gate lives at the item-use boundary (the scroll is
+// not consumed while in combat), so this trusts it is reachable only out of combat.
+// (l2go-kg9)
+func (gl *GameLoop) applyEscape(caster *registry.PlayerWorldState, escapeType string) {
+	if escapeType != "" && escapeType != "TOWN" {
+		return // clan-hall/castle escapes not modelled yet
+	}
+	dest, ok := registry.GetMapRegionRegistry().GetRespawnPoint(caster.Position.X, caster.Position.Y)
+	if !ok {
+		return
+	}
+	gl.handleTeleport(CmdTeleport{CharID: caster.CharID, Dest: dest, Heading: 0})
 }

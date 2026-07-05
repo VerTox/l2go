@@ -29,6 +29,10 @@ type ItemUseContext struct {
 	// messages in auto mode — they would spam on every swing — while keeping the
 	// side effects (consume, charge) and the shot visual. (l2go-btb)
 	Auto bool
+
+	// InCombat is the user's combat stance at use time. Escape scrolls refuse (no
+	// consume) while in combat; other consumables ignore it. (l2go-kg9)
+	InCombat bool
 }
 
 // emit reports an extra inventory change if a collector is wired, otherwise a no-op.

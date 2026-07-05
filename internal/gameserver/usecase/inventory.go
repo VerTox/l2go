@@ -54,7 +54,8 @@ type ReuseSyncSpec struct {
 // currently modelled; stun/sleep/afraid/alikeDead states do not yet exist in our
 // actor model (parked — see l2go-5i0).
 type PlayerCondition struct {
-	IsDead bool
+	IsDead   bool
+	InCombat bool // blocks escape-scroll use (l2go-kg9); potions etc. are unaffected
 }
 
 // EquipResult holds the result of an equip/unequip/use operation.
@@ -167,7 +168,7 @@ func (uc *InventoryUseCase) UseItem(ctx context.Context, charID int32, objectID 
 	// Non-equipment item: dispatch to a registered item handler by name.
 	// Mirrors L2J's ItemHandler lookup on L2EtcItem.getHandlerName().
 	if template.BodyPartCode == 0 {
-		return uc.useNonEquipItem(ctx, charID, item, template)
+		return uc.useNonEquipItem(ctx, charID, item, template, cond.InCombat)
 	}
 
 	if item.IsEquipped() {
@@ -191,7 +192,7 @@ func (uc *InventoryUseCase) UseItem(ctx context.Context, charID int32, objectID 
 // ItemHandler keyed by template.Handler. If no handler is registered (or the
 // item declares no handler), this is a no-op and NOT an error — exactly like
 // L2J, where a missing handler simply means the item does nothing on use.
-func (uc *InventoryUseCase) useNonEquipItem(ctx context.Context, charID int32, item *models.CharacterItem, template *registry.ItemTemplate) (*EquipResult, error) {
+func (uc *InventoryUseCase) useNonEquipItem(ctx context.Context, charID int32, item *models.CharacterItem, template *registry.ItemTemplate, inCombat bool) (*EquipResult, error) {
 	handler, ok := uc.itemHandlers.Get(template.Handler)
 	if !ok {
 		log.Ctx(ctx).Debug().
@@ -211,6 +212,7 @@ func (uc *InventoryUseCase) useNonEquipItem(ctx context.Context, charID int32, i
 		Item:     item,
 		Template: template,
 		Repo:     uc.repo,
+		InCombat: inCombat,
 		Emit:     func(ci ChangedItem) { extraChanges = append(extraChanges, ci) },
 	})
 	if err != nil {

@@ -40,6 +40,20 @@ func NewPotionHandler(skills SkillTemplateSource, caster ItemSkillCaster) *Potio
 	return &PotionHandler{skills: skills, caster: caster}
 }
 
+// skillHasEscapeEffect reports whether the skill teleports the user (Scroll of
+// Escape and kin), so it can be blocked in combat. (l2go-kg9)
+func skillHasEscapeEffect(skill *models.Skill) bool {
+	if skill == nil {
+		return false
+	}
+	for _, eff := range skill.Effects {
+		if eff.Name == "Escape" {
+			return true
+		}
+	}
+	return false
+}
+
 // UseItem casts the item's linked skill(s) through the skill engine and consumes one
 // item. Returns consumed=false (no-op) when the item declares no resolvable skill,
 // so a potion is never consumed without an effect.
@@ -53,8 +67,15 @@ func (p *PotionHandler) UseItem(ctx context.Context, use ItemUseContext) (bool, 
 	type cast struct{ id, level int32 }
 	var casts []cast
 	for _, sk := range use.Template.ItemSkills {
-		if p.skills != nil && p.skills.GetSkill(sk.ID, sk.Level) == nil {
+		skill := p.skills.GetSkill(sk.ID, sk.Level)
+		if p.skills != nil && skill == nil {
 			continue
+		}
+		// Escape scrolls (effect "Escape") can't be used in combat (L2J canEscape).
+		// Refuse before consuming so a blocked attempt doesn't waste the scroll. Other
+		// consumables (potions) are fine in combat. (l2go-kg9)
+		if use.InCombat && skillHasEscapeEffect(skill) {
+			return false, nil
 		}
 		casts = append(casts, cast{id: int32(sk.ID), level: int32(sk.Level)})
 	}

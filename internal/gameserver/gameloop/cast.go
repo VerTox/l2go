@@ -332,6 +332,12 @@ func (gl *GameLoop) applySkillEffects(caster *registry.PlayerWorldState, targetI
 			continue
 		}
 		switch eff.Name {
+		case "Escape":
+			// Scroll of Escape and kin: teleport the caster (stop-gap — instant, no
+			// 20s channel; the full interruptible cast comes with the skill engine,
+			// l2go-2w8). Terminal: nothing else applies. (l2go-kg9)
+			gl.applyEscape(caster, eff.Params["escapeType"])
+			return
 		case "Heal", "Hp", "HealPercent":
 			hp += effectPower(eff)
 		case "ManaHeal", "Mp", "ManaHealPercent":
