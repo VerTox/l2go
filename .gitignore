@@ -9,6 +9,8 @@ l2go.exe
 /gameserver
 /loginserver
 /main
+/seedbots
+/stressbot
 
 # Test binary, built with `go test -c`
 *.test
@@ -87,3 +89,9 @@ loadtest
 .logs
 .claude
 .beads
+docs/superpowers
+.superpowers
+
+# Agent instruction files (local tooling, not shipped)
+CLAUDE.md
+AGENTS.md

@@ -1,193 +1,116 @@
 # L2Go Development Makefile
 
-.PHONY: help db-up db-down db-restart db-logs db-clean build run-login run-game test js-client run-e2e stop-server show-log
+.PHONY: help \
+        db-up db-down db-restart db-logs db-clean adminer-up \
+        build build-loginserver build-gameserver build-stressbot build-seedbots \
+        run-loginserver run-gameserver \
+        deps test clean \
+        up down build-images logs logs-login logs-game restart-login restart-game \
+        stress stress-snap seed-bots check
+
+SHELL := /bin/bash
+.SHELLFLAGS := -eu -o pipefail -c
+
+# Docker Compose v2 (`docker compose`, not the legacy `docker-compose` binary).
+COMPOSE := docker compose
 
 help: ## Show this help message
 	@echo "L2Go Development Commands:"
 	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'
 
-# Shell and logging setup for orchestration
-SHELL := /bin/bash
-.SHELLFLAGS := -eu -o pipefail -c
-.ONESHELL:
+# ── Database (PostgreSQL only) ──────────────────────────────
+db-up: ## Start PostgreSQL only
+	$(COMPOSE) up -d postgres
+	@echo "PostgreSQL at localhost:5432 (postgres/postgres). DBs: l2go_login + l2go_gameserver (created by init-db.sql)."
 
-LOG_DIR := .logs
-TIME ?= 20
-LOG_FILE := $(LOG_DIR)/run-$(shell date +%Y%m%d-%H%M%S).log
+db-down: ## Stop PostgreSQL
+	$(COMPOSE) stop postgres
 
-# Database Commands
-db-up: ## Start PostgreSQL database
-	docker-compose up -d postgres
-	@echo "Waiting for PostgreSQL to be ready..."
-	@sleep 5
-	@echo "PostgreSQL is ready at localhost:5432"
-	@echo "Database: l2go_login"
-	@echo "User: postgres"
-	@echo "Password: postgres"
+db-restart: ## Restart PostgreSQL
+	$(COMPOSE) restart postgres
 
-db-down: ## Stop PostgreSQL database
-	docker-compose down
+db-logs: ## Tail PostgreSQL logs
+	$(COMPOSE) logs -f postgres
 
-db-restart: ## Restart PostgreSQL database
-	docker-compose restart postgres
+db-clean: ## Remove ALL stack data volumes (DESTRUCTIVE!)
+	$(COMPOSE) down -v
 
-db-logs: ## Show PostgreSQL logs
-	docker-compose logs -f postgres
+adminer-up: ## Start Adminer DB web UI (http://localhost:8080)
+	$(COMPOSE) up -d adminer
 
-db-clean: ## Remove PostgreSQL data (DESTRUCTIVE!)
-	docker-compose down -v
-	docker volume rm l2go_postgres_data 2>/dev/null || true
-
-adminer-up: ## Start Adminer (Database Web UI)
-	docker-compose up -d adminer
-	@echo "Adminer available at http://localhost:8080"
-	@echo "Server: postgres"
-	@echo "Username: postgres"
-	@echo "Password: postgres"
-	@echo "Database: l2go_login"
-
-# Application Commands
-build: ## Build the L2Go server (legacy)
-	go build -o l2go .
+# ── Build native binaries ───────────────────────────────────
+build: build-loginserver build-gameserver ## Build both server binaries
 
 build-loginserver: ## Build the LoginServer binary
 	cd cmd/loginserver && go build -o loginserver .
 
-run-login: build ## Run the login server (legacy, requires PostgreSQL)
-	./l2go -mode=0
+build-gameserver: ## Build the GameServer binary
+	cd cmd/gameserver && go build -o gameserver .
 
-run-loginserver: build-loginserver ## Run the new LoginServer (requires PostgreSQL)
+build-stressbot: ## Build the stress-test bot
+	go build -o stressbot ./cmd/stressbot
+
+build-seedbots: ## Build the character seeder
+	go build -o seedbots ./cmd/seedbots
+
+# ── Run natively (require PostgreSQL, e.g. `make db-up`) ─────
+run-loginserver: build-loginserver ## Run the LoginServer (needs PostgreSQL)
 	cd cmd/loginserver && ./loginserver
 
-run-game: build ## Run the game server
-	./l2go -mode=1 -server=1
+run-gameserver: build-gameserver ## Run the GameServer (needs PostgreSQL + LoginServer; loads datapack/)
+	cd cmd/gameserver && ./gameserver
 
-# Development Commands
+# ── Go module hygiene ───────────────────────────────────────
 deps: ## Download and tidy dependencies
 	go mod download
 	go mod tidy
 
-test: ## Run tests
+test: ## Run the test suite
 	go test ./...
 
-clean: ## Clean build artifacts
-	rm -f l2go
+clean: ## Remove built binaries
+	rm -f stressbot seedbots cmd/loginserver/loginserver cmd/gameserver/gameserver
 
-# Docker Commands
-docker-up: ## Start all services (PostgreSQL + LoginServer + Adminer)
-	docker-compose up -d
+# ── Full Docker stack ───────────────────────────────────────
+# Services: postgres, loginserver, gameserver, adminer, prometheus, grafana.
+up: ## Start the full stack in the background
+	$(COMPOSE) up -d
 
-docker-down: ## Stop all services
-	docker-compose down
+down: ## Stop the full stack
+	$(COMPOSE) down
 
-docker-logs: ## Show logs for all services
-	docker-compose logs -f
+build-images: ## (Re)build the LoginServer + GameServer images
+	$(COMPOSE) build loginserver gameserver
 
-docker-loginserver-logs: ## Show LoginServer logs only
-	docker-compose logs -f loginserver
+logs: ## Tail logs for all services
+	$(COMPOSE) logs -f
 
-docker-build: ## Build LoginServer Docker image
-	docker-compose build loginserver
+logs-login: ## Tail LoginServer logs
+	$(COMPOSE) logs -f loginserver
 
-docker-restart-loginserver: ## Restart LoginServer container
-	docker-compose restart loginserver
+logs-game: ## Tail GameServer logs
+	$(COMPOSE) logs -f gameserver
 
-# Load Testing Commands
-loadtest-setup: ## Setup load testing dependencies
-	cd loadtest && npm install
+restart-login: ## Rebuild + restart the LoginServer container
+	$(COMPOSE) up -d --build loginserver
 
-loadtest-simple: ## Run simple load test (100 clients, login-only)
-	cd loadtest && node login-only-test.js --clients=100
+restart-game: ## Rebuild + restart the GameServer container
+	$(COMPOSE) up -d --build gameserver
 
-loadtest-medium: ## Run medium load test (1000 clients, login-only)
-	cd loadtest && node login-only-test.js --clients=1000 --concurrency=50
+# ── Load / stress testing (Go cmd/stressbot — canonical) ────
+# N bots online. Needs the stack up and seeded characters (see seed-bots);
+# accounts auto-create on the LoginServer (AUTO_CREATE_ACCOUNTS=true).
+N ?= 1000
+stress: ## Ramp N bots into the world and hold (N=1000; override: make stress N=500)
+	go run ./cmd/stressbot -n $(N) -enter -hold 0
 
-loadtest-large: ## Run large load test (5000 clients, login-only)
-	cd loadtest && node login-only-test.js --clients=5000 --concurrency=100
+stress-snap: ## Print the Prometheus tick-health summary and exit (no fleet run)
+	go run ./cmd/stressbot -promsnap
 
-loadtest-custom: ## Run custom load test (use CLIENTS=N CONCURRENCY=M)
-	cd loadtest && node login-only-test.js --clients=$(or $(CLIENTS),1000) --concurrency=$(or $(CONCURRENCY),50) --verbose
+seed-bots: ## Seed stress-test characters into the DB (pass flags via ARGS="-n 1000 ...")
+	go run ./cmd/seedbots $(ARGS)
 
-loadtest-vs-docker: ## Test against Docker LoginServer
-	cd loadtest && node login-only-test.js --clients=1000 --host=localhost --port=2106
-
-loadtest-full: ## Run full client test (with GameServer, requires l2jsclient)
-	cd loadtest && node --expose-gc loadtest.js --clients=$(or $(CLIENTS),100) --concurrency=$(or $(CONCURRENCY),10)
-
-loadtest-full-small: ## Run small full client test (10 clients)
-	cd loadtest && node --expose-gc loadtest.js --clients=10 --concurrency=5 --verbose
-
-loadtest-full-medium: ## Run medium full client test (100 clients)
-	cd loadtest && node --expose-gc loadtest.js --clients=100 --concurrency=10
-
-loadtest-global: ## Run load test with global event handlers (no memory leaks)
-	cd loadtest && node loadtest-global.js --clients=$(or $(CLIENTS),1000) --concurrency=$(or $(CONCURRENCY),50)
-
-loadtest-global-large: ## Run large load test with global handlers (5000 clients)
-	cd loadtest && node loadtest-global.js --clients=5000 --concurrency=100
-
-# Native Go Client Load Tests
-loadtest-go: ## Run Go native client load test
-	cd loadtest/go-client && go run main.go -clients=$(or $(CLIENTS),100) -concurrency=$(or $(CONCURRENCY),50)
-
-loadtest-go-solo: ## Run small Go client test (10 clients)
-	cd loadtest/go-client && go run main.go -clients=1 -concurrency=1
-
-loadtest-go-small: ## Run small Go client test (10 clients)
-	cd loadtest/go-client && go run main.go -clients=4 -concurrency=1 -verbose
-
-loadtest-go-medium: ## Run medium Go client test (1000 clients)
-	cd loadtest/go-client && go run main.go -clients=1000 -concurrency=100
-
-loadtest-go-large: ## Run large Go client test (5000 clients)
-	cd loadtest/go-client && go run main.go -clients=5000 -concurrency=200
-
-loadtest-go-build: ## Build Go client binary
-	cd loadtest/go-client && go build -o loadtest-client main.go
-
-js-client:
-	node ../../WebstormProjects/l2client/main.js
-
-# Orchestrated end-to-end run: start server, run JS inclient, then stop server
-run-e2e: build
-	@mkdir -p $(LOG_DIR)
-	@echo "==> Starting server" | tee -a $(LOG_FILE)
-	@./l2go -mode=0 >> $(LOG_FILE) 2>&1 & echo $$! > .server.pid
-	@echo "Server PID: $$(cat .server.pid)" | tee -a $(LOG_FILE)
-	@trap 'echo "==> Interrupt received, stopping server" | tee -a $(LOG_FILE); $(MAKE) --no-print-directory stop-server' INT TERM EXIT; \
-	echo "==> Waiting 1s for server to warm up" | tee -a $(LOG_FILE); \
-	sleep 1; \
-	echo "==> Starting JS client" | tee -a $(LOG_FILE); \
-	if node ../../WebstormProjects/l2client/main.js >> $(LOG_FILE) 2>&1; then \
-		echo "==> Client finished (or disconnected)" | tee -a $(LOG_FILE); \
-	else \
-		echo "==> Client exited with error" | tee -a $(LOG_FILE); \
-	fi; \
-	echo "==> Client is done; stopping server now" | tee -a $(LOG_FILE); \
-	$(MAKE) --no-print-directory stop-server; \
-	trap - INT TERM EXIT
-
-# Graceful server stop using stored PID
-stop-server:
-	@if [ -f .server.pid ]; then \
-		PID=$$(cat .server.pid); \
-		kill $$PID >/dev/null 2>&1 || true; \
-		for i in $$(seq 1 10); do \
-			if kill -0 $$PID >/dev/null 2>&1; then sleep 0.5; else break; fi; \
-		done; \
-		kill -9 $$PID >/dev/null 2>&1 || true; \
-		rm -f .server.pid; \
-	else \
-		echo "No .server.pid file; server not running?"; \
-	fi
-
-# Quick look at the latest combined log
-show-log:
-	@latest=$$(ls -1t $(LOG_DIR)/*.log 2>/dev/null | head -n 1); \
-	if [ -n "$$latest" ]; then \
-		echo "Log file: $$latest"; \
-		tail -n 100 "$$latest" || true; \
-	else \
-		echo "No log files found in $(LOG_DIR)"; \
-	fi
+# ── In-game acceptance harness (headless l2client) ──────────
+check: ## Run the headless l2client acceptance check against the running stack
+	node references/l2client/check.js
