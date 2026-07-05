@@ -18,28 +18,61 @@ const (
 	regionDeactivateTimeout = 30 * time.Second
 )
 
-// regionKey returns a spatial key for the given world coordinates.
-func regionKey(x, y int) string {
-	return fmt.Sprintf("%d,%d", x/regionSize, y/regionSize)
+// cellOf returns the grid cell (cx, cy) containing world coordinates (x, y).
+func cellOf(x, y int) [2]int {
+	return [2]int{x / regionSize, y / regionSize}
 }
 
-// surroundingRegionKeys returns the 3x3 grid of region keys around a position.
-func surroundingRegionKeys(x, y int) []string {
-	cx := x / regionSize
-	cy := y / regionSize
+// cellKey is the activeRegions map key for a grid cell.
+func cellKey(c [2]int) string {
+	return fmt.Sprintf("%d,%d", c[0], c[1])
+}
+
+// surroundingKeys returns the 3x3 block of cell keys around the given center cell.
+func surroundingKeys(center [2]int) []string {
 	keys := make([]string, 0, 9)
 	for dx := -1; dx <= 1; dx++ {
 		for dy := -1; dy <= 1; dy++ {
-			keys = append(keys, fmt.Sprintf("%d,%d", cx+dx, cy+dy))
+			keys = append(keys, cellKey([2]int{center[0] + dx, center[1] + dy}))
 		}
 	}
 	return keys
 }
 
-// activateRegions activates the 3x3 region block around the player position.
-func (gl *GameLoop) activateRegions(x, y int) {
+// updatePlayerRegions keeps a player's 3x3 activation block in sync with its
+// position. Used for both world entry and movement. PlayerCount is a true reference
+// count: a move only transitions the block when the player crosses a cell boundary —
+// deactivating the old 3x3 and activating the new one — so the count no longer
+// inflates on every position update and returns to 0 once players leave. (l2go-wdl)
+// Loop-goroutine only (activeRegions/playerRegionCenter are loop-owned).
+func (gl *GameLoop) updatePlayerRegions(charID int32, x, y int) {
+	newCenter := cellOf(x, y)
+	oldCenter, tracked := gl.playerRegionCenter[charID]
+	if tracked && oldCenter == newCenter {
+		return // still in the same cell — block activation is unchanged
+	}
+	if tracked {
+		gl.deactivateRegionBlock(oldCenter)
+	}
+	gl.playerRegionCenter[charID] = newCenter
+	gl.activateRegionBlock(newCenter)
+}
+
+// leavePlayerRegions deactivates the block a disconnecting player held and stops
+// tracking it, so its regions can go stale and be reclaimed. (l2go-wdl)
+func (gl *GameLoop) leavePlayerRegions(charID int32) {
+	center, tracked := gl.playerRegionCenter[charID]
+	if !tracked {
+		return
+	}
+	gl.deactivateRegionBlock(center)
+	delete(gl.playerRegionCenter, charID)
+}
+
+// activateRegionBlock increments the reference count on the 3x3 block around center.
+func (gl *GameLoop) activateRegionBlock(center [2]int) {
 	now := time.Now()
-	for _, key := range surroundingRegionKeys(x, y) {
+	for _, key := range surroundingKeys(center) {
 		r, ok := gl.activeRegions[key]
 		if !ok {
 			r = &ActiveRegion{Key: key}
@@ -51,9 +84,12 @@ func (gl *GameLoop) activateRegions(x, y int) {
 	}
 }
 
-// deactivateRegions decrements the player count for the 3x3 region block.
-func (gl *GameLoop) deactivateRegions(x, y int) {
-	for _, key := range surroundingRegionKeys(x, y) {
+// deactivateRegionBlock decrements the reference count on the 3x3 block around
+// center and stamps LastPlayerTime, so the 30s vacancy timeout starts from the
+// moment the player left (not when it first arrived).
+func (gl *GameLoop) deactivateRegionBlock(center [2]int) {
+	now := time.Now()
+	for _, key := range surroundingKeys(center) {
 		r, ok := gl.activeRegions[key]
 		if !ok {
 			continue
@@ -62,15 +98,17 @@ func (gl *GameLoop) deactivateRegions(x, y int) {
 		if r.PlayerCount < 0 {
 			r.PlayerCount = 0
 		}
+		r.LastPlayerTime = now
 	}
 }
 
-// deactivateStaleRegions marks regions as inactive if no player was nearby for 30 seconds.
+// deactivateStaleRegions removes regions that have had no players for the timeout.
+// With correct ref-counting a vacated region's PlayerCount returns to 0, so this now
+// actually reclaims entries instead of leaking them. (l2go-wdl)
 func (gl *GameLoop) deactivateStaleRegions() {
 	now := time.Now()
 	for key, r := range gl.activeRegions {
-		if r.PlayerCount <= 0 && r.Active && now.Sub(r.LastPlayerTime) > regionDeactivateTimeout {
-			r.Active = false
+		if r.PlayerCount <= 0 && now.Sub(r.LastPlayerTime) > regionDeactivateTimeout {
 			delete(gl.activeRegions, key)
 		}
 	}

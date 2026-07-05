@@ -58,7 +58,12 @@ type GameLoop struct {
 	npcHateLists    map[int32]*HateList          // NPC objectID -> hate
 	npcSpawnInfo    map[int32]SpawnInfo          // NPC objectID -> spawn data for respawn
 	activeRegions   map[string]*ActiveRegion
-	interactPending map[int32]int32 // charID -> NPC objectID (active approach-to-interact)
+	// playerRegionCenter is the grid cell each live player's 3x3 activation block is
+	// centered on, so a move only re-counts regions when the player crosses a cell
+	// boundary — keeping activeRegions' PlayerCount a true reference count instead of
+	// inflating forever. Loop-owned. (l2go-wdl)
+	playerRegionCenter map[int32][2]int
+	interactPending    map[int32]int32 // charID -> NPC objectID (active approach-to-interact)
 
 	// Configurable server rates
 	expRate float64
@@ -128,8 +133,9 @@ func New(world *registry.WorldRegistry, connections *registry.ConnectionRegistry
 		npcCombatState:  make(map[int32]*NPCCombatState),
 		npcHateLists:    make(map[int32]*HateList),
 		npcSpawnInfo:    make(map[int32]SpawnInfo),
-		activeRegions:   make(map[string]*ActiveRegion),
-		interactPending: make(map[int32]int32),
+		activeRegions:      make(map[string]*ActiveRegion),
+		playerRegionCenter: make(map[int32][2]int),
+		interactPending:    make(map[int32]int32),
 		skillReuse:      make(map[int32]map[int32]time.Time),
 		buffedPlayers:   make(map[int32]struct{}),
 		flaggedPlayers:  make(map[int32]struct{}),
@@ -548,17 +554,15 @@ func (gl *GameLoop) handlePlayerDisconnected(cmd CmdPlayerDisconnected) {
 	// sets) so a later reconnect is spawned fresh.
 	gl.despawnPlayerFromAll(cmd.CharID)
 
-	// Deactivate regions for this player
-	if player, exists := gl.world.GetPlayer(cmd.CharID); exists {
-		gl.deactivateRegions(player.Position.X, player.Position.Y)
-	}
+	// Release the player's activated region block (ref-counted, l2go-wdl).
+	gl.leavePlayerRegions(cmd.CharID)
 }
 
 // handlePlayerEnteredWorld activates regions around the player and establishes the
 // initial player-to-player visibility (spawns nearby players to the newcomer and
 // the newcomer to them).
 func (gl *GameLoop) handlePlayerEnteredWorld(cmd CmdPlayerEnteredWorld) {
-	gl.activateRegions(cmd.Position.X, cmd.Position.Y)
+	gl.updatePlayerRegions(cmd.CharID, cmd.Position.X, cmd.Position.Y)
 	gl.reconcilePlayerVisibility(cmd.CharID)
 }
 
@@ -568,9 +572,10 @@ func (gl *GameLoop) handlePlayerEnteredWorld(cmd CmdPlayerEnteredWorld) {
 // the client's ValidatePosition updates (the handler syncs the client position into
 // the registry before sending this command, so the read below is fresh).
 func (gl *GameLoop) handlePlayerMoved(cmd CmdPlayerMoved) {
-	// Re-activate regions around the new position
-	// (simple approach: always activate, deactivation handled by timeout)
-	gl.activateRegions(cmd.Position.X, cmd.Position.Y)
+	// Re-sync the player's activated region block: a no-op unless the player crossed
+	// a cell boundary, in which case the old block is released and the new one taken
+	// (ref-counted, l2go-wdl).
+	gl.updatePlayerRegions(cmd.CharID, cmd.Position.X, cmd.Position.Y)
 
 	// Ground walking is client-authoritative (l2go-2ax): sync the client-reported
 	// position into the registry here (loop is the single writer for it). Combat/
